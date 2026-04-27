@@ -4,4 +4,8 @@
     <ProjectReference Include="..\MediaMatch.Core\MediaMatch.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Scriban" Version="7.1.0" />
+  </ItemGroup>
+
 </Project>
