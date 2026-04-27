@@ -13,6 +13,7 @@
     <Project Path="tests/MediaMatch.App.Tests/MediaMatch.App.Tests.csproj" />
     <Project Path="tests/MediaMatch.Application.Tests/MediaMatch.Application.Tests.csproj" />
     <Project Path="tests/MediaMatch.Core.Tests/MediaMatch.Core.Tests.csproj" />
+    <Project Path="tests/MediaMatch.EndToEnd.Tests/MediaMatch.EndToEnd.Tests.csproj" />
     <Project Path="tests/MediaMatch.Infrastructure.Tests/MediaMatch.Infrastructure.Tests.csproj" />
     <Project Path="tests/MediaMatch.CLI.Tests/MediaMatch.CLI.Tests.csproj" />
   </Folder>
