@@ -293,6 +293,68 @@ Phase 11 required batch rename operations with progress tracking and undo suppor
 
 ---
 
+### Decision: Phases 15-17 Implementation Patterns
+
+**Date:** 2026-04-27  
+**Author:** Fenster  
+**Status:** Implemented  
+
+#### Context
+
+Phases 15 (AniDB Provider), 16 (Opportunistic Matching), and 17 (New Binding Tokens) add anime metadata, fallback matching, and technical media metadata to MediaMatch v0.2.0.
+
+#### Decisions
+
+1. **AniDB rate limiter is timestamp-based** — Unlike MediaMatchHttpClient's sliding-window rate limiter (for TMDb's burst-based limits), AniDB enforces a simple per-request interval (≤1 req/2s). Uses `SemaphoreSlim` + last-request timestamp tracking with configurable interval.
+
+2. **AniDB uses raw HttpClient, not MediaMatchHttpClient** — AniDB returns XML (not JSON), so the shared JSON-based HTTP client doesn't apply. AniDB gets its own `HttpClient` via `IHttpClientFactory` named clients.
+
+3. **OpportunisticMatcher is composed, not injected** — MatchingPipeline creates its own `OpportunisticMatcher` internally, reusing the same provider instances. This keeps DI registration simple and avoids circular dependencies.
+
+4. **MediaInfoExtractor is best-effort** — ffprobe integration catches `Win32Exception` and falls back to filename-based regex parsing. No hard dependency on ffprobe being installed.
+
+5. **MediaBindings.ForEpisode/ForMovie signatures extended** — Added optional `MediaTechnicalInfo?` parameter (default null) to maintain backward compatibility. Existing callers are unaffected.
+
+6. **ReleaseInfo extended with optional fields** — HdrFormat, DolbyVision, AudioChannels, BitDepth added as optional parameters to preserve backward compatibility with existing record construction.
+
+#### Impact
+
+- **Hockney:** New providers, matcher, and extractor all follow the optional-logger pattern — testable without DI changes.
+- **McManus:** New bindings (`{jellyfin}`, `{acf}`, `{dovi}`, `{hdr}`, `{resolution}`, `{bitdepth}`) available for rename pattern UI.
+- **Keaton:** AniDB provider registered alongside TMDb/TVDb in `IEnumerable<IEpisodeProvider>` — no architectural changes needed.
+
+---
+
+### Decision: Theme & Font Scale Architecture
+
+**Date:** 2026-04-27  
+**Author:** McManus (UI Dev)  
+**Status:** Implemented  
+
+#### Context
+
+Phase 19 required dark mode support, HiDPI validation, and accessibility font scaling for MediaMatch.
+
+#### Decisions
+
+1. **Theme applied via `RequestedTheme` on root FrameworkElement** — not per-page. This gives immediate system-wide theme switching without app restart. `ElementTheme.Default` follows the OS setting.
+
+2. **Title bar colors updated manually** — WinUI 3's `AppWindowTitleBar` button colors don't auto-follow theme changes. `UpdateTitleBarColors()` is called on `ActualThemeChanged` to keep title bar buttons visually consistent.
+
+3. **Font scale via `Control.FontSize` on root + resource override** — WinUI 3 `FrameworkElement` lacks `FontSize`; only `Control` has it. The root Grid (a Panel/Control) accepts the property. A `ContentControlFontSize` resource override provides additional coverage.
+
+4. **ThemeMode and FontScale enums in Core** — Kept in `AppSettings.cs` alongside existing settings so both App and CLI can reference them. CLI ignores these values (headless), but they persist in the shared `settings.json`.
+
+5. **Live preview** — Both theme and font scale apply immediately as the user changes the ComboBox selection via `partial void OnChanged` handlers. No "Apply" button needed.
+
+#### Impact
+
+- **Fenster:** `ThemeMode` and `FontScale` fields added to `AppSettings` — CLI serialization picks them up automatically. No action needed unless CLI wants to expose theme config.
+- **Hockney:** New SettingsViewModel properties (`SelectedThemeIndex`, `SelectedFontScaleIndex`) and static methods (`ApplyTheme`, `ApplyFontScale`, `UpdateTitleBarColors`) are testable via mocking the window.
+- **Keaton:** Architecture stays clean — enums in Core, application logic in ViewModel, no new Infrastructure dependencies.
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus
