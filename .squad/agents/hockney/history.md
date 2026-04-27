@@ -73,6 +73,53 @@
 - Activity spans are null-safe (ActivitySource returns null when no listener attached)
 - No API keys or full file paths logged — only filenames and provider names
 
+### 2026-04-27 — Phase 13: Comprehensive Test Suite
+
+**Test count:** 159 → 264 (105 new tests, all passing, 0 skipped)
+
+**New test projects:**
+- `tests/MediaMatch.CLI.Tests/` — new project added to solution, 11 tests
+- Added FluentAssertions + Moq to Infrastructure.Tests, App.Tests, Core.Tests .csproj files
+
+**Infrastructure provider tests (25 total):**
+- `TmdbMovieProviderTests` (8) — search with/without year, null/empty responses, caching verification, GetMovieInfoAsync detail parsing, argument validation
+- `TmdbEpisodeProviderTests` (6) — search, multi-season episode fetch with URL-routing mock, series info, null handling
+- `TvdbEpisodeProviderTests` (6) — bearer token auth flow, search with login, episodes, series info, null data exception
+- `TmdbArtworkProviderTests` (5) — poster/backdrop/logo mapping, type filtering, movie artwork, null response
+
+**Infrastructure service tests (23 total):**
+- `MetadataCacheTests` (5) — cache miss invokes factory, cache hit skips factory, custom TTL, Remove clears, concurrent thread safety
+- `MediaMatchHttpClientTests` (6) — GET/POST deserialization, 503 throws with maxRetries=0, 429 backs off then recovers, cancellation token, non-transient errors throw immediately
+- `SettingsEncryptionTests` (8) — DPAPI encrypt/decrypt round-trip, empty string passthrough, ENC: prefix verification, IsEncrypted for all edge cases
+- `SettingsRepositoryTests` (4) — passthrough encryption helper, mock encryption contract verification
+
+**App/Core model tests (37 total):**
+- `AppSettingsTests` (6) — default values for AppSettings, ApiKeySettings, RenameSettings, ApiConfiguration, OutputFolderSettings, property round-trip
+- `CoreModelTests` (14) — record equality, optional defaults, SearchResult.ToString, SimpleDate parse/compare, MatchResult.NoMatch/IsMatch, ArtworkType enum, Person/MovieInfo/SeriesInfo positional construction
+- `ApiKeyValidationTests` (7) — null, empty, alphanumeric, hyphens/underscores, special chars, embedded spaces, unicode rejection
+- `SimpleDateTests` (10) — FromDateOnly, TryParse ISO/null/whitespace/garbage, CompareTo same/earlier/later/same-year-diff-month, ToString formatting
+
+**CLI tests (11 total):**
+- `MatchCommandTests` (5) — validation for empty path, nonexistent path, existing path, default format and recursive values
+- `MediaFileScannerTests` (6) — empty dir, media file detection (.mkv/.mp4), non-recursive ignores subdirs, recursive includes subdirs, single file, non-media exclusion
+
+**Integration tests (10 total):**
+- `EndToEndPipelineTests` — full pipeline: TV episode detection→matching→preview, movie detection→preview, unrecognized file no-match, batch processing, unicode filenames (Theory with 3 variants), empty file list, FileOrganization test mode (no FS calls), FileOrganization move mode (FS calls verified)
+
+**Testing patterns established:**
+- Mock `HttpMessageHandler` via `Moq.Protected()` for providers — `MediaMatchHttpClient` is sealed/concrete
+- URL-routing handler pattern for tests needing multiple distinct HTTP responses per test
+- Real `MemoryCache` for `MetadataCache` tests (not mocked)
+- `Directory.CreateTempSubdirectory()` for CLI file system tests with proper cleanup
+- `maxRetries: 0` on HTTP client to avoid retry delays in tests
+- Integration tests use real `MediaDetector`, `ReleaseInfoParser`, `EpisodeMatcher`, `ScribanExpressionEngine` with only providers mocked
+
+**Gotchas:**
+- App.Tests cannot reference WinUI App project (different TFM) — tests Core models/config instead
+- `SettingsRepository` uses static paths (`%LOCALAPPDATA%/MediaMatch`) — can't inject path for isolated tests; tested encryption contract separately
+- CLI internal classes require `InternalsVisibleTo` in CLI .csproj
+- Placeholder `UnitTest1.cs` files deleted from Core.Tests, App.Tests, Infrastructure.Tests
+
 ### 2026-04-27 — Cross-Agent Impact: Fenster Phase 8 & McManus Phase 9
 
 **From Fenster (Phase 8 — CLI Commands):**
