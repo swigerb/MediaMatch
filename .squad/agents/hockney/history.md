@@ -152,3 +152,28 @@
 - Key patterns: mock HttpMessageHandler with URL-routing for multi-endpoint tests, real MemoryCache for caching tests, maxRetries:0 for fast test execution, interface-cast pattern to resolve ambiguous SearchAsync overloads on dual-interface providers.
 - Discovered HDR10+ regex word-boundary limitation: `\bHDR10\+\b` fails when `+` is followed by `.` (no word boundary between two non-word chars). Tests adjusted to use valid boundary patterns.
 - Discovered DoVi profile regex limitation: `\bDoVi\s*P(\d)\b` requires whitespace (not dot) between DoVi and profile number. Tests use space-separated format.
+
+### 2026-04-27 — E2E Integration Test Suite (Brady request)
+
+**What was built:**
+- New project `tests/MediaMatch.EndToEnd.Tests/` added to solution — 108 new E2E tests, all green.
+- Total test count: 621 → 729 (108 new, 0 failures).
+
+**Test coverage:**
+- `FileMatchingPipelineE2ETests` (17) — TV, movie, anime, multi-episode patterns, unicode filenames, FileOrganization move/copy/test/rollback modes.
+- `MetadataProviderChainE2ETests` (9) — local-first ordering, online fallback, short-circuit at 0.90 local / 0.85 online, provider exceptions swallowed, cancellation.
+- `ExpressionEngineE2ETests` (18) — all binding tokens ({n}, {s00e00}, {t}, {jellyfin}, {acf}, {dovi}, {hdr}, {resolution}, {bitdepth}), multi-episode ranges, music bindings, helper functions (pad, clean_filename, coalesce), validation.
+- `BatchOperationsE2ETests` (13) — multi-file processing, progress reporting, cancellation mid-batch, undo record/undo/get-journal/file-not-found scenarios.
+- `PostProcessPipelineE2ETests` (8) — execution order, one-failure-doesn't-stop-others, availability skip, action filter, cancellation, all-fail resilience.
+- `AiRenameServiceE2ETests` (9) — provider selection, quote/newline sanitization, empty suggestion, first-available priority, provider throws, elapsed time.
+- `MusicDetectionE2ETests` (13) — known/unknown extension detection, all music bindings, featured artists, multi-disc, mock MusicBrainz/AcoustID, rename templates.
+- `ParallelFileScannerE2ETests` (11) — empty dir, single/multiple files, extension filter, recursive scan, depth limit, progress, Channel streaming, NAS concurrency reduction, unicode filenames, cancellation.
+
+**Key patterns established:**
+- `MediaMatchFixture` — reusable fixture wiring real detection/matching/expression engines with mock providers + file system.
+- `TempDirectoryFixture` — IDisposable temp dir for tests needing real files on disk (scanner tests).
+- `BatchOperationService` with empty file list returns `BatchStatus.Failed` (0==0 files failed check) — test must not assert `Completed`.
+- Scriban doesn't support `:D2` format specifier inline — use `{mm.pad track 2}` for zero-padded numbers.
+- `Person` record: `Job` is the 4th positional param (after Name, Character, Department) — needed for `{director}` binding.
+- `IMusicProvider.SearchAsync(artist, title, ct)` takes three args (not two).
+- `MovieInfo` constructor: `PosterUrl` (not PosterPath), `Rating` is `double?` (not `float`).
