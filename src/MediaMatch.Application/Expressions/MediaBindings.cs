@@ -13,7 +13,7 @@ public class MediaBindings : ScriptObject, IMediaBindings
     private MediaBindings() { }
 
     /// <summary>Create bindings for an episode file.</summary>
-    public static MediaBindings ForEpisode(Episode episode, SeriesInfo? seriesInfo = null, string? filePath = null)
+    public static MediaBindings ForEpisode(Episode episode, SeriesInfo? seriesInfo = null, string? filePath = null, MediaTechnicalInfo? techInfo = null)
     {
         var b = new MediaBindings();
 
@@ -35,11 +35,13 @@ public class MediaBindings : ScriptObject, IMediaBindings
         }
 
         SetFileBindings(b, filePath);
+        SetTechnicalBindings(b, techInfo);
+        SetJellyfinBinding(b, episode, seriesInfo);
         return b;
     }
 
     /// <summary>Create bindings for a movie file.</summary>
-    public static MediaBindings ForMovie(Movie movie, MovieInfo? movieInfo = null, string? filePath = null)
+    public static MediaBindings ForMovie(Movie movie, MovieInfo? movieInfo = null, string? filePath = null, MediaTechnicalInfo? techInfo = null)
     {
         var b = new MediaBindings();
 
@@ -60,6 +62,8 @@ public class MediaBindings : ScriptObject, IMediaBindings
         }
 
         SetFileBindings(b, filePath);
+        SetTechnicalBindings(b, techInfo);
+        SetJellyfinBinding(b, movie);
         return b;
     }
 
@@ -98,4 +102,31 @@ public class MediaBindings : ScriptObject, IMediaBindings
 
     private static string? FirstCrewByJob(IReadOnlyList<Person> crew, string job) =>
         crew.FirstOrDefault(p => string.Equals(p.Job, job, StringComparison.OrdinalIgnoreCase))?.Name;
+
+    private static void SetTechnicalBindings(MediaBindings b, MediaTechnicalInfo? techInfo)
+    {
+        if (techInfo is null) return;
+
+        b.SetValue("acf", techInfo.AudioChannels, readOnly: false);
+        b.SetValue("dovi", techInfo.DolbyVision, readOnly: false);
+        b.SetValue("hdr", techInfo.HdrFormat, readOnly: false);
+        b.SetValue("resolution", techInfo.Resolution, readOnly: false);
+        b.SetValue("bitdepth", techInfo.BitDepth, readOnly: false);
+    }
+
+    private static void SetJellyfinBinding(MediaBindings b, Episode episode, SeriesInfo? seriesInfo)
+    {
+        // Jellyfin naming: SeriesName/Season XX/SeriesName - SXXEXX - Title
+        var jellyfinName = $"{episode.SeriesName} - S{episode.Season:D2}E{episode.EpisodeNumber:D2}";
+        if (!string.IsNullOrWhiteSpace(episode.Title))
+            jellyfinName += $" - {episode.Title}";
+        b.SetValue("jellyfin", jellyfinName, readOnly: false);
+    }
+
+    private static void SetJellyfinBinding(MediaBindings b, Movie movie)
+    {
+        // Jellyfin naming: MovieName (Year)/MovieName (Year)
+        var jellyfinName = $"{movie.Name} ({movie.Year})";
+        b.SetValue("jellyfin", jellyfinName, readOnly: false);
+    }
 }

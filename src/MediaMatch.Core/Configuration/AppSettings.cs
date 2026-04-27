@@ -17,6 +17,18 @@ public sealed class AppSettings
 
     /// <summary>Root output folders for organized media.</summary>
     public OutputFolderSettings OutputFolders { get; set; } = new();
+
+    /// <summary>Theme mode preference: System (default), Light, or Dark.</summary>
+    public ThemeMode ThemeMode { get; set; } = ThemeMode.System;
+
+    /// <summary>Font scale for accessibility: Small, Medium (default), Large, ExtraLarge.</summary>
+    public FontScale FontScale { get; set; } = FontScale.Medium;
+
+    /// <summary>
+    /// Enable opportunistic matching when strict matching (≥0.85) fails.
+    /// Falls back to a 0.60 threshold and returns ranked suggestions.
+    /// </summary>
+    public bool EnableOpportunisticMode { get; set; } = true;
 }
 
 /// <summary>
@@ -48,4 +60,21 @@ public sealed class OutputFolderSettings
 {
     public string MoviesRoot { get; set; } = string.Empty;
     public string SeriesRoot { get; set; } = string.Empty;
+}
+
+/// <summary>App theme modes.</summary>
+public enum ThemeMode
+{
+    System = 0,
+    Light = 1,
+    Dark = 2
+}
+
+/// <summary>Accessibility font scale levels.</summary>
+public enum FontScale
+{
+    Small = 0,
+    Medium = 1,
+    Large = 2,
+    ExtraLarge = 3
 }

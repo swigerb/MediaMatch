@@ -118,6 +118,37 @@
 - All services accept `ILogger<T>?` with NullLogger fallback — CLI commands can log without test churn.
 - `MatchingPipeline` and `FileOrganizationService` instrumented with activity spans; `MatchCommand` and `RenameCommand` will inherit all tracing automatically.
 
+### 2026-04-27 — Phases 15, 16, 17: AniDB Provider, Opportunistic Matching, New Binding Tokens
+
+**Phase 15 — AniDB Provider:**
+- `IAniDbProvider` interface in Core/Providers extends `IEpisodeProvider` with anime-specific methods
+- `AniDbProvider` — full HTTP API integration with XML parsing, dedicated rate limiter (≤1 req/2s), retry with exponential backoff
+- `AniDbTvdbMappingProvider` — downloads/caches anime-lists XML mapping, maps AniDB↔TVDb IDs, provides episode/series fallback via TVDb
+- `AniDbConfiguration` in Core/Configuration — client credentials, rate limit, mapping cache, timeout
+- Both registered in DI via `IHttpClientFactory` named clients
+
+**Phase 16 — Opportunistic Matching:**
+- `OpportunisticMatcher` — triggered when strict matching (≥0.85) fails; relaxes to 0.60, returns top-5 `MatchSuggestion[]`
+- `MatchingPipeline` updated with opportunistic fallback; `AppSettings.EnableOpportunisticMode` (default: true)
+- OTel span `mediamatch.match.opportunistic` instrumented
+
+**Phase 17 — New Binding Tokens:**
+- `MediaInfoExtractor` — ffprobe integration with filename-based fallback for technical metadata
+- `MediaTechnicalInfo` record — AudioChannels, DolbyVision, HdrFormat, Resolution, BitDepth, VideoCodec, AudioCodec
+- New bindings: `{jellyfin}`, `{acf}`, `{dovi}`, `{hdr}`, `{resolution}`, `{bitdepth}`
+- `ReleaseInfo` extended with HdrFormat, DolbyVision, AudioChannels, BitDepth fields
+- `ReleaseInfoParser` updated with HDR10/HDR10+/HLG, DoVi, channel, bit depth regex patterns
+
+**Key file paths:**
+- `src/MediaMatch.Core/Providers/IAniDbProvider.cs`
+- `src/MediaMatch.Core/Configuration/AniDbConfiguration.cs`
+- `src/MediaMatch.Core/Models/MatchSuggestion.cs`
+- `src/MediaMatch.Core/Models/MediaTechnicalInfo.cs`
+- `src/MediaMatch.Infrastructure/Providers/AniDbProvider.cs`
+- `src/MediaMatch.Infrastructure/Providers/AniDbTvdbMappingProvider.cs`
+- `src/MediaMatch.Application/Matching/OpportunisticMatcher.cs`
+- `src/MediaMatch.Application/Detection/MediaInfoExtractor.cs`
+
 ### 2026-04-27 — Cross-Agent Impact: McManus Phase 11+14 & Hockney Phase 13
 
 **From McManus (Phase 11+14 — Batch Operations & Polish):**

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using MediaMatch.Application.Detection;
 using MediaMatch.Application.Expressions;
 using MediaMatch.Application.Matching;
+using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Enums;
 using MediaMatch.Core.Expressions;
 using MediaMatch.Core.Models;
@@ -15,6 +16,7 @@ namespace MediaMatch.Application.Pipeline;
 /// <summary>
 /// Coordinates: Detect media type → Match against providers → Apply rename template.
 /// Configurable pipeline with short-circuit on high-confidence match.
+/// Falls back to opportunistic matching when strict matching fails.
 /// </summary>
 public sealed class MatchingPipeline : IMatchingPipeline
 {
@@ -25,15 +27,21 @@ public sealed class MatchingPipeline : IMatchingPipeline
     private readonly IReadOnlyList<IEpisodeProvider> _episodeProviders;
     private readonly IReadOnlyList<IMovieProvider> _movieProviders;
     private readonly EpisodeMatcher _episodeMatcher;
+    private readonly OpportunisticMatcher _opportunisticMatcher;
+    private readonly bool _enableOpportunisticMode;
     private readonly ILogger<MatchingPipeline> _logger;
 
     /// <summary>Confidence threshold above which we short-circuit and stop searching.</summary>
     private const float HighConfidenceThreshold = 0.85f;
 
+    /// <summary>Most recent opportunistic suggestions from the last ProcessAsync call.</summary>
+    public IReadOnlyList<MatchSuggestion> LastSuggestions { get; private set; } = Array.Empty<MatchSuggestion>();
+
     public MatchingPipeline(
         IEnumerable<IEpisodeProvider> episodeProviders,
         IEnumerable<IMovieProvider> movieProviders,
-        ILogger<MatchingPipeline>? logger = null)
+        ILogger<MatchingPipeline>? logger = null,
+        AppSettings? appSettings = null)
     {
         ArgumentNullException.ThrowIfNull(episodeProviders);
         ArgumentNullException.ThrowIfNull(movieProviders);
@@ -44,6 +52,8 @@ public sealed class MatchingPipeline : IMatchingPipeline
         _movieProviders = movieProviders.ToList();
         _episodeMatcher = new EpisodeMatcher();
         _logger = logger ?? NullLogger<MatchingPipeline>.Instance;
+        _enableOpportunisticMode = appSettings?.EnableOpportunisticMode ?? true;
+        _opportunisticMatcher = new OpportunisticMatcher(_episodeProviders, _movieProviders, logger: null);
     }
 
     public MatchingPipeline(
@@ -60,6 +70,8 @@ public sealed class MatchingPipeline : IMatchingPipeline
         _episodeProviders = episodeProviders.ToList();
         _movieProviders = movieProviders.ToList();
         _logger = logger ?? NullLogger<MatchingPipeline>.Instance;
+        _enableOpportunisticMode = true;
+        _opportunisticMatcher = new OpportunisticMatcher(_episodeProviders, _movieProviders, logger: null);
     }
 
     public async Task<MatchResult> ProcessAsync(string filePath, CancellationToken ct = default)
@@ -88,6 +100,20 @@ public sealed class MatchingPipeline : IMatchingPipeline
 
         activity?.SetTag("mediamatch.confidence", result.Confidence);
         activity?.SetTag("mediamatch.provider", result.ProviderSource);
+
+        // Opportunistic fallback when strict matching fails
+        if (result.Confidence < HighConfidenceThreshold && _enableOpportunisticMode)
+        {
+            _logger.LogInformation("Strict matching below threshold ({Confidence:F2}), trying opportunistic mode",
+                result.Confidence);
+            LastSuggestions = await _opportunisticMatcher.SuggestAsync(filePath, detection, ct);
+            activity?.SetTag("mediamatch.opportunistic_suggestions", LastSuggestions.Count);
+        }
+        else
+        {
+            LastSuggestions = Array.Empty<MatchSuggestion>();
+        }
+
         return result;
     }
 

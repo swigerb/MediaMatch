@@ -12,4 +12,8 @@ public sealed record ReleaseInfo(
     string? VideoCodec,
     string? AudioCodec,
     string? ReleaseGroup,
-    string? Language);
+    string? Language,
+    string? HdrFormat = null,
+    string? DolbyVision = null,
+    string? AudioChannels = null,
+    string? BitDepth = null);

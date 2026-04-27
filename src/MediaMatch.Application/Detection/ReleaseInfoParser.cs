@@ -120,8 +120,37 @@ public sealed partial class ReleaseInfoParser
     // ── Cleaning ────────────────────────────────────────────────────────
 
     // Known noise tokens used when cleaning a title
-    [GeneratedRegex(@"\b(REPACK|PROPER|INTERNAL|LIMITED|EXTENDED|UNRATED|THEATRICAL|DIRECTORS\.?CUT|DC|IMAX|REMUX|RARBG|YTS|YIFY|AMZN|NF|DSNP|HMAX|ATVP|PCOK|BluRay|Blu-?Ray|BDRip|BRRip|WEB-?DL|WEBRip|WEBDL|WEB|HDTV|DVDRip|HDRip|CAM|TELESYNC|TS|REMASTERED|COMPLETE|10bit|8bit|HDR10|HDR|DV|DoVi)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    [GeneratedRegex(@"\b(REPACK|PROPER|INTERNAL|LIMITED|EXTENDED|UNRATED|THEATRICAL|DIRECTORS\.?CUT|DC|IMAX|REMUX|RARBG|YTS|YIFY|AMZN|NF|DSNP|HMAX|ATVP|PCOK|BluRay|Blu-?Ray|BDRip|BRRip|WEB-?DL|WEBRip|WEBDL|WEB|HDTV|DVDRip|HDRip|CAM|TELESYNC|TS|REMASTERED|COMPLETE|10bit|8bit|HDR10\+?|HDR|DV|DoVi|Dolby\.?Vision|Atmos|QHD)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex NoiseTokenRegex();
+
+    // ── HDR / Dolby Vision / Channels / Bit Depth ────────────────────
+
+    [GeneratedRegex(@"\bHDR10\+", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex Hdr10PlusRegex();
+
+    [GeneratedRegex(@"\bHDR10\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex Hdr10Regex();
+
+    [GeneratedRegex(@"\bHLG\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex HlgRegex();
+
+    [GeneratedRegex(@"\bHDR\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex HdrGenericRegex();
+
+    [GeneratedRegex(@"\bDoVi\s*P(\d)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex DoViProfileRegex();
+
+    [GeneratedRegex(@"\b(?:DoVi|DV|Dolby\.?Vision)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex DolbyVisionRegex();
+
+    [GeneratedRegex(@"\b(?:7\.1\s*Atmos|7\.1)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex Channels71Regex();
+
+    [GeneratedRegex(@"\b5\.1\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex Channels51Regex();
+
+    [GeneratedRegex(@"\b10bit\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex BitDepth10Regex();
 
     // ────────────────────────────────────────────────────────────────────
     // Public API
@@ -301,6 +330,41 @@ public sealed partial class ReleaseInfoParser
         return m.Success ? m.Groups[1].Value.ToUpperInvariant() : null;
     }
 
+    public string? ParseHdrFormat(string fileName)
+    {
+        var name = StripExtension(fileName);
+        if (Hdr10PlusRegex().IsMatch(name)) return "HDR10+";
+        if (Hdr10Regex().IsMatch(name)) return "HDR10";
+        if (HlgRegex().IsMatch(name)) return "HLG";
+        if (HdrGenericRegex().IsMatch(name)) return "HDR10";
+        return null;
+    }
+
+    public string? ParseDolbyVision(string fileName)
+    {
+        var name = StripExtension(fileName);
+        var profileMatch = DoViProfileRegex().Match(name);
+        if (profileMatch.Success) return $"DoVi P{profileMatch.Groups[1].Value}";
+        if (DolbyVisionRegex().IsMatch(name)) return "DV";
+        return null;
+    }
+
+    public string? ParseAudioChannels(string fileName)
+    {
+        var name = StripExtension(fileName);
+        if (Channels71Regex().IsMatch(name))
+            return AudioTrueHDRegex().IsMatch(name) ? "7.1 Atmos" : "7.1";
+        if (Channels51Regex().IsMatch(name)) return "5.1";
+        return null;
+    }
+
+    public string? ParseBitDepth(string fileName)
+    {
+        var name = StripExtension(fileName);
+        if (BitDepth10Regex().IsMatch(name)) return "10bit";
+        return null;
+    }
+
     public ReleaseInfo Parse(string fileName)
     {
         return new ReleaseInfo(
@@ -313,7 +377,11 @@ public sealed partial class ReleaseInfoParser
             VideoCodec: ParseVideoCodec(fileName),
             AudioCodec: ParseAudioCodec(fileName),
             ReleaseGroup: ParseReleaseGroup(fileName),
-            Language: ParseLanguage(fileName));
+            Language: ParseLanguage(fileName),
+            HdrFormat: ParseHdrFormat(fileName),
+            DolbyVision: ParseDolbyVision(fileName),
+            AudioChannels: ParseAudioChannels(fileName),
+            BitDepth: ParseBitDepth(fileName));
     }
 
     // ────────────────────────────────────────────────────────────────────
@@ -351,8 +419,10 @@ public sealed partial class ReleaseInfoParser
         {
             "x264", "x265", "h264", "h265", "HEVC", "AVC", "AV1", "VP9",
             "AAC", "AC3", "DTS", "FLAC", "MP3", "TrueHD", "Atmos",
-            "720p", "1080p", "2160p", "4K", "UHD", "SD", "480p",
+            "720p", "1080p", "2160p", "4K", "UHD", "SD", "480p", "QHD",
             "BluRay", "WEB", "WEBDL", "WEBRip", "HDTV", "DVDRip", "HDRip",
             "REPACK", "PROPER", "INTERNAL", "REMUX", "mkv", "mp4",
+            "HDR10", "HDR", "HLG", "DV", "DoVi", "DolbyVision",
+            "10bit", "8bit",
         };
 }

@@ -20,10 +20,14 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddMediaMatchInfrastructure(
         this IServiceCollection services,
-        ApiConfiguration? config = null)
+        ApiConfiguration? config = null,
+        AniDbConfiguration? aniDbConfig = null)
     {
         var apiConfig = config ?? new ApiConfiguration();
         services.AddSingleton(apiConfig);
+
+        var aniDbConf = aniDbConfig ?? new AniDbConfiguration();
+        services.AddSingleton(aniDbConf);
 
         // Register HttpClientFactory with named clients
         services.AddHttpClient();
@@ -47,9 +51,35 @@ public static class ServiceCollectionExtensions
         // Movie providers
         services.AddSingleton<IMovieProvider, TmdbMovieProvider>();
 
-        // Episode providers — register both; consumers can choose by Name
+        // Episode providers — register all; consumers can choose by Name
         services.AddSingleton<IEpisodeProvider, TmdbEpisodeProvider>();
         services.AddSingleton<IEpisodeProvider, TvdbEpisodeProvider>();
+        // AniDB provider — uses its own HttpClient for XML + dedicated rate limiting
+        services.AddSingleton<IEpisodeProvider, AniDbProvider>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient("AniDB");
+            return new AniDbProvider(
+                httpClient,
+                sp.GetRequiredService<MetadataCache>(),
+                aniDbConf,
+                sp.GetRequiredService<ILogger<AniDbProvider>>());
+        });
+        services.AddSingleton<IAniDbProvider>(sp =>
+            sp.GetServices<IEpisodeProvider>().OfType<AniDbProvider>().First());
+
+        // AniDB-TVDb mapping provider for fallback lookups
+        services.AddSingleton<AniDbTvdbMappingProvider>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient("AniDBMapping");
+            return new AniDbTvdbMappingProvider(
+                httpClient,
+                sp.GetRequiredService<MetadataCache>(),
+                aniDbConf,
+                sp.GetServices<IEpisodeProvider>(),
+                sp.GetRequiredService<ILogger<AniDbTvdbMappingProvider>>());
+        });
 
         // Artwork providers
         services.AddSingleton<IArtworkProvider, TmdbArtworkProvider>();
