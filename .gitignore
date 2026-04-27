@@ -5,3 +5,36 @@
 .squad/sessions/
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+.vs/
+*.DotSettings.user
+TestResults/
+BenchmarkDotNet.Artifacts/
+
+# Build
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM64/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# IDE
+.idea/
+*.swp
+*~
+
+# OS
+Thumbs.db
+.DS_Store

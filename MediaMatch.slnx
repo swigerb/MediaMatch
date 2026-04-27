@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MediaMatch.App/MediaMatch.App.csproj">
+      <Platform Project="x86" />
+    </Project>
+    <Project Path="src/MediaMatch.Application/MediaMatch.Application.csproj" />
+    <Project Path="src/MediaMatch.CLI/MediaMatch.CLI.csproj" />
+    <Project Path="src/MediaMatch.Core/MediaMatch.Core.csproj" />
+    <Project Path="src/MediaMatch.Infrastructure/MediaMatch.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MediaMatch.App.Tests/MediaMatch.App.Tests.csproj" />
+    <Project Path="tests/MediaMatch.Application.Tests/MediaMatch.Application.Tests.csproj" />
+    <Project Path="tests/MediaMatch.Core.Tests/MediaMatch.Core.Tests.csproj" />
+    <Project Path="tests/MediaMatch.Infrastructure.Tests/MediaMatch.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

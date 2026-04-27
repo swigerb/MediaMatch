@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MediaMatch.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "MediaMatch.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
