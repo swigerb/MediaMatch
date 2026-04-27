@@ -2,7 +2,137 @@
 
 ## Active Decisions
 
-No decisions recorded yet.
+### Decision: Metadata Provider Implementation Patterns
+
+**Date:** 2026-04-27  
+**Author:** Fenster  
+**Status:** Implemented  
+
+#### Context
+
+Phase 3 required implementing TMDb and TVDb metadata providers against the existing `IMovieProvider`, `IEpisodeProvider`, and `IArtworkProvider` interfaces.
+
+#### Decisions
+
+1. **Private nested DTOs** — Each provider defines its own JSON DTO classes as private nested types rather than sharing a DTO namespace. This keeps API-specific shapes isolated and avoids coupling between providers.
+
+2. **Sliding-window rate limiter** — `MediaMatchHttpClient` enforces 38 req/10s (2-request headroom below TMDb's 40/10s limit). The limiter is built into the shared HTTP client so all providers benefit without coordination.
+
+3. **Dual episode provider registration** — Both `TmdbEpisodeProvider` and `TvdbEpisodeProvider` implement `IEpisodeProvider` and are registered in DI. Consumers can inject `IEnumerable<IEpisodeProvider>` and select by the `Name` property.
+
+4. **ApiConfiguration in Core** — Settings model lives in `MediaMatch.Core.Configuration` so the UI layer can reference it without depending on Infrastructure.
+
+#### Impact
+
+- Hockney: Provider implementations are testable via interface mocking; HTTP client can also be mocked via `HttpMessageHandler`.
+- McManus: `ApiConfiguration` is available in Core for settings UI binding.
+- Keaton: Architecture follows clean architecture boundaries (Core owns contracts, Infrastructure owns implementations).
+
+---
+
+### Decision: File Services Architecture (Phase 5)
+
+**Date:** 2026-04-27  
+**Author:** Hockney  
+**Status:** Implemented  
+
+#### Context
+
+Phase 5 required building the file organization pipeline — the services that connect detection/matching/expressions into an end-to-end rename workflow.
+
+#### Decisions
+
+1. **IFileSystem abstraction** — Introduced in `Application/Services/FileOrganizationService.cs`. All file I/O goes through this interface so the entire rename/rollback workflow is unit-testable without disk access. `PhysicalFileSystem` is the default implementation.
+
+2. **Service interfaces in Core/Services/** — `IFileOrganizationService`, `IMediaAnalysisService`, `IRenamePreviewService`, `IMatchingPipeline` all live in Core to maintain clean architecture dependency flow.
+
+3. **Pipeline pattern** — `MatchingPipeline` accepts multiple `IEpisodeProvider` and `IMovieProvider` instances. It tries each provider in order and short-circuits at 0.85 confidence. Provider failures are swallowed to allow fallback.
+
+4. **Rollback on failure** — `FileOrganizationService` tracks completed renames. If any rename fails, all prior renames are reversed in reverse order (best-effort).
+
+5. **Preview-first design** — `FileOrganizationService` delegates to `IRenamePreviewService` for all detection/matching/naming, then applies file operations. `RenameAction.Test` returns previews without touching the filesystem.
+
+#### Impact
+
+- All team members building providers or UI can depend on these interfaces
+- `IFileSystem` must be registered in DI when wiring up the application
+- `MatchingPipeline` needs at least one provider registered to produce matches
+
+---
+
+### Decision: WinUI 3 MVVM Architecture Pattern
+
+**Date:** 2026-04-27
+**Author:** McManus (UI Dev)
+**Status:** Implemented
+
+#### Context
+MediaMatch needed a full MVVM architecture for its WinUI 3 UI layer — ViewModels, DI, navigation, and data binding.
+
+#### Decision
+- **CommunityToolkit.Mvvm** with partial property syntax (required for WinRT AOT)
+- **DI via `Microsoft.Extensions.DependencyInjection`** with static `App.GetService<T>()` accessor
+- **NavigationService** wraps `Frame` for ViewModel-friendly navigation
+- **x:Bind** compiled bindings throughout (no `{Binding}`)
+- **HomeViewModel as singleton** to preserve file list state across navigations
+- **SettingsViewModel/AboutViewModel as transient** — no state preservation needed
+
+#### Implications
+- All new ViewModels should inherit `ViewModelBase`
+- Always use `[ObservableProperty] public partial` syntax, never field-based
+- Pages resolve their ViewModel from DI in constructor
+- Build requires `-p:Platform=x64` (or x86/ARM64)
+
+---
+
+### Decision: MediaMatch Remaining Phases (11-Phase Plan)
+
+**Date:** 2026-04-27  
+**Status:** Architecture Planning  
+**Lead:** Keaton (Architect)
+
+#### Executive Summary
+MediaMatch has completed Phase 1 (scaffolding) and foundational Phases 2+4 (matching/detection engines). **11 additional phases** remain to deliver a fully functional modern FileBot successor. These phases progress from infrastructure → features → UI → distribution.
+
+#### Phases 3-14 Overview
+
+**Phase 3: Metadata Provider Implementations** (Fenster) — TMDb/TVDb providers, HTTP client with rate limiting, metadata caching.
+
+**Phase 5: File System & Media Analysis Services** (Fenster) — FileOrganizationService, MediaAnalysisService, RenamePreviewService, MatchingPipeline orchestrator.
+
+**Phase 6: WinUI 3 UI — Core User Pages & MVVM** (McManus) — HomeViewModel, SettingsViewModel, AboutViewModel, MVVM refactor of all pages with x:Bind and ThemeResource bindings.
+
+**Phase 7: Subtitle Search Integration** (Fenster/McManus) — OpenSubtitlesProvider, SubtitleDatabaseProvider, SubtitleBrowserPage UI.
+
+**Phase 8: CLI Commands & Batch Operations** (Fenster) — RenameCommand, MatchCommand, ConfigCommand, SubtitleCommand using Spectre.Console.Cli.
+
+**Phase 9: Configuration, Settings Persistence & Initialization** (Fenster/McManus) — AppSettings model, SettingsRepository with encryption, first-run wizard.
+
+**Phase 10: OpenTelemetry & Serilog Full Integration** (Fenster) — Centralized observability, structured logging, performance metrics.
+
+**Phase 11: Batch Operations, Undo & Advanced Features** (McManus/Fenster) — BatchOperationService, UndoService, FileOrganizationRule system, parallel processing with progress tracking.
+
+**Phase 12: Velopack Integration** (Fenster) — Installer, auto-update framework, signed releases, delta updates.
+
+**Phase 13: Testing, Validation & Bug Fixes** (Hockney) — Comprehensive test suites for all layers, integration tests, performance benchmarks, >80% code coverage target.
+
+**Phase 14: Polish, Documentation & Release v0.1.0** (McManus/Fenster/Keaton) — README, API documentation, user guides, release preparation, v0.1.0 tag.
+
+#### Execution Order
+1. Phase 3 → 5 → 6 → 9 → 8 → 10 → 11 → 7 → 12 → 13 → 14
+2. Estimated 20-26 development sessions (3-4 weeks for 3-person team)
+3. Parallelizable: Phase 3 + Phase 6 scaffolding; Phase 5 + Phase 6 full impl; Phase 8/9 overlap; Phase 11/13; Phase 12/13
+
+#### Architecture Decisions Locked In
+- **Clean Architecture:** Core → Application → Infrastructure → App/CLI
+- **Provider Pattern:** All external data sources implement interfaces for easy mocking/swapping
+- **Matching Engine Reusability:** BipartiteMatcher + EpisodeMatcher used by both UI and CLI
+- **Logging & Observability:** Serilog structured logs + OpenTelemetry tracing
+
+#### Sign-Off
+**Created by:** Keaton (Architect)  
+**Date:** 2026-04-27  
+**Status:** Pending team review and approval
 
 ## Governance
 

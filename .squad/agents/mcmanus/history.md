@@ -9,4 +9,26 @@
 
 ## Learnings
 
-<!-- Append UI patterns, component decisions, and design notes below -->
+### 2026-04-27 — Phase 6: MVVM Architecture Implementation
+
+- **CommunityToolkit.Mvvm 8.4.2 requires partial properties (not fields)** for WinRT AOT compatibility. Use `[ObservableProperty] public partial string Foo { get; set; }` instead of `[ObservableProperty] private string _foo;`. Error MVVMTK0045 fires otherwise.
+- **DI container** set up in `App.xaml.cs` using `Microsoft.Extensions.DependencyInjection` (via `Microsoft.Extensions.Hosting` package). Static `App.GetService<T>()` accessor pattern.
+- **Navigation** uses `NavigationView` + `Frame` in `MainWindow.xaml`. `NavigationService` wraps the Frame for ViewModel-driven navigation.
+- **Build command**: `dotnet build src\MediaMatch.App\MediaMatch.App.csproj -p:Platform=x64` — must specify platform due to MSIX packaging requirements.
+- **Key paths:**
+  - ViewModels: `src/MediaMatch.App/ViewModels/`
+  - Services: `src/MediaMatch.App/Services/`
+  - Converters: `src/MediaMatch.App/Converters/`
+  - Pages: `src/MediaMatch.App/Pages/`
+- **x:Bind** used throughout for compiled bindings. `BoolToVisibilityConverter` needed for bool→Visibility conversion.
+- **Mica backdrop** + `ThemeResource` used for dark/light theme — no custom colors.
+- `HomeViewModel` is registered as singleton (preserves file list across navigations); `SettingsViewModel` and `AboutViewModel` are transient.
+
+### 2026-04-27 — Team Consolidation Checkpoint
+
+**Cross-team updates:**
+- **From Fenster:** Phase 3 complete (providers, HTTP client, caching). ApiConfiguration available in Core for SettingsPage binding.
+- **From Hockney:** Phase 5 complete (services, abstractions, 157 tests). IFileOrganizationService ready for HomePage integration.
+- **From Keaton:** Phase plan consolidated to decisions.md. Critical path: Phase 3 → 5 → 6 integration. No blockers.
+
+**Next:** Phase 5 services bound to HomeViewModel (file organization, media analysis). Phase 9 wizard (settings persistence) runs in parallel.
