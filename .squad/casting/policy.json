@@ -1,0 +1,21 @@
+{
+  "universes": [
+    "the-usual-suspects",
+    "alien",
+    "the-matrix",
+    "blade-runner",
+    "firefly",
+    "star-wars",
+    "lord-of-the-rings",
+    "dune",
+    "the-expanse",
+    "back-to-the-future",
+    "ghostbusters",
+    "jurassic-park",
+    "terminator",
+    "mad-max",
+    "indiana-jones"
+  ],
+  "max_per_universe": 10,
+  "overflow_strategy": "diegetic-expansion"
+}

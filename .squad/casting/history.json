@@ -1,0 +1,14 @@
+[
+  {
+    "assignment_id": "mediamatch-init-2026-04-27",
+    "universe": "the-usual-suspects",
+    "timestamp": "2026-04-27T02:28:00Z",
+    "agents": [
+      { "name": "Keaton", "role": "Lead / Architect" },
+      { "name": "McManus", "role": "UI Dev" },
+      { "name": "Fenster", "role": "Backend Dev" },
+      { "name": "Hockney", "role": "Tester" }
+    ],
+    "reason": "Initial team casting for MediaMatch — .NET 10 desktop app rewrite of FileBot"
+  }
+]
