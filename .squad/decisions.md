@@ -134,6 +134,79 @@ MediaMatch has completed Phase 1 (scaffolding) and foundational Phases 2+4 (matc
 **Date:** 2026-04-27  
 **Status:** Pending team review and approval
 
+---
+
+### Decision: CLI Architecture — Spectre.Console.Cli with Direct DI
+
+**Date:** 2026-04-27  
+**Author:** Fenster  
+**Status:** Implemented  
+
+#### Context
+Phase 8 required transforming the stub CLI project into a full command-line tool with match, rename, config, and subtitle commands.
+
+#### Decision
+- **Spectre.Console.Cli** owns the application lifecycle (no Generic Host). A `TypeRegistrar`/`TypeResolver` bridge connects `IServiceCollection` to Spectre's DI.
+- All services (Infrastructure + Application) are registered in a flat `ServiceCollection` in `Program.cs`.
+- Config management uses a simple JSON file at `%LOCALAPPDATA%/MediaMatch/config.json` — independent from `ApiConfiguration` (which is in-memory DI-bound).
+
+#### Rationale
+- Generic Host adds unnecessary complexity for a CLI tool (hosted services, configuration binding we don't need).
+- Spectre.Console.Cli handles argument parsing, help generation, and command routing — no need for a second framework.
+- Flat DI registration in Program.cs keeps the CLI self-contained and easy to reason about.
+
+#### Impact
+- Future CLI commands should follow the same pattern: `AsyncCommand<TSettings>` with constructor DI.
+- Config values stored in config.json are user-facing settings; `ApiConfiguration` in DI is the runtime representation.
+
+---
+
+### Decision: Settings Persistence Architecture
+
+**Date:** 2026-04-27
+**Author:** McManus (UI Dev)
+**Status:** Implemented
+
+#### Context
+Phase 9 requires settings that both the WinUI App and CLI can share. API keys need encryption at rest.
+
+#### Decision
+- Interfaces (`ISettingsRepository`, `ISettingsEncryption`) live in **Core** so both App and CLI depend on them without coupling to Infrastructure.
+- Implementations live in **Infrastructure/Persistence/** — `SettingsRepository` (JSON file at `%LOCALAPPDATA%/MediaMatch/settings.json`) and `SettingsEncryption` (Windows DPAPI, current-user scope).
+- Only API key values are encrypted (prefixed `ENC:`); the rest of the JSON stays human-readable for debugging.
+- File I/O uses `FileShare.Read` so CLI can read settings while the App has them open. Writes are atomic via temp file + `File.Move`.
+- `SettingsEncryption` is annotated `[SupportedOSPlatform("windows")]` because the shared TFM is `net10.0` (not windows-specific). If cross-platform support is ever needed, a platform-agnostic encryption adapter would replace this.
+- Infrastructure's `AddMediaMatchInfrastructure()` registers both settings services as singletons. The App calls this in `ConfigureServices()`.
+
+#### Impact
+- CLI team (Fenster) can inject `ISettingsRepository` to read API keys and output folders without duplicating persistence code.
+- Any new settings fields go in `AppSettings` model in Core — both surfaces pick them up automatically.
+
+---
+
+### Decision: Observability Architecture
+
+**Date:** 2026-04-27
+**Author:** Hockney (Tester)
+**Phase:** 10 — OpenTelemetry & Serilog Full Integration
+
+#### Decision
+
+Services use `ILogger<T>` from Microsoft.Extensions.Logging — never Serilog types directly. Serilog is the backend, wired only in the App composition root via `AddSerilog()`. Logger parameters in Application-layer constructors are optional (`ILogger<T>? logger = null`) with `NullLogger<T>` fallback so existing tests don't need updating.
+
+OpenTelemetry uses `System.Diagnostics.ActivitySource` directly — no OTel SDK dependency in Application layer. Activity spans are started via static `TelemetryConfig` helpers in Infrastructure, but Application-layer services create their own local `ActivitySource` for pipeline-level spans.
+
+#### Rationale
+
+- Keeps Application and Core layers framework-agnostic (clean architecture)
+- Optional logger parameters mean zero test churn — all 159 tests pass unchanged
+- `ActivitySource` returns null when no listener is attached, so spans are zero-cost in tests
+- Serilog file sink logs to `%LOCALAPPDATA%/MediaMatch/logs/` with 14-day retention — standard Windows app pattern
+
+#### Impact
+
+All agents adding new services should follow the same pattern: accept `ILogger<T>?` with NullLogger fallback, never reference Serilog directly.
+
 ## Governance
 
 - All meaningful changes require team consensus

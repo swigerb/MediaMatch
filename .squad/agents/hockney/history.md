@@ -72,3 +72,15 @@
 - Logger parameters are optional with NullLogger fallback — existing tests pass without changes (159 total, all green)
 - Activity spans are null-safe (ActivitySource returns null when no listener attached)
 - No API keys or full file paths logged — only filenames and provider names
+
+### 2026-04-27 — Cross-Agent Impact: Fenster Phase 8 & McManus Phase 9
+
+**From Fenster (Phase 8 — CLI Commands):**
+- CLI layer fully functional with 4 commands (match, rename, config, subtitle). All built using Spectre.Console.Cli with DI injection pattern.
+- `MatchCommand` and `RenameCommand` will call the now-instrumented `MatchingPipeline` and `FileOrganizationService` — all activity spans and logs will flow through.
+- CLI benefits from full observability stack — Serilog file sink + OpenTelemetry tracing automatically enabled.
+
+**From McManus (Phase 9 — Settings Persistence):**
+- Settings persistence layer complete with `ISettingsRepository` and `ISettingsEncryption` (DPAPI). Both CLI and App share the same persistent storage.
+- All services now have access to centralized AppSettings without duplicating configuration logic.
+- First-run detection wired into App; CLI can use the same settings file for operation parameters (output folder, API keys, rules).
