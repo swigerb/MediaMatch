@@ -24,4 +24,16 @@ public partial class FileItemViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string FilePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Screen reader name: filename + status for accessibility.
+    /// </summary>
+    public string AutomationName => string.IsNullOrEmpty(NewFileName) || NewFileName == OriginalFileName
+        ? $"{OriginalFileName}, {MediaType}, no match"
+        : $"{OriginalFileName} → {NewFileName}, {MediaType}, {MatchConfidence:P0} confidence";
+
+    /// <summary>
+    /// Screen reader name for the selection checkbox.
+    /// </summary>
+    public string SelectionAutomationName => $"Select {OriginalFileName}";
 }

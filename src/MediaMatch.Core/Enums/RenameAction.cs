@@ -7,5 +7,6 @@ public enum RenameAction
     Hardlink,
     Symlink,
     Reflink,
-    Test
+    Test,
+    Clone
 }

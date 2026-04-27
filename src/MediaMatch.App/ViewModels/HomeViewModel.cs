@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediaMatch.App.Dialogs;
+using MediaMatch.App.Services;
 using MediaMatch.Core.Enums;
 using MediaMatch.Core.Models;
 using MediaMatch.Core.Services;
@@ -21,6 +22,7 @@ public partial class HomeViewModel : ViewModelBase
     private readonly IUndoService? _undoService;
     private readonly ILogger<HomeViewModel> _logger;
     private CancellationTokenSource? _batchCts;
+    private NotificationService? _notificationService;
 
     public ObservableCollection<FileItemViewModel> Files { get; } = [];
 
@@ -33,6 +35,9 @@ public partial class HomeViewModel : ViewModelBase
     public partial bool IsProcessing { get; set; }
 
     [ObservableProperty]
+    public partial bool IsScanning { get; set; }
+
+    [ObservableProperty]
     public partial string StatusMessage { get; set; } = "No files loaded. Add a folder to get started.";
 
     [ObservableProperty]
@@ -42,6 +47,16 @@ public partial class HomeViewModel : ViewModelBase
     public int SelectedCount => Files.Count(f => f.IsSelected);
     public bool HasFiles => Files.Count > 0;
     public bool HasNoFiles => Files.Count == 0;
+    public bool ShowEmptyState => HasNoFiles && !IsScanning;
+    public string FileCountDisplay => $"Showing {Files.Count} file(s)";
+
+    /// <summary>
+    /// Wires the notification service for operation feedback.
+    /// </summary>
+    public void SetNotificationService(NotificationService service)
+    {
+        _notificationService = service;
+    }
 
     /// <summary>
     /// Design-time / test constructor (no services).
@@ -63,10 +78,17 @@ public partial class HomeViewModel : ViewModelBase
             OnPropertyChanged(nameof(SelectedCount));
             OnPropertyChanged(nameof(HasFiles));
             OnPropertyChanged(nameof(HasNoFiles));
+            OnPropertyChanged(nameof(ShowEmptyState));
+            OnPropertyChanged(nameof(FileCountDisplay));
             UpdateStatusMessage();
         };
 
         _ = RefreshCanUndoAsync();
+    }
+
+    partial void OnIsScanningChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowEmptyState));
     }
 
     [RelayCommand]
@@ -84,6 +106,7 @@ public partial class HomeViewModel : ViewModelBase
 
         SelectedFolder = folder.Path;
         IsProcessing = true;
+        IsScanning = true;
         StatusMessage = $"Scanning {folder.Name}...";
 
         try
@@ -94,10 +117,12 @@ public partial class HomeViewModel : ViewModelBase
         {
             _logger.LogError(ex, "Failed to scan folder {Folder}", folder.Path);
             StatusMessage = $"Error scanning folder: {ex.Message}";
+            _notificationService?.ShowError($"Failed to scan folder: {ex.Message}");
         }
         finally
         {
             IsProcessing = false;
+            IsScanning = false;
             UpdateStatusMessage();
         }
     }
@@ -178,11 +203,20 @@ public partial class HomeViewModel : ViewModelBase
                 BatchStatus.Failed => "Batch operation failed.",
                 _ => "Renames completed."
             };
+
+            // Notification feedback
+            if (job.Status == BatchStatus.Completed && job.FailedCount == 0)
+                _notificationService?.ShowSuccess($"Batch complete — {job.CompletedCount} file(s) renamed.");
+            else if (job.Status == BatchStatus.Completed && job.FailedCount > 0)
+                _notificationService?.ShowError($"Batch finished with {job.FailedCount} error(s).");
+            else if (job.Status == BatchStatus.Cancelled)
+                _notificationService?.ShowInfo($"Batch cancelled — {job.CompletedCount} renamed before stop.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Batch rename failed");
             StatusMessage = $"Rename error: {ex.Message}";
+            _notificationService?.ShowError($"Rename error: {ex.Message}");
         }
         finally
         {
@@ -237,6 +271,7 @@ public partial class HomeViewModel : ViewModelBase
 
         Files.Clear();
         IsProcessing = true;
+        IsScanning = true;
         StatusMessage = "Refreshing...";
 
         try
@@ -251,6 +286,7 @@ public partial class HomeViewModel : ViewModelBase
         finally
         {
             IsProcessing = false;
+            IsScanning = false;
             UpdateStatusMessage();
         }
     }

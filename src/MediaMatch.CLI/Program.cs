@@ -51,6 +51,9 @@ try
     services.AddSingleton<IMediaAnalysisService, MediaAnalysisService>();
     services.AddSingleton<IFileSystem, PhysicalFileSystem>();
     services.AddSingleton<IFileOrganizationService, FileOrganizationService>();
+    services.AddSingleton<MediaMatch.Application.Services.MetadataProviderChain>();
+    services.AddSingleton<MediaMatch.Application.Services.PostProcessPipeline>();
+    services.AddSingleton<MediaMatch.Application.Detection.MusicDetector>();
 
     // Subtitle providers — none yet; register empty enumerable
     services.AddSingleton<IEnumerable<ISubtitleProvider>>(

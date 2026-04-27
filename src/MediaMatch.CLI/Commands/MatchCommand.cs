@@ -22,6 +22,11 @@ internal sealed class MatchSettings : CommandSettings
     [DefaultValue("table")]
     public string Format { get; set; } = "table";
 
+    [CommandOption("--mode <MODE>")]
+    [Description("Media mode: auto (default), music")]
+    [DefaultValue("auto")]
+    public string Mode { get; set; } = "auto";
+
     public override ValidationResult Validate()
     {
         if (string.IsNullOrWhiteSpace(Path))

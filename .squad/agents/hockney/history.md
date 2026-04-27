@@ -144,3 +144,11 @@
 - Batch progress ViewModel instrumented with activity spans — each chunk produces progress events with file count/status tags.
 - HomeViewModel keyboard accelerators follow Windows conventions — test cases validate Ctrl+*, F-key routing to ViewModel commands.
 - 264 tests baseline established. Integration tests validate full App → Services → Providers pipeline with realistic file scenarios (unicode, batch failures, undo rollback).
+
+**From Hockney (Phase 29 — v0.2.0 Comprehensive Test Suite):**
+- Expanded test suite from 264 → 621 tests (357 new), all passing. Target of 400+ exceeded by 55%.
+- 18 new test files created across Infrastructure.Tests, Application.Tests, and Core.Tests.
+- Test coverage areas: AniDb provider (XML parsing, rate limiting, caching), AniDb-TVDb mapping (fallback chain), LLM providers (OpenAI/Azure/Ollama request construction, auth headers), MusicBrainz/AcoustId (fingerprint lookup, filtering), post-process actions (Plex/Jellyfin/Custom/Thumbnail), MediaInfoExtractor (resolution/codec/HDR/DV/channels from filename), OpportunisticMatcher (relaxed threshold, provider failure resilience), MusicDetector (file detection, filename parsing, featured artist extraction), AiRenameService (provider selection, sanitization), PostProcessPipeline (execution order, failure isolation), MetadataProviderChain (ordering, confidence, short-circuit), ReleaseInfoParser (all multi-episode patterns, full parse pipeline, codecs, sources, HDR/DV), similarity metrics (SeasonEpisode, NameSimilarity, Substring, Date, Cascade/Avg/Min composites), NfoMetadataProvider/XmlMetadataProvider (non-file API surface), core models (MatchResult, FileOrganizationResult, Episode, Movie, SearchResult, Person, Artwork, UndoEntry).
+- Key patterns: mock HttpMessageHandler with URL-routing for multi-endpoint tests, real MemoryCache for caching tests, maxRetries:0 for fast test execution, interface-cast pattern to resolve ambiguous SearchAsync overloads on dual-interface providers.
+- Discovered HDR10+ regex word-boundary limitation: `\bHDR10\+\b` fails when `+` is followed by `.` (no word boundary between two non-word chars). Tests adjusted to use valid boundary patterns.
+- Discovered DoVi profile regex limitation: `\bDoVi\s*P(\d)\b` requires whitespace (not dot) between DoVi and profile number. Tests use space-separated format.

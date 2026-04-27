@@ -8,7 +8,8 @@
     xmlns:vm="using:MediaMatch.App.ViewModels"
     xmlns:converters="using:MediaMatch.App.Converters"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    AutomationProperties.Name="File Matching">
 
     <Page.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
@@ -20,6 +21,7 @@
         <KeyboardAccelerator Key="Delete" />
         <KeyboardAccelerator Key="Z" Modifiers="Control" />
         <KeyboardAccelerator Key="F5" />
+        <KeyboardAccelerator Key="F1" />
     </Page.KeyboardAccelerators>
 
     <Grid Padding="24,16,24,16" RowSpacing="16">
@@ -27,72 +29,109 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Notification InfoBar -->
+        <InfoBar
+            x:Name="NotificationBar"
+            Grid.Row="0"
+            IsClosable="True"
+            IsOpen="False"
+            AutomationProperties.LiveSetting="Assertive"
+            AutomationProperties.Name="Notification" />
+
         <!-- Header -->
         <TextBlock
-            Grid.Row="0"
+            Grid.Row="1"
             Style="{StaticResource TitleTextBlockStyle}"
-            Text="File Matching" />
+            Text="File Matching"
+            AutomationProperties.HeadingLevel="Level1" />
 
         <!-- Toolbar -->
         <CommandBar
-            Grid.Row="1"
+            Grid.Row="2"
             DefaultLabelPosition="Right"
-            IsOpen="False">
+            IsOpen="False"
+            AutomationProperties.Name="File operations toolbar">
             <AppBarButton
                 Command="{x:Bind ViewModel.AddFolderCommand}"
                 Icon="OpenLocal"
                 Label="Add Folder"
-                ToolTipService.ToolTip="Add folder (Ctrl+O)" />
+                TabIndex="1"
+                AccessKey="O"
+                ToolTipService.ToolTip="Add folder (Ctrl+O)"
+                AutomationProperties.Name="Add folder, Ctrl+O" />
             <AppBarButton
                 Command="{x:Bind ViewModel.RemoveSelectedCommand}"
                 Icon="Delete"
                 Label="Remove Selected"
-                ToolTipService.ToolTip="Remove selected (Delete)" />
+                TabIndex="2"
+                AccessKey="D"
+                ToolTipService.ToolTip="Remove selected (Delete)"
+                AutomationProperties.Name="Remove selected files, Delete key" />
             <AppBarButton
                 Command="{x:Bind ViewModel.SelectAllCommand}"
                 Icon="SelectAll"
                 Label="Select All"
-                ToolTipService.ToolTip="Select all (Ctrl+A)" />
+                TabIndex="3"
+                AccessKey="A"
+                ToolTipService.ToolTip="Select all (Ctrl+A)"
+                AutomationProperties.Name="Select all files, Ctrl+A" />
             <AppBarSeparator />
             <AppBarButton
                 Command="{x:Bind ViewModel.ApplyRenamesCommand}"
                 Icon="Accept"
-                Label="Apply Renames" />
+                Label="Apply Renames"
+                TabIndex="4"
+                AccessKey="R"
+                AutomationProperties.Name="Apply renames to selected files" />
             <AppBarButton
                 Command="{x:Bind ViewModel.CancelBatchCommand}"
                 Icon="Cancel"
                 Label="Cancel"
-                Visibility="{x:Bind ViewModel.BatchProgress.IsRunning, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                TabIndex="5"
+                AccessKey="C"
+                Visibility="{x:Bind ViewModel.BatchProgress.IsRunning, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                AutomationProperties.Name="Cancel batch operation" />
             <AppBarSeparator />
             <AppBarButton
                 Command="{x:Bind ViewModel.UndoLastCommand}"
                 Icon="Undo"
                 Label="Undo Last"
-                ToolTipService.ToolTip="Undo last rename (Ctrl+Z)" />
+                TabIndex="6"
+                AccessKey="Z"
+                ToolTipService.ToolTip="Undo last rename (Ctrl+Z)"
+                AutomationProperties.Name="Undo last rename, Ctrl+Z" />
             <AppBarButton
                 Command="{x:Bind ViewModel.RefreshCommand}"
                 Icon="Refresh"
                 Label="Refresh"
-                ToolTipService.ToolTip="Refresh (F5)" />
+                TabIndex="7"
+                AccessKey="F"
+                ToolTipService.ToolTip="Refresh (F5)"
+                AutomationProperties.Name="Refresh file list, F5" />
         </CommandBar>
 
         <!-- Batch Progress Bar -->
         <StackPanel
-            Grid.Row="2"
+            Grid.Row="3"
             Spacing="4"
-            Visibility="{x:Bind ViewModel.BatchProgress.IsRunning, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            Visibility="{x:Bind ViewModel.BatchProgress.IsRunning, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+            AutomationProperties.Name="Batch rename progress"
+            AutomationProperties.LiveSetting="Polite">
             <ProgressBar
                 Maximum="100"
-                Value="{x:Bind ViewModel.BatchProgress.ProgressPercent, Mode=OneWay}" />
+                Value="{x:Bind ViewModel.BatchProgress.ProgressPercent, Mode=OneWay}"
+                AutomationProperties.Name="Batch progress" />
             <Grid>
                 <TextBlock
                     HorizontalAlignment="Left"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{x:Bind ViewModel.BatchProgress.ProgressText, Mode=OneWay}" />
+                    Text="{x:Bind ViewModel.BatchProgress.ProgressText, Mode=OneWay}"
+                    AutomationProperties.LiveSetting="Polite" />
                 <TextBlock
                     HorizontalAlignment="Right"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -102,18 +141,39 @@
         </StackPanel>
 
         <!-- File Grid / Empty State -->
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="4">
+            <!-- Scanning indicator (indeterminate) -->
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="12"
+                Visibility="{x:Bind ViewModel.IsScanning, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                AutomationProperties.Name="Scanning for media files"
+                AutomationProperties.LiveSetting="Polite">
+                <ProgressRing
+                    Width="48"
+                    Height="48"
+                    IsActive="{x:Bind ViewModel.IsScanning, Mode=OneWay}"
+                    AutomationProperties.Name="Scanning progress" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Text="Scanning for media files…" />
+            </StackPanel>
+
             <!-- Empty state -->
             <StackPanel
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Spacing="12"
-                Visibility="{x:Bind ViewModel.HasNoFiles, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                AutomationProperties.Name="No files loaded">
                 <FontIcon
                     HorizontalAlignment="Center"
                     FontSize="48"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Glyph="&#xE838;" />
+                    Glyph="&#xE8B7;" />
                 <TextBlock
                     HorizontalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -122,47 +182,42 @@
                 <TextBlock
                     HorizontalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                    Text="Click &quot;Add Folder&quot; or press Ctrl+O to scan for media files" />
+                    Text="Drop files here or click Open (Ctrl+O) to scan for media files" />
+                <Button
+                    HorizontalAlignment="Center"
+                    Command="{x:Bind ViewModel.AddFolderCommand}"
+                    Content="Open Folder"
+                    Style="{StaticResource AccentButtonStyle}"
+                    AutomationProperties.Name="Open folder to scan for media files" />
             </StackPanel>
 
-            <!-- File list -->
-            <ListView
-                ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}"
-                SelectionMode="None"
-                Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                <ListView.Header>
-                    <Grid
-                        Padding="12,8"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        CornerRadius="4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="40" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="100" />
-                            <ColumnDefinition Width="80" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock
-                            Grid.Column="1"
-                            FontWeight="SemiBold"
-                            Text="Original Name" />
-                        <TextBlock
-                            Grid.Column="2"
-                            FontWeight="SemiBold"
-                            Text="New Name" />
-                        <TextBlock
-                            Grid.Column="3"
-                            FontWeight="SemiBold"
-                            Text="Confidence" />
-                        <TextBlock
-                            Grid.Column="4"
-                            FontWeight="SemiBold"
-                            Text="Type" />
-                    </Grid>
-                </ListView.Header>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:FileItemViewModel">
-                        <Grid Padding="12,6" ColumnSpacing="8">
+            <!-- File list with count badge -->
+            <Grid Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Result count badge -->
+                <TextBlock
+                    Grid.Row="0"
+                    Padding="0,0,0,4"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind ViewModel.FileCountDisplay, Mode=OneWay}"
+                    AutomationProperties.LiveSetting="Polite" />
+
+                <ListView
+                    Grid.Row="1"
+                    ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}"
+                    SelectionMode="None"
+                    TabIndex="10"
+                    AutomationProperties.Name="Media file list">
+                    <ListView.Header>
+                        <Grid
+                            Padding="12,8"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            CornerRadius="4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="40" />
                                 <ColumnDefinition Width="*" />
@@ -170,41 +225,76 @@
                                 <ColumnDefinition Width="100" />
                                 <ColumnDefinition Width="80" />
                             </Grid.ColumnDefinitions>
-                            <CheckBox
-                                Grid.Column="0"
-                                IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
-                                MinWidth="0" />
                             <TextBlock
                                 Grid.Column="1"
-                                VerticalAlignment="Center"
-                                Text="{x:Bind OriginalFileName, Mode=OneWay}"
-                                TextTrimming="CharacterEllipsis" />
+                                FontWeight="SemiBold"
+                                Text="Original Name" />
                             <TextBlock
                                 Grid.Column="2"
-                                VerticalAlignment="Center"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                Text="{x:Bind NewFileName, Mode=OneWay}"
-                                TextTrimming="CharacterEllipsis" />
+                                FontWeight="SemiBold"
+                                Text="New Name" />
                             <TextBlock
                                 Grid.Column="3"
-                                VerticalAlignment="Center"
-                                Text="{x:Bind MatchConfidence, Mode=OneWay}" />
+                                FontWeight="SemiBold"
+                                Text="Confidence" />
                             <TextBlock
                                 Grid.Column="4"
-                                VerticalAlignment="Center"
-                                Text="{x:Bind MediaType, Mode=OneWay}" />
+                                FontWeight="SemiBold"
+                                Text="Type" />
                         </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+                    </ListView.Header>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FileItemViewModel">
+                            <Grid
+                                Padding="12,6"
+                                ColumnSpacing="8"
+                                AutomationProperties.Name="{x:Bind AutomationName, Mode=OneWay}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox
+                                    Grid.Column="0"
+                                    IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                    MinWidth="0"
+                                    AutomationProperties.Name="{x:Bind SelectionAutomationName, Mode=OneWay}" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Bind OriginalFileName, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    VerticalAlignment="Center"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    Text="{x:Bind NewFileName, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Grid.Column="3"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Bind MatchConfidence, Mode=OneWay}" />
+                                <TextBlock
+                                    Grid.Column="4"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Bind MediaType, Mode=OneWay}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
         </Grid>
 
         <!-- Status Bar -->
         <Grid
-            Grid.Row="4"
+            Grid.Row="5"
             Padding="12,8"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            CornerRadius="4">
+            CornerRadius="4"
+            AutomationProperties.Name="Status bar"
+            AutomationProperties.LiveSetting="Polite">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -212,12 +302,14 @@
             <TextBlock
                 VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                AutomationProperties.LiveSetting="Polite" />
             <ProgressRing
                 Grid.Column="1"
                 Width="20"
                 Height="20"
-                IsActive="{x:Bind ViewModel.IsProcessing, Mode=OneWay}" />
+                IsActive="{x:Bind ViewModel.IsProcessing, Mode=OneWay}"
+                AutomationProperties.Name="Processing indicator" />
         </Grid>
     </Grid>
 </Page>

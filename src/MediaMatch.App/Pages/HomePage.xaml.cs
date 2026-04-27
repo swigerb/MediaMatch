@@ -1,3 +1,5 @@
+using MediaMatch.App.Dialogs;
+using MediaMatch.App.Services;
 using MediaMatch.App.ViewModels;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -13,6 +15,11 @@ public sealed partial class HomePage : Page
     {
         ViewModel = App.GetService<HomeViewModel>();
         InitializeComponent();
+
+        // Wire the notification InfoBar to the NotificationService
+        var notificationService = App.GetService<NotificationService>();
+        notificationService.SetInfoBar(NotificationBar);
+        ViewModel.SetNotificationService(notificationService);
     }
 
     protected override void OnKeyboardAcceleratorInvoked(KeyboardAcceleratorInvokedEventArgs args)
@@ -49,8 +56,22 @@ public sealed partial class HomePage : Page
                     ViewModel.RefreshCommand.Execute(null);
                 args.Handled = true;
                 break;
+
+            case VirtualKey.F1:
+                _ = ShowKeyboardShortcutsAsync();
+                args.Handled = true;
+                break;
         }
 
         base.OnKeyboardAcceleratorInvoked(args);
+    }
+
+    private async Task ShowKeyboardShortcutsAsync()
+    {
+        var dialog = new KeyboardShortcutsDialog
+        {
+            XamlRoot = this.XamlRoot
+        };
+        await dialog.ShowAsync();
     }
 }

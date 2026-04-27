@@ -132,6 +132,9 @@ public partial class App : Microsoft.UI.Xaml.Application
         // Thumbnail service
         services.AddSingleton<ThumbnailService>();
 
+        // Notification service
+        services.AddSingleton<NotificationService>();
+
         // Update services
         services.AddSingleton<IUpdateCheckService, UpdateCheckService>();
         services.AddTransient<UpdateViewModel>();

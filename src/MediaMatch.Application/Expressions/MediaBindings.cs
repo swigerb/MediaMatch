@@ -13,7 +13,7 @@ public class MediaBindings : ScriptObject, IMediaBindings
     private MediaBindings() { }
 
     /// <summary>Create bindings for an episode file.</summary>
-    public static MediaBindings ForEpisode(Episode episode, SeriesInfo? seriesInfo = null, string? filePath = null, MediaTechnicalInfo? techInfo = null)
+    public static MediaBindings ForEpisode(Episode episode, SeriesInfo? seriesInfo = null, string? filePath = null, MediaTechnicalInfo? techInfo = null, int? endEpisode = null)
     {
         var b = new MediaBindings();
 
@@ -28,6 +28,18 @@ public class MediaBindings : ScriptObject, IMediaBindings
         b.SetValue("airdate", episode.AirDate?.ToString(), readOnly: false);
         b.SetValue("absolute", episode.AbsoluteNumber, readOnly: false);
 
+        // Multi-episode bindings
+        b.SetValue("startEpisode", episode.EpisodeNumber, readOnly: false);
+        b.SetValue("endEpisode", endEpisode ?? episode.EpisodeNumber, readOnly: false);
+        b.SetValue("isMultiEpisode", endEpisode.HasValue && endEpisode.Value != episode.EpisodeNumber, readOnly: false);
+
+        if (endEpisode.HasValue && endEpisode.Value != episode.EpisodeNumber)
+        {
+            // Multi-episode s00e00 ranges
+            b.SetValue("s00e00", $"S{episode.Season:D2}E{episode.EpisodeNumber:D2}-E{endEpisode.Value:D2}", readOnly: false);
+            b.SetValue("sxe", $"{episode.Season}x{episode.EpisodeNumber:D2}-{endEpisode.Value:D2}", readOnly: false);
+        }
+
         if (seriesInfo is not null)
         {
             b.SetValue("series", seriesInfo, readOnly: false);
@@ -36,7 +48,7 @@ public class MediaBindings : ScriptObject, IMediaBindings
 
         SetFileBindings(b, filePath);
         SetTechnicalBindings(b, techInfo);
-        SetJellyfinBinding(b, episode, seriesInfo);
+        SetJellyfinBinding(b, episode, seriesInfo, endEpisode);
         return b;
     }
 
@@ -96,6 +108,7 @@ public class MediaBindings : ScriptObject, IMediaBindings
         {
             b.SetValue("fn", Path.GetFileNameWithoutExtension(filePath), readOnly: false);
             b.SetValue("ext", Path.GetExtension(filePath), readOnly: false);
+            b.SetValue("extension", Path.GetExtension(filePath), readOnly: false);
             b.SetValue("file", filePath, readOnly: false);
         }
     }
@@ -114,12 +127,21 @@ public class MediaBindings : ScriptObject, IMediaBindings
         b.SetValue("bitdepth", techInfo.BitDepth, readOnly: false);
     }
 
-    private static void SetJellyfinBinding(MediaBindings b, Episode episode, SeriesInfo? seriesInfo)
+    private static void SetJellyfinBinding(MediaBindings b, Episode episode, SeriesInfo? seriesInfo, int? endEpisode = null)
     {
-        // Jellyfin naming: SeriesName/Season XX/SeriesName - SXXEXX - Title
-        var jellyfinName = $"{episode.SeriesName} - S{episode.Season:D2}E{episode.EpisodeNumber:D2}";
-        if (!string.IsNullOrWhiteSpace(episode.Title))
-            jellyfinName += $" - {episode.Title}";
+        string jellyfinName;
+        if (endEpisode.HasValue && endEpisode.Value != episode.EpisodeNumber)
+        {
+            // Jellyfin multi-episode: SeriesName S01E01-S01E02
+            jellyfinName = $"{episode.SeriesName} S{episode.Season:D2}E{episode.EpisodeNumber:D2}-S{episode.Season:D2}E{endEpisode.Value:D2}";
+        }
+        else
+        {
+            // Jellyfin naming: SeriesName - SXXEXX - Title
+            jellyfinName = $"{episode.SeriesName} - S{episode.Season:D2}E{episode.EpisodeNumber:D2}";
+            if (!string.IsNullOrWhiteSpace(episode.Title))
+                jellyfinName += $" - {episode.Title}";
+        }
         b.SetValue("jellyfin", jellyfinName, readOnly: false);
     }
 
@@ -128,5 +150,26 @@ public class MediaBindings : ScriptObject, IMediaBindings
         // Jellyfin naming: MovieName (Year)/MovieName (Year)
         var jellyfinName = $"{movie.Name} ({movie.Year})";
         b.SetValue("jellyfin", jellyfinName, readOnly: false);
+    }
+
+    /// <summary>Create bindings for a music file.</summary>
+    public static MediaBindings ForMusic(MusicTrack track, string? filePath = null)
+    {
+        var b = new MediaBindings();
+
+        b.SetValue("artist", track.Artist, readOnly: false);
+        b.SetValue("album", track.Album, readOnly: false);
+        b.SetValue("albumartist", track.AlbumArtist ?? track.Artist, readOnly: false);
+        b.SetValue("title", track.Title, readOnly: false);
+        b.SetValue("t", track.Title, readOnly: false);
+        b.SetValue("n", track.Artist, readOnly: false);
+        b.SetValue("track", track.TrackNumber, readOnly: false);
+        b.SetValue("disc", track.DiscNumber, readOnly: false);
+        b.SetValue("genre", track.Genre, readOnly: false);
+        b.SetValue("y", track.Year, readOnly: false);
+        b.SetValue("featuring", track.DisplayArtist != track.Artist ? string.Join(", ", track.FeaturedArtists ?? []) : null, readOnly: false);
+
+        SetFileBindings(b, filePath);
+        return b;
     }
 }

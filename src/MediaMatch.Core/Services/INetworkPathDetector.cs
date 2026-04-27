@@ -1,0 +1,10 @@
+namespace MediaMatch.Core.Services;
+
+/// <summary>
+/// Detects whether a path is on a network share (UNC or mapped drive).
+/// </summary>
+public interface INetworkPathDetector
+{
+    /// <summary>Returns true if the path is a UNC path or a mapped network drive.</summary>
+    bool IsNetworkPath(string path);
+}

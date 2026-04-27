@@ -36,23 +36,28 @@
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
             IsSettingsVisible="True"
-            SelectionChanged="NavView_SelectionChanged">
+            SelectionChanged="NavView_SelectionChanged"
+            AutomationProperties.Name="Main navigation">
             <NavigationView.MenuItems>
                 <NavigationViewItem
                     Content="Home"
                     IsSelected="True"
-                    Tag="home">
+                    Tag="home"
+                    AutomationProperties.Name="Home page"
+                    AccessKey="H">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE80F;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="About" Tag="about">
+                <NavigationViewItem Content="About" Tag="about"
+                    AutomationProperties.Name="About page"
+                    AccessKey="B">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xEA3A;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
-            <Frame x:Name="NavFrame" />
+            <Frame x:Name="NavFrame" AutomationProperties.Name="Page content" />
         </NavigationView>
     </Grid>
 </Window>

@@ -1,6 +1,9 @@
 using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Providers;
+using MediaMatch.Core.Services;
+using MediaMatch.Infrastructure.Actions;
 using MediaMatch.Infrastructure.Caching;
+using MediaMatch.Infrastructure.FileSystem;
 using MediaMatch.Infrastructure.Http;
 using MediaMatch.Infrastructure.Observability;
 using MediaMatch.Infrastructure.Providers;
@@ -21,13 +24,25 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddMediaMatchInfrastructure(
         this IServiceCollection services,
         ApiConfiguration? config = null,
-        AniDbConfiguration? aniDbConfig = null)
+        AniDbConfiguration? aniDbConfig = null,
+        LlmConfiguration? llmConfig = null,
+        AppSettings? appSettings = null)
     {
         var apiConfig = config ?? new ApiConfiguration();
         services.AddSingleton(apiConfig);
 
         var aniDbConf = aniDbConfig ?? new AniDbConfiguration();
         services.AddSingleton(aniDbConf);
+
+        var llmConf = llmConfig ?? new LlmConfiguration();
+        services.AddSingleton(llmConf);
+
+        var settings = appSettings ?? new AppSettings();
+        services.AddSingleton(settings);
+        services.AddSingleton(settings.ApiKeys);
+        services.AddSingleton(settings.Plex);
+        services.AddSingleton(settings.Jellyfin);
+        services.AddSingleton(settings.Performance);
 
         // Register HttpClientFactory with named clients
         services.AddHttpClient();
@@ -48,10 +63,14 @@ public static class ServiceCollectionExtensions
             return new MetadataCache(cache, apiConfig.CacheTtlMinutes);
         });
 
-        // Movie providers
+        // Movie providers — local providers first for chain ordering
+        services.AddSingleton<IMovieProvider, NfoMetadataProvider>();
+        services.AddSingleton<IMovieProvider, XmlMetadataProvider>();
         services.AddSingleton<IMovieProvider, TmdbMovieProvider>();
 
-        // Episode providers — register all; consumers can choose by Name
+        // Episode providers — local first, then online
+        services.AddSingleton<IEpisodeProvider, NfoMetadataProvider>();
+        services.AddSingleton<IEpisodeProvider, XmlMetadataProvider>();
         services.AddSingleton<IEpisodeProvider, TmdbEpisodeProvider>();
         services.AddSingleton<IEpisodeProvider, TvdbEpisodeProvider>();
         // AniDB provider — uses its own HttpClient for XML + dedicated rate limiting
@@ -86,6 +105,74 @@ public static class ServiceCollectionExtensions
 
         // Subtitle providers
         services.AddSingleton<ISubtitleProvider, OpenSubtitlesProvider>();
+
+        // LLM providers for AI-assisted renaming
+        services.AddSingleton<ILlmProvider>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient("OpenAI");
+            httpClient.Timeout = TimeSpan.FromSeconds(llmConf.TimeoutSeconds);
+            return new OpenAiProvider(httpClient, llmConf, sp.GetRequiredService<ILogger<OpenAiProvider>>());
+        });
+        services.AddSingleton<ILlmProvider>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient("AzureOpenAI");
+            httpClient.Timeout = TimeSpan.FromSeconds(llmConf.TimeoutSeconds);
+            return new AzureOpenAiProvider(httpClient, llmConf, sp.GetRequiredService<ILogger<AzureOpenAiProvider>>());
+        });
+        services.AddSingleton<ILlmProvider>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient("Ollama");
+            httpClient.Timeout = TimeSpan.FromSeconds(llmConf.TimeoutSeconds);
+            return new OllamaProvider(httpClient, llmConf, sp.GetRequiredService<ILogger<OllamaProvider>>());
+        });
+
+        // File clone services (Windows-only, suppressed for cross-platform TFM)
+#pragma warning disable CA1416
+        services.AddSingleton<ReFsCloneHandler>();
+        services.AddSingleton<HardLinkHandler>();
+        services.AddSingleton<FileCloneService>();
+#pragma warning restore CA1416
+
+        // Music providers
+        services.AddSingleton<IMusicProvider>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient("MusicBrainz");
+            return new MusicBrainzProvider(httpClient, sp.GetRequiredService<ILogger<MusicBrainzProvider>>());
+        });
+        services.AddSingleton<IMusicProvider>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient("AcoustID");
+            return new AcoustIdProvider(httpClient, settings.ApiKeys, sp.GetRequiredService<ILogger<AcoustIdProvider>>());
+        });
+
+        // Post-process actions
+        services.AddSingleton<IPostProcessAction>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new PlexRefreshAction(
+                factory.CreateClient("Plex"),
+                sp.GetRequiredService<PlexSettings>(),
+                sp.GetRequiredService<ILogger<PlexRefreshAction>>());
+        });
+        services.AddSingleton<IPostProcessAction>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new JellyfinRefreshAction(
+                factory.CreateClient("Jellyfin"),
+                sp.GetRequiredService<JellyfinSettings>(),
+                sp.GetRequiredService<ILogger<JellyfinRefreshAction>>());
+        });
+        services.AddSingleton<IPostProcessAction, ThumbnailGenerateAction>();
+
+        // Network path detection (Windows P/Invoke)
+#pragma warning disable CA1416
+        services.AddSingleton<INetworkPathDetector, NetworkPathDetector>();
+#pragma warning restore CA1416
 
         return services;
     }

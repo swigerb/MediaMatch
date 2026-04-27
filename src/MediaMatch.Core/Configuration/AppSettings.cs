@@ -40,6 +40,24 @@ public sealed class AppSettings
     /// Custom preset definitions for quick-action context menu and batch operations.
     /// </summary>
     public List<PresetDefinitionSettings> Presets { get; set; } = [];
+
+    /// <summary>Prefer local metadata (NFO/XML) over online providers.</summary>
+    public bool PreferLocalMetadata { get; set; } = true;
+
+    /// <summary>Default rename pattern for music files.</summary>
+    public string MusicRenamePattern { get; set; } = "{albumartist}/{album}/{disc:D1}-{track:D2} {title}{extension}";
+
+    /// <summary>Post-processing actions to run after successful renames.</summary>
+    public List<PostProcessActionSettings> PostProcessActions { get; set; } = [];
+
+    /// <summary>Plex media server settings for post-processing.</summary>
+    public PlexSettings Plex { get; set; } = new();
+
+    /// <summary>Jellyfin media server settings for post-processing.</summary>
+    public JellyfinSettings Jellyfin { get; set; } = new();
+
+    /// <summary>Performance tuning for file scanning and metadata resolution.</summary>
+    public PerformanceSettings Performance { get; set; } = new();
 }
 
 /// <summary>
@@ -85,6 +103,7 @@ public sealed class ApiKeySettings
     public string TmdbApiKey { get; set; } = string.Empty;
     public string TvdbApiKey { get; set; } = string.Empty;
     public string OpenSubtitlesApiKey { get; set; } = string.Empty;
+    public string AcoustIdApiKey { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -105,6 +124,34 @@ public sealed class OutputFolderSettings
 {
     public string MoviesRoot { get; set; } = string.Empty;
     public string SeriesRoot { get; set; } = string.Empty;
+}
+
+/// <summary>Configuration for a post-processing action.</summary>
+public sealed class PostProcessActionSettings
+{
+    /// <summary>Action name (e.g., "plex-refresh", "thumbnail", "custom-script").</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Whether this action is enabled.</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>Optional configuration value (e.g., script path for custom-script).</summary>
+    public string? Config { get; set; }
+}
+
+/// <summary>Plex media server connection settings.</summary>
+public sealed class PlexSettings
+{
+    public string Url { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
+    public List<string> LibrarySectionIds { get; set; } = [];
+}
+
+/// <summary>Jellyfin media server connection settings.</summary>
+public sealed class JellyfinSettings
+{
+    public string Url { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
 }
 
 /// <summary>App theme modes.</summary>

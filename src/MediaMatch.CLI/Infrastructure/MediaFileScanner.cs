@@ -11,6 +11,7 @@ internal static class MediaFileScanner
             ".mkv", ".mp4", ".avi", ".wmv", ".flv", ".mov", ".m4v",
             ".mpg", ".mpeg", ".ts", ".m2ts", ".vob", ".webm", ".ogv",
             ".srt", ".sub", ".ssa", ".ass", ".idx", ".vtt",
+            ".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma", ".aac", ".opus",
         };
 
     public static IReadOnlyList<string> Scan(string path, bool recursive)

@@ -1,12 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediaMatch.Core.Configuration;
+using Microsoft.UI.Xaml;
 using Windows.Storage.Pickers;
 
 namespace MediaMatch.App.ViewModels;
 
 /// <summary>
-/// ViewModel for the Settings page — manages API keys, rename patterns, and output paths.
+/// ViewModel for the Settings page — manages API keys, rename patterns, output paths,
+/// theme mode, and font scale settings.
 /// Persists settings via <see cref="ISettingsRepository"/>.
 /// </summary>
 public partial class SettingsViewModel : ViewModelBase
@@ -52,9 +54,43 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool ShowWelcomeBanner { get; set; }
 
+    /// <summary>Selected theme mode index: 0=System, 1=Light, 2=Dark.</summary>
+    [ObservableProperty]
+    public partial int SelectedThemeIndex { get; set; }
+
+    /// <summary>Selected font scale index: 0=Small, 1=Medium, 2=Large, 3=ExtraLarge.</summary>
+    [ObservableProperty]
+    public partial int SelectedFontScaleIndex { get; set; } = 1;
+
+    /// <summary>Font scale label descriptions for the UI.</summary>
+    public string[] ThemeOptions { get; } = ["System", "Light", "Dark"];
+
+    /// <summary>Font scale label descriptions for the UI.</summary>
+    public string[] FontScaleOptions { get; } = ["Small (12px)", "Medium (14px)", "Large (16px)", "Extra Large (18px)"];
+
+    /// <summary>Preview text showing current font scale.</summary>
+    public string FontPreviewText => "The quick brown fox jumps over the lazy dog. MediaMatch renames your media files automatically.";
+
+    /// <summary>Caption describing the current font scale selection.</summary>
+    public string FontPreviewCaption => SelectedFontScaleIndex switch
+    {
+        0 => "Small — 12px base size",
+        1 => "Medium — 14px base size (default)",
+        2 => "Large — 16px base size",
+        3 => "Extra Large — 18px base size",
+        _ => "Medium — 14px base size"
+    };
+
     partial void OnMovieRenamePatternChanged(string value) => UpdateRenamePreview();
     partial void OnSeriesRenamePatternChanged(string value) => UpdateRenamePreview();
     partial void OnAnimeRenamePatternChanged(string value) => UpdateRenamePreview();
+
+    partial void OnSelectedThemeIndexChanged(int value) => ApplyTheme((ThemeMode)value);
+    partial void OnSelectedFontScaleIndexChanged(int value)
+    {
+        ApplyFontScale((FontScale)value);
+        OnPropertyChanged(nameof(FontPreviewCaption));
+    }
 
     public SettingsViewModel(ISettingsRepository settingsRepository)
     {
@@ -86,6 +122,9 @@ public partial class SettingsViewModel : ViewModelBase
 
             MovieOutputFolder = settings.OutputFolders.MoviesRoot;
             SeriesOutputFolder = settings.OutputFolders.SeriesRoot;
+
+            SelectedThemeIndex = (int)settings.ThemeMode;
+            SelectedFontScaleIndex = (int)settings.FontScale;
         }
         catch
         {
@@ -126,7 +165,9 @@ public partial class SettingsViewModel : ViewModelBase
                 {
                     MoviesRoot = MovieOutputFolder,
                     SeriesRoot = SeriesOutputFolder
-                }
+                },
+                ThemeMode = (ThemeMode)SelectedThemeIndex,
+                FontScale = (FontScale)SelectedFontScaleIndex
             };
 
             await _settingsRepository.SaveAsync(settings);
@@ -237,5 +278,76 @@ public partial class SettingsViewModel : ViewModelBase
             .Replace("{extension}", ".mkv");
 
         RenamePreview = $"Movie: {movieExample}\nSeries: {seriesExample}";
+    }
+
+    /// <summary>
+    /// Applies the theme to the root element and updates title bar colors.
+    /// </summary>
+    public static void ApplyTheme(ThemeMode themeMode)
+    {
+        if (App.MainWindow?.Content is FrameworkElement rootElement)
+        {
+            rootElement.RequestedTheme = themeMode switch
+            {
+                ThemeMode.Light => ElementTheme.Light,
+                ThemeMode.Dark => ElementTheme.Dark,
+                _ => ElementTheme.Default
+            };
+
+            UpdateTitleBarColors(rootElement.ActualTheme);
+        }
+    }
+
+    /// <summary>
+    /// Applies the font scale globally by overriding the root FontSize resource.
+    /// </summary>
+    public static void ApplyFontScale(FontScale fontScale)
+    {
+        if (App.MainWindow?.Content is FrameworkElement rootElement)
+        {
+            var baseFontSize = fontScale switch
+            {
+                FontScale.Small => 12.0,
+                FontScale.Large => 16.0,
+                FontScale.ExtraLarge => 18.0,
+                _ => 14.0
+            };
+
+            rootElement.Resources["ContentControlFontSize"] = baseFontSize;
+
+            // For controls that inherit from Control, set FontSize directly
+            if (rootElement is Microsoft.UI.Xaml.Controls.Control control)
+            {
+                control.FontSize = baseFontSize;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Updates title bar button colors to match the current theme.
+    /// </summary>
+    internal static void UpdateTitleBarColors(ElementTheme actualTheme)
+    {
+        var titleBar = App.MainWindow?.AppWindow?.TitleBar;
+        if (titleBar is null) return;
+
+        if (actualTheme == ElementTheme.Dark)
+        {
+            titleBar.ButtonForegroundColor = Microsoft.UI.Colors.White;
+            titleBar.ButtonHoverForegroundColor = Microsoft.UI.Colors.White;
+            titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF);
+            titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(0x66, 0xFF, 0xFF, 0xFF);
+        }
+        else
+        {
+            titleBar.ButtonForegroundColor = Microsoft.UI.Colors.Black;
+            titleBar.ButtonHoverForegroundColor = Microsoft.UI.Colors.Black;
+            titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(0x33, 0x00, 0x00, 0x00);
+            titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(0x66, 0x00, 0x00, 0x00);
+        }
+
+        // Keep background transparent for Mica backdrop
+        titleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
+        titleBar.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
     }
 }

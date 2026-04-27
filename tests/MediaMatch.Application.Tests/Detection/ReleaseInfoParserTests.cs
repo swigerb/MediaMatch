@@ -248,4 +248,184 @@ public class ReleaseInfoParserTests
         result.Quality.Should().Be(VideoQuality.Unknown);
         result.SeasonEpisode.Should().BeNull();
     }
+
+    // ── Additional multi-episode parsing ─────────────────────────
+
+    [Theory]
+    [InlineData("Show.S01E01-S01E03.mkv", 1, 1, 3)]
+    [InlineData("Show.S02E05-S02E08.mkv", 2, 5, 8)]
+    public void ParseSeasonEpisode_CrossReferenceRange_MatchesCorrectly(
+        string fileName, int season, int startEp, int endEp)
+    {
+        var result = _parser.ParseSeasonEpisode(fileName);
+        result.Should().NotBeNull();
+        result!.Season.Should().Be(season);
+        result.Episode.Should().Be(startEp);
+        result.EndEpisode.Should().Be(endEp);
+    }
+
+    [Theory]
+    [InlineData("Show.S01E01E02.mkv", 1, 1, 2)]
+    [InlineData("Show.S03E10E11.mkv", 3, 10, 11)]
+    public void ParseSeasonEpisode_ConsecutiveEpisodes_MatchesCorrectly(
+        string fileName, int season, int startEp, int endEp)
+    {
+        var result = _parser.ParseSeasonEpisode(fileName);
+        result.Should().NotBeNull();
+        result!.Season.Should().Be(season);
+        result.Episode.Should().Be(startEp);
+        result.EndEpisode.Should().Be(endEp);
+    }
+
+    [Theory]
+    [InlineData("Show.S01E01-E05.mkv", 1, 1, 5)]
+    [InlineData("Show.S02E03-E06.mkv", 2, 3, 6)]
+    public void ParseSeasonEpisode_DashRangeEpisodes_MatchesCorrectly(
+        string fileName, int season, int startEp, int endEp)
+    {
+        var result = _parser.ParseSeasonEpisode(fileName);
+        result.Should().NotBeNull();
+        result!.Season.Should().Be(season);
+        result.Episode.Should().Be(startEp);
+        result.EndEpisode.Should().Be(endEp);
+    }
+
+    [Theory]
+    [InlineData("Movie.HDR10.mkv", "HDR10")]
+    [InlineData("Movie.HLG.mkv", "HLG")]
+    [InlineData("Movie.HDR.mkv", "HDR10")]
+    public void ParseHdrFormat_ValidFormats_ReturnsExpected(string fileName, string expected)
+    {
+        _parser.ParseHdrFormat(fileName).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("Movie.DoVi P5.mkv", "DoVi P5")]
+    [InlineData("Movie.DoVi P7.mkv", "DoVi P7")]
+    [InlineData("Movie.DV.mkv", "DV")]
+    [InlineData("Movie.DoVi.mkv", "DV")]
+    [InlineData("Movie.DolbyVision.mkv", "DV")]
+    public void ParseDolbyVision_ValidFormats_ReturnsExpected(string fileName, string expected)
+    {
+        _parser.ParseDolbyVision(fileName).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("Movie.7.1.mkv", "7.1")]
+    [InlineData("Movie.5.1.mkv", "5.1")]
+    public void ParseAudioChannels_ValidChannels_ReturnsExpected(string fileName, string expected)
+    {
+        _parser.ParseAudioChannels(fileName).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("Movie.10bit.mkv", "10bit")]
+    public void ParseBitDepth_10bit_Detected(string fileName, string expected)
+    {
+        _parser.ParseBitDepth(fileName).Should().Be(expected);
+    }
+
+    [Fact]
+    public void ParseBitDepth_NoBitDepth_ReturnsNull()
+    {
+        _parser.ParseBitDepth("Movie.mkv").Should().BeNull();
+    }
+
+    // ── Video source additional tests ────────────────────────────
+
+    [Theory]
+    [InlineData("Movie.Blu-Ray.mkv", "BluRay")]
+    [InlineData("Movie.WEBRip.mkv", "WEB-DL")]
+    [InlineData("Movie.HDRip.mkv", "HDRip")]
+    [InlineData("Movie.CAM.mkv", "CAM")]
+    [InlineData("Movie.TELESYNC.mkv", "TELESYNC")]
+    public void ParseVideoSource_AdditionalFormats_DetectsCorrectly(string fileName, string expected)
+    {
+        _parser.ParseVideoSource(fileName).Should().Be(expected);
+    }
+
+    // ── Video codec additional tests ─────────────────────────────
+
+    [Theory]
+    [InlineData("Movie.AV1.mkv", "AV1")]
+    [InlineData("Movie.VP9.mkv", "VP9")]
+    [InlineData("Movie.H.264.mkv", "H.264")]
+    public void ParseVideoCodec_AdditionalCodecs_DetectsCorrectly(string fileName, string expected)
+    {
+        _parser.ParseVideoCodec(fileName).Should().Be(expected);
+    }
+
+    // ── Audio codec additional tests ─────────────────────────────
+
+    [Theory]
+    [InlineData("Movie.FLAC.mkv", "FLAC")]
+    [InlineData("Movie.MP3.mkv", "MP3")]
+    [InlineData("Movie.TrueHD.mkv", "TrueHD")]
+    public void ParseAudioCodec_AdditionalCodecs_DetectsCorrectly(string fileName, string expected)
+    {
+        _parser.ParseAudioCodec(fileName).Should().Be(expected);
+    }
+
+    // ── 8K quality ───────────────────────────────────────────────
+
+    [Fact]
+    public void ParseVideoQuality_8K_ReturnsUHD8K()
+    {
+        _parser.ParseVideoQuality("Movie.8K.mkv").Should().Be(VideoQuality.UHD8K);
+    }
+
+    // ── Season/Episode word format ───────────────────────────────
+
+    [Fact]
+    public void ParseSeasonEpisode_SeasonWordEpisodeWord()
+    {
+        var result = _parser.ParseSeasonEpisode("Show.Season 3 Episode 5.mkv");
+        result.Should().NotBeNull();
+        result!.Season.Should().Be(3);
+        result.Episode.Should().Be(5);
+    }
+
+    // ── Absolute episode format ──────────────────────────────────
+
+    [Fact]
+    public void ParseSeasonEpisode_EpisodeWordAbsolute()
+    {
+        var result = _parser.ParseSeasonEpisode("Anime.Episode 42.mkv");
+        result.Should().NotBeNull();
+        result!.AbsoluteNumber.Should().Be(42);
+    }
+
+    // ── Episode range word format ────────────────────────────────
+
+    [Theory]
+    [InlineData("Show.Episode 1-3.mkv", 1, 3)]
+    [InlineData("Show.Ep.05-07.mkv", 5, 7)]
+    public void ParseSeasonEpisode_EpisodeWordRange_DetectsRange(
+        string fileName, int startEp, int endEp)
+    {
+        var result = _parser.ParseSeasonEpisode(fileName);
+        result.Should().NotBeNull();
+        result!.Episode.Should().Be(startEp);
+        result.EndEpisode.Should().Be(endEp);
+    }
+
+    // ── Parse full movie with all metadata ───────────────────────
+
+    [Fact]
+    public void Parse_4KMovie_AllFieldsPopulated()
+    {
+        var info = _parser.Parse("Inception.2010.2160p.BluRay.x265.DTS.10bit.HDR10.DoVi P5.7.1-SPARKS.mkv");
+
+        info.CleanTitle.Should().Be("Inception");
+        info.Year.Should().Be(2010);
+        info.Quality.Should().Be(VideoQuality.UHD4K);
+        info.VideoSource.Should().Be("BluRay");
+        info.VideoCodec.Should().Be("H.265");
+        info.AudioCodec.Should().Be("DTS");
+        info.BitDepth.Should().Be("10bit");
+        info.HdrFormat.Should().Be("HDR10");
+        info.DolbyVision.Should().Be("DoVi P5");
+        info.AudioChannels.Should().Be("7.1");
+        info.ReleaseGroup.Should().Be("SPARKS");
+    }
 }

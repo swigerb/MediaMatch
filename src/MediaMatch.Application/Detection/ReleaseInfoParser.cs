@@ -11,13 +11,29 @@ public sealed partial class ReleaseInfoParser
     [GeneratedRegex(@"[Ss](\d{1,2})\s*[Ee](\d{1,3})(?:\s*-?\s*[Ee](\d{1,3}))?", RegexOptions.Compiled)]
     private static partial Regex SxxExxRegex();
 
-    // 1x02, 01x02
+    // S01E01-S01E02 (cross-season-style multi-episode)
+    [GeneratedRegex(@"[Ss](\d{1,2})[Ee](\d{1,3})\s*-\s*[Ss]\d{1,2}[Ee](\d{1,3})", RegexOptions.Compiled)]
+    private static partial Regex SxxExxSxxExxRegex();
+
+    // 1x01-1x02 or 1x01-02
+    [GeneratedRegex(@"(\d{1,2})[xX](\d{2,3})\s*-\s*(?:\d{1,2}[xX])?(\d{2,3})", RegexOptions.Compiled)]
+    private static partial Regex NxNNRangeRegex();
+
+    // 1x02, 01x02 (single)
     [GeneratedRegex(@"(\d{1,2})[xX](\d{2,3})", RegexOptions.Compiled)]
     private static partial Regex NxNNRegex();
+
+    // Episode 1-2, Ep.01-02
+    [GeneratedRegex(@"[Ee](?:p\.?|pisode)\s*(\d{1,4})\s*-\s*(\d{1,4})", RegexOptions.Compiled)]
+    private static partial Regex EpisodeRangeWordRegex();
 
     // Season 1 Episode 2
     [GeneratedRegex(@"[Ss]eason\s+(\d{1,2})\s+[Ee]pisode\s+(\d{1,3})", RegexOptions.Compiled)]
     private static partial Regex SeasonEpisodeWordRegex();
+
+    // Absolute range: 01-02 (at start or after space/bracket)
+    [GeneratedRegex(@"(?:^|[\s\[])(\d{2,3})\s*-\s*(\d{2,3})(?=[\s\].]|$)", RegexOptions.Compiled)]
+    private static partial Regex AbsoluteRangeRegex();
 
     // Episode 42 (absolute numbering)
     [GeneratedRegex(@"(?<![Ss]eason\s{0,4})[Ee](?:pisode)?\s*(\d{1,4})(?!\s*[xX])", RegexOptions.Compiled)]
@@ -160,7 +176,18 @@ public sealed partial class ReleaseInfoParser
     {
         var name = StripExtension(fileName);
 
-        var m = SxxExxRegex().Match(name);
+        // S01E01-S01E02 (cross-reference multi-episode)
+        var m = SxxExxSxxExxRegex().Match(name);
+        if (m.Success)
+        {
+            int season = int.Parse(m.Groups[1].Value);
+            int startEp = int.Parse(m.Groups[2].Value);
+            int endEp = int.Parse(m.Groups[3].Value);
+            return new SeasonEpisodeMatch(season, startEp, endEp);
+        }
+
+        // S01E01, S01E01E02, S01E01-E03
+        m = SxxExxRegex().Match(name);
         if (m.Success)
         {
             int season = int.Parse(m.Groups[1].Value);
@@ -169,6 +196,17 @@ public sealed partial class ReleaseInfoParser
             return new SeasonEpisodeMatch(season, episode, endEp);
         }
 
+        // 1x01-1x02 or 1x01-02
+        m = NxNNRangeRegex().Match(name);
+        if (m.Success)
+        {
+            return new SeasonEpisodeMatch(
+                int.Parse(m.Groups[1].Value),
+                int.Parse(m.Groups[2].Value),
+                int.Parse(m.Groups[3].Value));
+        }
+
+        // 1x02 (single)
         m = NxNNRegex().Match(name);
         if (m.Success)
         {
@@ -177,12 +215,34 @@ public sealed partial class ReleaseInfoParser
                 int.Parse(m.Groups[2].Value));
         }
 
+        // Episode 1-2, Ep.01-02
+        m = EpisodeRangeWordRegex().Match(name);
+        if (m.Success)
+        {
+            int startEp = int.Parse(m.Groups[1].Value);
+            int endEp = int.Parse(m.Groups[2].Value);
+            return new SeasonEpisodeMatch(Season: 1, Episode: startEp, EndEpisode: endEp, AbsoluteNumber: startEp);
+        }
+
         m = SeasonEpisodeWordRegex().Match(name);
         if (m.Success)
         {
             return new SeasonEpisodeMatch(
                 int.Parse(m.Groups[1].Value),
                 int.Parse(m.Groups[2].Value));
+        }
+
+        // Absolute range: 01-02
+        m = AbsoluteRangeRegex().Match(name);
+        if (m.Success)
+        {
+            int startEp = int.Parse(m.Groups[1].Value);
+            int endEp = int.Parse(m.Groups[2].Value);
+            // Only treat as episode range if endEp > startEp and both are reasonable episode numbers
+            if (endEp > startEp && startEp <= 999)
+            {
+                return new SeasonEpisodeMatch(Season: 1, Episode: startEp, EndEpisode: endEp, AbsoluteNumber: startEp);
+            }
         }
 
         m = AbsoluteEpisodeRegex().Match(name);

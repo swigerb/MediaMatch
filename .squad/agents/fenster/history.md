@@ -83,6 +83,43 @@
 - `src/MediaMatch.Application/Services/PostProcessPipeline.cs` — post-process executor
 - `src/MediaMatch.Application/Detection/MusicDetector.cs` — music file detection + tag reading
 
+### 2026-04-27 — Batch 7: Phase 28 — Performance & NAS Optimization
+
+**ParallelFileScanner:**
+- `Channel<T>` producer/consumer for streaming file results. `Parallel.ForEachAsync` with configurable concurrency.
+- Lazy `Directory.EnumerateFiles` (never `GetFiles`) with recursive depth limit (default 20).
+- `IProgress<ScanProgress>` for UI consumption (FilesFound, FilesProcessed, CurrentFile, ElapsedMs).
+- OTel spans: `mediamatch.scan.parallel` (local) and `mediamatch.scan.network` (UNC/mapped).
+
+**NetworkPathDetector:**
+- Win32 `GetDriveType` P/Invoke via LibraryImport (same pattern as HardLinkHandler).
+- Detects UNC paths (`\\server\share`) and mapped drives (`DRIVE_REMOTE = 4`).
+- Auto-reduces concurrency to `NetworkConcurrency` (default 2) for network paths.
+
+**LazyMetadataResolver:**
+- Deferred metadata resolution: `Register()` queues, `ResolveMovieAsync`/`ResolveEpisodeSearchAsync` fetches on demand.
+- `ConcurrentDictionary` session cache prevents duplicate API calls.
+- Iterates providers in DI order, short-circuits on first result.
+
+**PerformanceSettings:**
+- `MaxScanThreads` (default: ProcessorCount), `NetworkConcurrency` (default: 2), `MaxDirectoryDepth` (default: 20), `EnableLazyMetadata` (default: true).
+- Added to `AppSettings.Performance`, registered in DI.
+
+**Architecture:**
+- `INetworkPathDetector` interface in Core/Services (clean architecture).
+- Application-level `ServiceCollectionExtensions.AddMediaMatchApplication()` for scanner + resolver registration.
+- Infrastructure `ServiceCollectionExtensions` registers `NetworkPathDetector` only.
+
+**Key file paths:**
+- `src/MediaMatch.Core/Configuration/PerformanceSettings.cs` — performance tuning config
+- `src/MediaMatch.Core/Services/IParallelFileScanner.cs` — scanner interface + ScanProgress record
+- `src/MediaMatch.Core/Services/ILazyMetadataResolver.cs` — deferred metadata interface
+- `src/MediaMatch.Core/Services/INetworkPathDetector.cs` — network path detection interface
+- `src/MediaMatch.Application/Services/ParallelFileScanner.cs` — parallel scanner impl
+- `src/MediaMatch.Application/Services/LazyMetadataResolver.cs` — lazy resolver impl
+- `src/MediaMatch.Application/ServiceCollectionExtensions.cs` — Application DI registration
+- `src/MediaMatch.Infrastructure/FileSystem/NetworkPathDetector.cs` — Win32 drive type detection
+
 
 ## Batch 6 Orchestration — 2026-04-27 08:28:35
 

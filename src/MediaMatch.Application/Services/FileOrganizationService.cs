@@ -134,7 +134,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
         return finalResults;
     }
 
-    private Task ApplyRenameAsync(string source, string destination, RenameAction action)
+    private async Task ApplyRenameAsync(string source, string destination, RenameAction action)
     {
         // Ensure destination directory exists
         var destDir = Path.GetDirectoryName(destination);
@@ -152,12 +152,13 @@ public sealed class FileOrganizationService : IFileOrganizationService
             case RenameAction.Hardlink:
                 _fileSystem.CreateHardLink(destination, source);
                 break;
+            case RenameAction.Clone:
+                await _fileSystem.CloneFileAsync(source, destination);
+                break;
             default:
                 _fileSystem.MoveFile(source, destination);
                 break;
         }
-
-        return Task.CompletedTask;
     }
 
     private Task RollbackAsync(List<(string From, string To)> completed)
@@ -191,6 +192,11 @@ public interface IFileSystem
     void CopyFile(string source, string destination);
     void CreateHardLink(string linkPath, string targetPath);
     void CreateDirectory(string path);
+
+    /// <summary>
+    /// Clones a file using the best available method (CoW → hardlink → copy).
+    /// </summary>
+    Task CloneFileAsync(string source, string destination, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -205,7 +211,14 @@ public sealed class PhysicalFileSystem : IFileSystem
 
     public void CreateHardLink(string linkPath, string targetPath)
     {
-        // .NET doesn't have a built-in hard link API; fall back to move for now
+        // .NET doesn't have a built-in hard link API; fall back to copy
         File.Copy(targetPath, linkPath);
+    }
+
+    public Task CloneFileAsync(string source, string destination, CancellationToken ct = default)
+    {
+        // Default implementation falls back to copy
+        File.Copy(source, destination, overwrite: true);
+        return Task.CompletedTask;
     }
 }

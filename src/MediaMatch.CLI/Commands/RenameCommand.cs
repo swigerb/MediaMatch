@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using MediaMatch.CLI.Infrastructure;
+using MediaMatch.Core.Enums;
 using MediaMatch.Core.Services;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -32,6 +33,20 @@ internal sealed class RenameSettings : CommandSettings
     [DefaultValue("table")]
     public string Format { get; set; } = "table";
 
+    [CommandOption("--action <ACTION>")]
+    [Description("File action: move (default), copy, clone, hardlink, test")]
+    [DefaultValue("move")]
+    public string Action { get; set; } = "move";
+
+    [CommandOption("--mode <MODE>")]
+    [Description("Media mode: auto (default), music")]
+    [DefaultValue("auto")]
+    public string Mode { get; set; } = "auto";
+
+    [CommandOption("--apply <ACTIONS>")]
+    [Description("Comma-separated post-process actions to run (e.g., plex-refresh,thumbnail)")]
+    public string? Apply { get; set; }
+
     public override ValidationResult Validate()
     {
         if (string.IsNullOrWhiteSpace(Path))
@@ -40,6 +55,9 @@ internal sealed class RenameSettings : CommandSettings
         var fullPath = System.IO.Path.GetFullPath(Path);
         if (!File.Exists(fullPath) && !Directory.Exists(fullPath))
             return ValidationResult.Error($"Path not found: {fullPath}");
+
+        if (!Enum.TryParse<MediaMatch.Core.Enums.RenameAction>(Action, ignoreCase: true, out _))
+            return ValidationResult.Error($"Invalid action: {Action}. Valid options: move, copy, clone, hardlink, test");
 
         return ValidationResult.Success();
     }
@@ -69,7 +87,10 @@ internal sealed class RenameCommand : AsyncCommand<RenameSettings>
             return 0;
         }
 
-        var mode = settings.DryRun ? "[cyan]DRY RUN[/]" : "[green]RENAME[/]";
+        var action = Enum.Parse<Core.Enums.RenameAction>(settings.Action, ignoreCase: true);
+        var isDryRun = settings.DryRun || action == Core.Enums.RenameAction.Test;
+
+        var mode = isDryRun ? "[cyan]DRY RUN[/]" : $"[green]{action.ToString().ToUpperInvariant()}[/]";
         AnsiConsole.MarkupLine($"{mode} — Processing {files.Count} file(s) with pattern [blue]{Markup.Escape(settings.Pattern)}[/]");
 
         var results = await AnsiConsole.Progress()
@@ -80,14 +101,14 @@ internal sealed class RenameCommand : AsyncCommand<RenameSettings>
                 var task = ctx.AddTask("[green]Processing files[/]", maxValue: files.Count);
 
                 Core.Models.FileOrganizationResult[] items;
-                if (settings.DryRun)
+                if (isDryRun)
                 {
                     var preview = await _previewService.PreviewAsync(files, settings.Pattern);
                     items = preview.ToArray();
                 }
                 else
                 {
-                    var organized = await _organizationService.OrganizeAsync(files, settings.Pattern);
+                    var organized = await _organizationService.OrganizeAsync(files, settings.Pattern, action);
                     items = organized.ToArray();
                 }
 
@@ -97,11 +118,11 @@ internal sealed class RenameCommand : AsyncCommand<RenameSettings>
 
         if (settings.Format.Equals("json", StringComparison.OrdinalIgnoreCase))
         {
-            RenderJson(results, settings.DryRun);
+            RenderJson(results, isDryRun);
         }
         else
         {
-            RenderTable(results, settings.DryRun);
+            RenderTable(results, isDryRun);
         }
 
         var succeeded = results.Count(r => r.Success);
