@@ -1,0 +1,187 @@
+using System.Text.Json.Serialization;
+using MediaMatch.Core.Configuration;
+using MediaMatch.Core.Models;
+using MediaMatch.Core.Providers;
+using MediaMatch.Infrastructure.Http;
+using Microsoft.Extensions.Logging;
+
+namespace MediaMatch.Infrastructure.Providers;
+
+/// <summary>
+/// Subtitle provider backed by the OpenSubtitles REST API v1.
+/// </summary>
+public sealed class OpenSubtitlesProvider : ISubtitleProvider
+{
+    private const string BaseUrl = "https://api.opensubtitles.com/api/v1";
+
+    private readonly MediaMatchHttpClient _http;
+    private readonly ApiConfiguration _config;
+    private readonly ILogger<OpenSubtitlesProvider> _logger;
+
+    /// <inheritdoc />
+    public string Name => "OpenSubtitles";
+
+    public OpenSubtitlesProvider(
+        MediaMatchHttpClient http,
+        ApiConfiguration config,
+        ILogger<OpenSubtitlesProvider> logger)
+    {
+        _http = http;
+        _config = config;
+        _logger = logger;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<SubtitleDescriptor>> SearchAsync(
+        string query, string language, CancellationToken ct = default)
+    {
+        var encodedQuery = Uri.EscapeDataString(query);
+        var url = $"{BaseUrl}/subtitles?query={encodedQuery}&languages={Uri.EscapeDataString(language)}";
+
+        return await SearchInternalAsync(url, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<SubtitleDescriptor>> SearchByHashAsync(
+        string movieHash, long fileSize, string language, CancellationToken ct = default)
+    {
+        var url = $"{BaseUrl}/subtitles?moviehash={Uri.EscapeDataString(movieHash)}&languages={Uri.EscapeDataString(language)}";
+
+        return await SearchInternalAsync(url, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<Stream> DownloadAsync(SubtitleDescriptor subtitle, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(subtitle.DownloadUrl))
+            throw new InvalidOperationException("Subtitle has no download URL.");
+
+        _logger.LogInformation("Downloading subtitle {Name} from OpenSubtitles", subtitle.Name);
+
+        // OpenSubtitles v1 download endpoint returns a JSON with a link
+        var response = await _http.PostAsync<DownloadRequest, DownloadResponse>(
+            $"{BaseUrl}/download",
+            new DownloadRequest(int.Parse(subtitle.DownloadUrl, System.Globalization.CultureInfo.InvariantCulture)),
+            ct);
+
+        if (response?.Link is null)
+            throw new InvalidOperationException("Failed to obtain download link from OpenSubtitles.");
+
+        // Fetch the actual subtitle file as a stream
+        var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("MediaMatch/1.0");
+        return await httpClient.GetStreamAsync(response.Link, ct);
+    }
+
+    private async Task<IReadOnlyList<SubtitleDescriptor>> SearchInternalAsync(string url, CancellationToken ct)
+    {
+        try
+        {
+            var response = await _http.GetAsync<SearchResponse>(url, ct);
+            if (response?.Data is null)
+                return [];
+
+            var results = new List<SubtitleDescriptor>();
+
+            foreach (var item in response.Data)
+            {
+                var attrs = item.Attributes;
+                if (attrs is null) continue;
+
+                var file = attrs.Files?.FirstOrDefault();
+                var format = ParseFormat(attrs.Format);
+
+                results.Add(new SubtitleDescriptor(
+                    Name: attrs.Release ?? attrs.FeatureDetails?.Title ?? "Unknown",
+                    Language: attrs.Language ?? "en",
+                    Format: format,
+                    ProviderName: "OpenSubtitles",
+                    DownloadUrl: file?.FileId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    Hash: attrs.MovieHashMatch is true ? "hash-match" : null,
+                    Downloads: attrs.DownloadCount));
+            }
+
+            _logger.LogDebug("OpenSubtitles returned {Count} results for {Url}", results.Count, url);
+            return results;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "OpenSubtitles search failed for {Url}", url);
+            return [];
+        }
+    }
+
+    private static SubtitleFormat ParseFormat(string? format) => format?.ToUpperInvariant() switch
+    {
+        "SRT" => SubtitleFormat.SubRip,
+        "ASS" or "SSA" => SubtitleFormat.SubStationAlpha,
+        "SUB" => SubtitleFormat.MicroDVD,
+        "SMI" or "SAMI" => SubtitleFormat.Sami,
+        _ => SubtitleFormat.Unknown
+    };
+
+    // Private DTOs for OpenSubtitles REST API v1
+
+    private sealed record DownloadRequest(
+        [property: JsonPropertyName("file_id")] int FileId);
+
+    private sealed class DownloadResponse
+    {
+        [JsonPropertyName("link")]
+        public string? Link { get; set; }
+    }
+
+    private sealed class SearchResponse
+    {
+        [JsonPropertyName("data")]
+        public List<SearchItem>? Data { get; set; }
+    }
+
+    private sealed class SearchItem
+    {
+        [JsonPropertyName("attributes")]
+        public SubtitleAttributes? Attributes { get; set; }
+    }
+
+    private sealed class SubtitleAttributes
+    {
+        [JsonPropertyName("release")]
+        public string? Release { get; set; }
+
+        [JsonPropertyName("language")]
+        public string? Language { get; set; }
+
+        [JsonPropertyName("download_count")]
+        public int? DownloadCount { get; set; }
+
+        [JsonPropertyName("format")]
+        public string? Format { get; set; }
+
+        [JsonPropertyName("moviehash_match")]
+        public bool? MovieHashMatch { get; set; }
+
+        [JsonPropertyName("files")]
+        public List<SubtitleFile>? Files { get; set; }
+
+        [JsonPropertyName("feature_details")]
+        public FeatureDetails? FeatureDetails { get; set; }
+    }
+
+    private sealed class SubtitleFile
+    {
+        [JsonPropertyName("file_id")]
+        public int FileId { get; set; }
+
+        [JsonPropertyName("file_name")]
+        public string? FileName { get; set; }
+    }
+
+    private sealed class FeatureDetails
+    {
+        [JsonPropertyName("title")]
+        public string? Title { get; set; }
+
+        [JsonPropertyName("imdb_id")]
+        public int? ImdbId { get; set; }
+    }
+}

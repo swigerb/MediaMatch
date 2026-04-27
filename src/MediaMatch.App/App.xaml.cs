@@ -1,5 +1,7 @@
 using MediaMatch.App.Services;
 using MediaMatch.App.ViewModels;
+using MediaMatch.Application.Services;
+using MediaMatch.Core.Services;
 using MediaMatch.Infrastructure;
 using MediaMatch.Infrastructure.Observability;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +48,27 @@ public partial class App : Microsoft.UI.Xaml.Application
     {
         MainWindow = new MainWindow();
         MainWindow.Activate();
+
+        // Fire-and-forget update check — don't block app launch
+        _ = CheckForUpdatesAsync();
+    }
+
+    private static async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            var updateService = _serviceProvider.GetRequiredService<IUpdateCheckService>();
+            await updateService.CheckForUpdatesAsync();
+
+            if (updateService.IsUpdateAvailable)
+            {
+                Log.Information("Update available: v{Version}", updateService.LatestVersion);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Background update check failed");
+        }
     }
 
     private static IServiceProvider ConfigureServices()
@@ -63,10 +86,22 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<NavigationService>();
         services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
 
-        // ViewModels — transient so each page gets a fresh instance if navigated again
-        services.AddSingleton<HomeViewModel>();
+        // Application services
+        services.AddSingleton<IFileSystem, PhysicalFileSystem>();
+        services.AddSingleton<IBatchOperationService, BatchOperationService>();
+        services.AddSingleton<IUndoService, UndoService>();
+
+        // ViewModels
+        services.AddSingleton<HomeViewModel>(sp => new HomeViewModel(
+            sp.GetRequiredService<IBatchOperationService>(),
+            sp.GetRequiredService<IUndoService>(),
+            sp.GetRequiredService<ILogger<HomeViewModel>>()));
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();
+
+        // Update services
+        services.AddSingleton<IUpdateCheckService, UpdateCheckService>();
+        services.AddTransient<UpdateViewModel>();
 
         return services.BuildServiceProvider();
     }

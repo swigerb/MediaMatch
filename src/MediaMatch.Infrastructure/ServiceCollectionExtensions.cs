@@ -54,6 +54,9 @@ public static class ServiceCollectionExtensions
         // Artwork providers
         services.AddSingleton<IArtworkProvider, TmdbArtworkProvider>();
 
+        // Subtitle providers
+        services.AddSingleton<ISubtitleProvider, OpenSubtitlesProvider>();
+
         return services;
     }
 
