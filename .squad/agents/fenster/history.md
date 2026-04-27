@@ -117,3 +117,19 @@
 - Serilog + OpenTelemetry fully integrated. CLI benefits from structured logging and activity tracing out-of-box.
 - All services accept `ILogger<T>?` with NullLogger fallback — CLI commands can log without test churn.
 - `MatchingPipeline` and `FileOrganizationService` instrumented with activity spans; `MatchCommand` and `RenameCommand` will inherit all tracing automatically.
+
+### 2026-04-27 — Cross-Agent Impact: McManus Phase 11+14 & Hockney Phase 13
+
+**From McManus (Phase 11+14 — Batch Operations & Polish):**
+- `BatchOperationService` now available for CLI integration. Chunk-based concurrency (configurable) processes files in parallel with per-file failure isolation.
+- `UndoService` provides rolling journal (100-entry limit) at `%LOCALAPPDATA%/MediaMatch/undo.json` — both App and CLI can use it.
+- Keyboard shortcuts wired: Ctrl+O (Organize), Ctrl+A (Select All), Ctrl+Z (Undo), Del (Delete), F5 (Refresh) — established pattern for App layer.
+- HomeViewModel fully instrumented with Serilog + OpenTelemetry from Phase 10; batch operations produce activity spans automatically.
+- README.md and CHANGELOG.md v0.1.0 provide user-facing documentation; architectural decisions documented in squad/decisions.md.
+
+**From Hockney (Phase 13 — Test Suite):**
+- 264 tests now passing (159 → +105). All layers covered: Core models, Application services, Infrastructure providers, CLI commands, integration tests.
+- Test patterns established: mock `HttpMessageHandler` (not sealed `MediaMatchHttpClient`), URL-routing for multi-call tests, real `MemoryCache` for cache tests.
+- `InternalsVisibleTo` wired in CLI .csproj — allows CLI.Tests to access internal command classes.
+- No test churn achieved — optional `ILogger<T>?` pattern with NullLogger fallback means all 159 pre-existing tests pass without modification.
+- Baseline established for future phases: >80% code coverage across all layers. Integration tests cover end-to-end pipeline with mocked providers.

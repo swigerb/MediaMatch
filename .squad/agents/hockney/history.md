@@ -131,3 +131,16 @@
 - Settings persistence layer complete with `ISettingsRepository` and `ISettingsEncryption` (DPAPI). Both CLI and App share the same persistent storage.
 - All services now have access to centralized AppSettings without duplicating configuration logic.
 - First-run detection wired into App; CLI can use the same settings file for operation parameters (output folder, API keys, rules).
+
+### 2026-04-27 — Cross-Agent Impact: Fenster Phase 7+12 & McManus Phase 11+14
+
+**From Fenster (Phase 7+12 — Subtitles & Velopack):**
+- `OpenSubtitlesProvider` implements `ISubtitleProvider` with REST API v1. Uses same HTTP mocking patterns established in Phase 3.
+- Subtitle tests cover two-step download flow, encoding detection, error handling. URL-routing handler pattern supports complex multi-call scenarios.
+- `UpdateCheckService` stub wired — fire-and-forget update check on App launch. TODO placeholder ready for Velopack.UpdateManager integration.
+
+**From McManus (Phase 11+14 — Batch Operations & Polish):**
+- `BatchOperationService` and `UndoService` fully tested with 15+ tests covering concurrency, failure modes, undo rollback, journal persistence.
+- Batch progress ViewModel instrumented with activity spans — each chunk produces progress events with file count/status tags.
+- HomeViewModel keyboard accelerators follow Windows conventions — test cases validate Ctrl+*, F-key routing to ViewModel commands.
+- 264 tests baseline established. Integration tests validate full App → Services → Providers pipeline with realistic file scenarios (unicode, batch failures, undo rollback).

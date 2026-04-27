@@ -71,3 +71,18 @@
 - Serilog + OpenTelemetry fully instrumented across Application layer. SettingsViewModel now logs state changes via `ILogger<T>` with optional pattern.
 - First-run detection and settings persistence paths are traced via activity spans; all failures logged structurally.
 - 159 tests pass without modification — optional logger pattern ensures backward compatibility for all existing tests.
+
+### 2026-04-27 — Cross-Agent Impact: Fenster Phase 7+12 & Hockney Phase 13
+
+**From Fenster (Phase 7+12 — Subtitles & Velopack):**
+- `OpenSubtitlesProvider` provides subtitle search/download via REST API v1. Two-step download process (POST `/download` → GET file) handled internally by provider.
+- `SubtitleDownloadService` orchestrates provider selection and download, with encoding detection via `System.Text.Encoding.DetectInputCodepage()`. Saves as UTF-8 with BOM.
+- `UpdateViewModel` ready for UI binding: properties `IsUpdateAvailable`, `LatestVersion`, `ReleaseNotes`, `IsChecking`, `IsApplying`; commands `CheckForUpdatesCommand`, `ApplyUpdateCommand`.
+- `IUpdateCheckService` fully wired in DI. Only `UpdateCheckService.CheckForUpdatesAsync()` needs Velopack.UpdateManager wiring when .NET 10 package is available.
+- Fire-and-forget update check in `App.OnLaunched` — never blocks startup.
+
+**From Hockney (Phase 13 — Test Suite):**
+- 264 tests passing (159 → +105), all layers covered. ViewModel tests validate `UpdateViewModel` command execution and state changes.
+- Test patterns established for subtitle providers: mock `HttpMessageHandler` for API responses, URL-routing for two-step download flow.
+- `ISubtitleDownloadService` mock contracts documented; easy to add tests for ViewModel integration with batch operations.
+- No test churn — all existing tests pass. Optional `ILogger<T>?` pattern ensures backward compatibility.

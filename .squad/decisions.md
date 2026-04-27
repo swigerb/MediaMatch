@@ -207,6 +207,92 @@ OpenTelemetry uses `System.Diagnostics.ActivitySource` directly — no OTel SDK 
 
 All agents adding new services should follow the same pattern: accept `ILogger<T>?` with NullLogger fallback, never reference Serilog directly.
 
+### Decision: Subtitle Provider & Velopack Update Architecture
+
+**Date:** 2026-04-27  
+**Author:** Fenster  
+**Status:** Implemented (Velopack stubbed)
+
+#### Context
+
+Phase 7 (Subtitle Search) and Phase 12 (Velopack Integration) were implemented together. Both involve external service integration with graceful degradation requirements.
+
+#### Decisions
+
+1. **OpenSubtitles two-step download** — The v1 API requires a POST to `/download` with a `file_id` to get a temporary download link, then a separate GET to fetch the file. The `DownloadAsync` method on the provider handles both steps internally.
+
+2. **Provider-agnostic download service** — `SubtitleDownloadService` resolves the correct `ISubtitleProvider` by matching the descriptor's `ProviderName`, then delegates download to the provider. This keeps the service independent of any specific API.
+
+3. **Velopack stubbed with full interface** — `IUpdateCheckService` and `UpdateViewModel` are fully wired. Only `UpdateCheckService` needs its TODO replaced with real `Velopack.UpdateManager` calls when the package is available for .NET 10.
+
+4. **Fire-and-forget startup update check** — `App.OnLaunched` kicks off `CheckForUpdatesAsync` without awaiting. Failures are swallowed and logged. The app never blocks on update checks.
+
+#### Impact
+
+- **McManus:** `UpdateViewModel` is ready for UI binding. Properties: `IsUpdateAvailable`, `LatestVersion`, `ReleaseNotes`, `IsChecking`, `IsApplying`. Commands: `CheckForUpdatesCommand`, `ApplyUpdateCommand`.
+- **Hockney:** `OpenSubtitlesProvider` is testable via `MediaMatchHttpClient` mock. `SubtitleDownloadService` can be tested by mocking `ISubtitleProvider`.
+- **All:** When Velopack NuGet is confirmed, only `UpdateCheckService.cs` needs modification — no interface or ViewModel changes required.
+
+---
+
+### Decision: Test Infrastructure Patterns (Phase 13)
+
+**Date:** 2026-04-27  
+**Author:** Hockney  
+**Status:** Implemented
+
+#### Context
+
+Phase 13 required comprehensive test coverage across all projects. Several infrastructure classes (sealed HTTP client, static file paths) required specific testing strategies.
+
+#### Decisions
+
+1. **Mock HttpMessageHandler, not MediaMatchHttpClient** — Since `MediaMatchHttpClient` is sealed, provider tests mock `HttpMessageHandler` via `Moq.Protected()` and inject it into a real `HttpClient`. This gives full control over HTTP responses without modifying production code.
+
+2. **URL-routing handler for multi-call tests** — Tests that exercise code paths making multiple HTTP requests use a dictionary-based handler that matches URL patterns to JSON responses.
+
+3. **Real MemoryCache in cache tests** — `MetadataCache` wraps `IMemoryCache`. Tests use the real `Microsoft.Extensions.Caching.Memory.MemoryCache` since it's fast and deterministic.
+
+4. **CLI test project with InternalsVisibleTo** — Created `MediaMatch.CLI.Tests` and added `<InternalsVisibleTo Include="MediaMatch.CLI.Tests" />` to CLI .csproj to access internal command classes.
+
+5. **App.Tests references Core, not App** — WinUI 3 App project can't be referenced from a `net10.0` test project. App.Tests validates Core models, configuration, and validation logic instead.
+
+#### Impact
+
+- Fenster: When adding new providers, follow the `HttpMessageHandler` mock pattern from `TmdbMovieProviderTests`
+- McManus: If SettingsRepository gets path injection, add file-system round-trip tests
+- Keaton: 264 tests baseline. Integration tests in `Application.Tests/Integration/` cover the full pipeline with mocked providers.
+
+---
+
+### Decision: Batch Operations & Undo Architecture
+
+**Date:** 2026-04-27  
+**Author:** McManus (UI Dev)  
+**Status:** Implemented
+
+#### Context
+
+Phase 11 required batch rename operations with progress tracking and undo support. Phase 14 required documentation and UI polish.
+
+#### Decisions
+
+1. **Chunk-based concurrency** — `BatchOperationService` processes files in chunks of N (default 4) using `Task.WhenAll`. Each file is individually sent to `IFileOrganizationService.OrganizeAsync()` so per-file failure doesn't block the batch. This is simpler than `SemaphoreSlim`-based throttling and sufficient for file I/O workloads.
+
+2. **Undo journal at `%LOCALAPPDATA%`** — `UndoService` stores a rolling JSON journal (max 100 entries) at `%LOCALAPPDATA%/MediaMatch/undo.json`. Atomic writes via `.tmp` + `File.Move`. Thread-safe with `SemaphoreSlim`. Uses Hockney's `IFileSystem` abstraction so the entire undo flow is unit-testable.
+
+3. **HomeViewModel constructor injection** — `HomeViewModel` now takes `IBatchOperationService`, `IUndoService`, and `ILogger` via DI. A parameterless constructor remains for design-time scenarios. This keeps the ViewModel fully testable without WinUI dependencies.
+
+4. **Keyboard accelerators via Page override** — Used `Page.KeyboardAccelerators` in XAML with `OnKeyboardAcceleratorInvoked` override in code-behind (not ViewModel). Keyboard input is inherently a View concern; the handler simply dispatches to ViewModel commands.
+
+#### Impact
+
+- **Hockney**: `IBatchOperationService` and `IUndoService` interfaces in Core are ready for unit test coverage.
+- **Fenster**: CLI can reuse `BatchOperationService` and `UndoService` directly — they have no UI dependencies.
+- **Keaton**: Architecture maintains clean separation. No circular dependencies introduced.
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus
