@@ -1,0 +1,8 @@
+docs: log Phase 2+4 launch, record Scriban decision
+
+- Created orchestration logs for all 4 spawned agents (Phase 2 + Phase 4)
+- Created session log documenting Phase 2 and Phase 4 launch
+- Recorded architecture decision: Scriban expression engine (primary) + Roslyn fallback
+- Merged decision inbox entry into decisions.md
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
