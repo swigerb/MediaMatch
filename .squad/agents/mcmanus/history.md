@@ -41,6 +41,27 @@
 - App + CLI share settings layer + subtitle providers
 
 
+## Learnings — 2026-04-27 (Docs Update)
+
+- **README.md** at repo root; full rewrite for v0.2.0: structured by category (Matching, Providers, Tokens, File Handling, UI, Shell, Automation, Performance). FileBot comparison table is a key reader touchpoint — keep it current each version.
+- **CHANGELOG.md** at repo root; uses Keep a Changelog format. New version entries go ABOVE the previous entry. Phase numbers in parentheses on each item help trace features back to implementation.
+- `dotnet build src\MediaMatch.App\MediaMatch.App.csproj -p:Platform=x64` is the canonical build command (Platform=x64 is required).
+- Shell Extension project is `MediaMatch.ShellExtension` — 6th project in the solution alongside Core, Application, Infrastructure, App, CLI.
+- `MediaMatch.ShellExtension` registers at `HKCU\Software\Classes\*\shell\MediaMatch`; CLI dispatch pattern is `MediaMatch.CLI.exe`.
+
+## Cross-Agent Integration — 2026-04-27 (Batch 8)
+
+**From Hockney (Phases 15-28):**
+- E2E integration test suite complete: 729 passing tests (108 new E2E + 621 existing)
+- Test patterns established for all v0.2.0 features
+- Ready for release candidate build
+
+**Batch 8 Summary:**
+- v0.2.0 documentation complete (README + CHANGELOG with Phase traceability)
+- All decisions from Fenster, Hockney, McManus merged into decisions.md
+- 4 inbox files processed, deduplicated, archived
+- Ready for v0.2.0 release
+
 ## Batch 6 Orchestration — 2026-04-27 08:28:35
 
 ### Team Status

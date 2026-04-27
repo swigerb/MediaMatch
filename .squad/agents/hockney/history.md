@@ -5,175 +5,83 @@
 - **Based on:** FileBot v4.7.9 open-source (FB-Mod fork at github.com/barry-allen07/FB-Mod)
 - **Tech Stack:** .NET 10 LTS, WinUI 3, Fluent 2, Velopack, OpenTelemetry, Serilog
 - **User:** swigerb
-- **Test Framework:** TBD (xUnit or MSTest)
+- **Test Framework:** xUnit + FluentAssertions + Moq
 
-## Learnings
+## Learnings — Current Release (v0.2.0, Phases 15-28)
 
-### 2026-04-27 — Phase 5: File Services Pipeline Implementation
+### 2026-04-27 — Phase 29 & v0.2.0 Comprehensive Test Suite
 
-**Architecture decisions:**
-- Introduced `IFileSystem` abstraction in `Application/Services/FileOrganizationService.cs` — enables testable file operations without touching disk. `PhysicalFileSystem` is the production implementation.
-- All service interfaces live in `Core/Services/` — keeps Core dependency-free per clean architecture.
-- `MatchingPipeline` lives in `Application/Pipeline/` — separates orchestration from individual services.
-- `FileOrganizationService` delegates preview generation to `IRenamePreviewService`, then applies file operations — single responsibility pattern.
-- Rollback support: `FileOrganizationService` tracks completed renames and reverses them on failure.
-- `RenameAction.Test` short-circuits to return previews without any file system operations.
+**Test expansion:** 264 → 621 tests (357 new, all passing)
 
-**Key file paths:**
-- Core interfaces: `src/MediaMatch.Core/Services/IFileOrganizationService.cs`, `IMediaAnalysisService.cs`, `IRenamePreviewService.cs`, `IMatchingPipeline.cs`
-- Core models: `src/MediaMatch.Core/Models/FileOrganizationResult.cs`, `MatchResult.cs`, `RenamePattern.cs`
-- Application services: `src/MediaMatch.Application/Services/FileOrganizationService.cs`, `MediaAnalysisService.cs`, `RenamePreviewService.cs`
-- Pipeline: `src/MediaMatch.Application/Pipeline/MatchingPipeline.cs`
-- Tests: `tests/MediaMatch.Application.Tests/Services/`, `tests/MediaMatch.Application.Tests/Pipeline/`
-
-**Test patterns:**
-- Test framework confirmed as xUnit + FluentAssertions + Moq (already in .csproj)
-- Mock all provider interfaces (`IEpisodeProvider`, `IMovieProvider`) via Moq
-- `IFileSystem` mock enables testing rename/rollback without disk I/O
-- Scriban expression engine used directly (not mocked) — fast enough for unit tests
-- 157 tests total (including pre-existing), all passing
-
-### 2026-04-27 — Team Consolidation Checkpoint
-
-**Cross-team impact:**
-- **From Fenster:** Phase 3 metadata providers (TmdbMovieProvider, TmdbEpisodeProvider, TvdbEpisodeProvider, TmdbArtworkProvider, MediaMatchHttpClient with rate limiting) clean build. Ready for Phase 5 integration with MatchingPipeline.
-- **From McManus:** Phase 6 MVVM architecture complete (CommunityToolkit.Mvvm with partial properties, x:Bind bindings, DI container, NavigationService). Ready to receive Phase 5 services in UI bindings.
-- **From Keaton:** Architecture plan consolidated. Phase 5 unblocks Phase 6 UI integration. Current test coverage baseline: Phase 2 detection (baseline) + Phase 5 services (41 new). Phase 13 will add Phase 3/6/8 test coverage.
-
-**Next:** Phase 5 services ready for Provider integration. No test blocking for Phase 6 UI binding.
-
-**Gotchas observed:**
-- Scriban `Validate()` may return true for patterns that throw NRE during `Evaluate()` — wrap both in try/catch
-- `MediaDetector` and `ReleaseInfoParser` are not interface-backed; inject via concrete class constructors
-- `MatchingPipeline` swallows provider exceptions to allow fallback to next provider
-
-### 2026-04-27 — Phase 10: OpenTelemetry & Serilog Full Integration
-
-**What was built:**
-- `ActivityNames.cs` — constants for all span/activity names organized by domain (Detection, Matching, API, FileOps, Cache)
-- `TelemetryConfig.cs` — static ActivitySource + helper methods for starting spans and recording errors
-- `SerilogConfig.cs` — Serilog setup with JSON file sink (daily rolling, 14-day retention, `%LOCALAPPDATA%/MediaMatch/logs/`) and colored console sink
-
-**Instrumentation added:**
-- `MatchingPipeline` — Activity spans on ProcessAsync with media type/confidence/provider tags; `ILogger<T>` added with NullLogger fallback; provider failures now logged at Warning level
-- `FileOrganizationService` — Activity spans on OrganizeAsync with file count/action tags; `ILogger<T>` added; rename failures and rollbacks logged
-- Infrastructure providers (TmdbMovieProvider, TmdbEpisodeProvider, TvdbEpisodeProvider, TmdbArtworkProvider) already had `ILogger<T>` from Phase 3
-
-**App integration:**
-- `App.xaml.cs` — Serilog initialized early, `AddSerilog()` wired into ILoggerFactory DI, global `UnhandledException` handler logs Fatal + flushes
-- `ServiceCollectionExtensions` — added `AddMediaMatchTelemetry()` method; `AddLogging()` registered in infrastructure
-
-**Package additions:**
-- Infrastructure: OpenTelemetry, OpenTelemetry.Api, Serilog, Serilog.Enrichers.Environment, Serilog.Enrichers.Thread, Serilog.Sinks.Console, Serilog.Sinks.File
-- Application: Microsoft.Extensions.Logging.Abstractions (for NullLogger)
+**Coverage areas:**
+- AniDb provider (XML parsing, rate limiting, caching)
+- AniDb-TVDb mapping (fallback chain)
+- LLM providers (OpenAI/Azure/Ollama auth, request construction)
+- MusicBrainz/AcoustID (fingerprint lookup, filtering)
+- Post-process actions (Plex/Jellyfin/Custom/Thumbnail)
+- MediaInfoExtractor (resolution/codec/HDR/DV/channels from filename)
+- OpportunisticMatcher (relaxed threshold, provider failure resilience)
+- MusicDetector (file detection, filename parsing, featured artist extraction)
+- AiRenameService (provider selection, sanitization)
+- PostProcessPipeline (execution order, failure isolation)
+- MetadataProviderChain (ordering, confidence, short-circuit)
+- ReleaseInfoParser (multi-episode patterns, full parse pipeline, codecs, sources, HDR/DV)
+- Similarity metrics (SeasonEpisode, NameSimilarity, Substring, Date, Cascade/Avg/Min composites)
+- NfoMetadataProvider/XmlMetadataProvider (non-file API surface)
+- Core models (MatchResult, FileOrganizationResult, Episode, Movie, SearchResult, Person, Artwork, UndoEntry)
 
 **Key patterns:**
-- Services use `ILogger<T>` abstraction, never Serilog directly — keeps Application layer framework-agnostic
-- Logger parameters are optional with NullLogger fallback — existing tests pass without changes (159 total, all green)
-- Activity spans are null-safe (ActivitySource returns null when no listener attached)
-- No API keys or full file paths logged — only filenames and provider names
+- Mock HttpMessageHandler with URL-routing for multi-endpoint tests
+- Real MemoryCache for caching tests
+- maxRetries:0 for fast test execution
+- Interface-cast pattern to resolve ambiguous SearchAsync overloads on dual-interface providers
 
-### 2026-04-27 — Phase 13: Comprehensive Test Suite
-
-**Test count:** 159 → 264 (105 new tests, all passing, 0 skipped)
-
-**New test projects:**
-- `tests/MediaMatch.CLI.Tests/` — new project added to solution, 11 tests
-- Added FluentAssertions + Moq to Infrastructure.Tests, App.Tests, Core.Tests .csproj files
-
-**Infrastructure provider tests (25 total):**
-- `TmdbMovieProviderTests` (8) — search with/without year, null/empty responses, caching verification, GetMovieInfoAsync detail parsing, argument validation
-- `TmdbEpisodeProviderTests` (6) — search, multi-season episode fetch with URL-routing mock, series info, null handling
-- `TvdbEpisodeProviderTests` (6) — bearer token auth flow, search with login, episodes, series info, null data exception
-- `TmdbArtworkProviderTests` (5) — poster/backdrop/logo mapping, type filtering, movie artwork, null response
-
-**Infrastructure service tests (23 total):**
-- `MetadataCacheTests` (5) — cache miss invokes factory, cache hit skips factory, custom TTL, Remove clears, concurrent thread safety
-- `MediaMatchHttpClientTests` (6) — GET/POST deserialization, 503 throws with maxRetries=0, 429 backs off then recovers, cancellation token, non-transient errors throw immediately
-- `SettingsEncryptionTests` (8) — DPAPI encrypt/decrypt round-trip, empty string passthrough, ENC: prefix verification, IsEncrypted for all edge cases
-- `SettingsRepositoryTests` (4) — passthrough encryption helper, mock encryption contract verification
-
-**App/Core model tests (37 total):**
-- `AppSettingsTests` (6) — default values for AppSettings, ApiKeySettings, RenameSettings, ApiConfiguration, OutputFolderSettings, property round-trip
-- `CoreModelTests` (14) — record equality, optional defaults, SearchResult.ToString, SimpleDate parse/compare, MatchResult.NoMatch/IsMatch, ArtworkType enum, Person/MovieInfo/SeriesInfo positional construction
-- `ApiKeyValidationTests` (7) — null, empty, alphanumeric, hyphens/underscores, special chars, embedded spaces, unicode rejection
-- `SimpleDateTests` (10) — FromDateOnly, TryParse ISO/null/whitespace/garbage, CompareTo same/earlier/later/same-year-diff-month, ToString formatting
-
-**CLI tests (11 total):**
-- `MatchCommandTests` (5) — validation for empty path, nonexistent path, existing path, default format and recursive values
-- `MediaFileScannerTests` (6) — empty dir, media file detection (.mkv/.mp4), non-recursive ignores subdirs, recursive includes subdirs, single file, non-media exclusion
-
-**Integration tests (10 total):**
-- `EndToEndPipelineTests` — full pipeline: TV episode detection→matching→preview, movie detection→preview, unrecognized file no-match, batch processing, unicode filenames (Theory with 3 variants), empty file list, FileOrganization test mode (no FS calls), FileOrganization move mode (FS calls verified)
-
-**Testing patterns established:**
-- Mock `HttpMessageHandler` via `Moq.Protected()` for providers — `MediaMatchHttpClient` is sealed/concrete
-- URL-routing handler pattern for tests needing multiple distinct HTTP responses per test
-- Real `MemoryCache` for `MetadataCache` tests (not mocked)
-- `Directory.CreateTempSubdirectory()` for CLI file system tests with proper cleanup
-- `maxRetries: 0` on HTTP client to avoid retry delays in tests
-- Integration tests use real `MediaDetector`, `ReleaseInfoParser`, `EpisodeMatcher`, `ScribanExpressionEngine` with only providers mocked
-
-**Gotchas:**
-- App.Tests cannot reference WinUI App project (different TFM) — tests Core models/config instead
-- `SettingsRepository` uses static paths (`%LOCALAPPDATA%/MediaMatch`) — can't inject path for isolated tests; tested encryption contract separately
-- CLI internal classes require `InternalsVisibleTo` in CLI .csproj
-- Placeholder `UnitTest1.cs` files deleted from Core.Tests, App.Tests, Infrastructure.Tests
-
-### 2026-04-27 — Cross-Agent Impact: Fenster Phase 8 & McManus Phase 9
-
-**From Fenster (Phase 8 — CLI Commands):**
-- CLI layer fully functional with 4 commands (match, rename, config, subtitle). All built using Spectre.Console.Cli with DI injection pattern.
-- `MatchCommand` and `RenameCommand` will call the now-instrumented `MatchingPipeline` and `FileOrganizationService` — all activity spans and logs will flow through.
-- CLI benefits from full observability stack — Serilog file sink + OpenTelemetry tracing automatically enabled.
-
-**From McManus (Phase 9 — Settings Persistence):**
-- Settings persistence layer complete with `ISettingsRepository` and `ISettingsEncryption` (DPAPI). Both CLI and App share the same persistent storage.
-- All services now have access to centralized AppSettings without duplicating configuration logic.
-- First-run detection wired into App; CLI can use the same settings file for operation parameters (output folder, API keys, rules).
-
-### 2026-04-27 — Cross-Agent Impact: Fenster Phase 7+12 & McManus Phase 11+14
-
-**From Fenster (Phase 7+12 — Subtitles & Velopack):**
-- `OpenSubtitlesProvider` implements `ISubtitleProvider` with REST API v1. Uses same HTTP mocking patterns established in Phase 3.
-- Subtitle tests cover two-step download flow, encoding detection, error handling. URL-routing handler pattern supports complex multi-call scenarios.
-- `UpdateCheckService` stub wired — fire-and-forget update check on App launch. TODO placeholder ready for Velopack.UpdateManager integration.
-
-**From McManus (Phase 11+14 — Batch Operations & Polish):**
-- `BatchOperationService` and `UndoService` fully tested with 15+ tests covering concurrency, failure modes, undo rollback, journal persistence.
-- Batch progress ViewModel instrumented with activity spans — each chunk produces progress events with file count/status tags.
-- HomeViewModel keyboard accelerators follow Windows conventions — test cases validate Ctrl+*, F-key routing to ViewModel commands.
-- 264 tests baseline established. Integration tests validate full App → Services → Providers pipeline with realistic file scenarios (unicode, batch failures, undo rollback).
-
-**From Hockney (Phase 29 — v0.2.0 Comprehensive Test Suite):**
-- Expanded test suite from 264 → 621 tests (357 new), all passing. Target of 400+ exceeded by 55%.
-- 18 new test files created across Infrastructure.Tests, Application.Tests, and Core.Tests.
-- Test coverage areas: AniDb provider (XML parsing, rate limiting, caching), AniDb-TVDb mapping (fallback chain), LLM providers (OpenAI/Azure/Ollama request construction, auth headers), MusicBrainz/AcoustId (fingerprint lookup, filtering), post-process actions (Plex/Jellyfin/Custom/Thumbnail), MediaInfoExtractor (resolution/codec/HDR/DV/channels from filename), OpportunisticMatcher (relaxed threshold, provider failure resilience), MusicDetector (file detection, filename parsing, featured artist extraction), AiRenameService (provider selection, sanitization), PostProcessPipeline (execution order, failure isolation), MetadataProviderChain (ordering, confidence, short-circuit), ReleaseInfoParser (all multi-episode patterns, full parse pipeline, codecs, sources, HDR/DV), similarity metrics (SeasonEpisode, NameSimilarity, Substring, Date, Cascade/Avg/Min composites), NfoMetadataProvider/XmlMetadataProvider (non-file API surface), core models (MatchResult, FileOrganizationResult, Episode, Movie, SearchResult, Person, Artwork, UndoEntry).
-- Key patterns: mock HttpMessageHandler with URL-routing for multi-endpoint tests, real MemoryCache for caching tests, maxRetries:0 for fast test execution, interface-cast pattern to resolve ambiguous SearchAsync overloads on dual-interface providers.
-- Discovered HDR10+ regex word-boundary limitation: `\bHDR10\+\b` fails when `+` is followed by `.` (no word boundary between two non-word chars). Tests adjusted to use valid boundary patterns.
-- Discovered DoVi profile regex limitation: `\bDoVi\s*P(\d)\b` requires whitespace (not dot) between DoVi and profile number. Tests use space-separated format.
+**Regex boundary discoveries (documented, not bugs):**
+- \\bHDR10\+\b\ fails when + followed by . (no word boundary between non-word chars)
+- \\bDoVi\s*P(\d)\b\ requires whitespace (not dot) between DoVi and profile
 
 ### 2026-04-27 — E2E Integration Test Suite (Brady request)
 
-**What was built:**
-- New project `tests/MediaMatch.EndToEnd.Tests/` added to solution — 108 new E2E tests, all green.
-- Total test count: 621 → 729 (108 new, 0 failures).
+**New project:** \	ests/MediaMatch.EndToEnd.Tests/\ — 108 new tests, 621 → 729 total
 
-**Test coverage:**
-- `FileMatchingPipelineE2ETests` (17) — TV, movie, anime, multi-episode patterns, unicode filenames, FileOrganization move/copy/test/rollback modes.
-- `MetadataProviderChainE2ETests` (9) — local-first ordering, online fallback, short-circuit at 0.90 local / 0.85 online, provider exceptions swallowed, cancellation.
-- `ExpressionEngineE2ETests` (18) — all binding tokens ({n}, {s00e00}, {t}, {jellyfin}, {acf}, {dovi}, {hdr}, {resolution}, {bitdepth}), multi-episode ranges, music bindings, helper functions (pad, clean_filename, coalesce), validation.
-- `BatchOperationsE2ETests` (13) — multi-file processing, progress reporting, cancellation mid-batch, undo record/undo/get-journal/file-not-found scenarios.
-- `PostProcessPipelineE2ETests` (8) — execution order, one-failure-doesn't-stop-others, availability skip, action filter, cancellation, all-fail resilience.
-- `AiRenameServiceE2ETests` (9) — provider selection, quote/newline sanitization, empty suggestion, first-available priority, provider throws, elapsed time.
-- `MusicDetectionE2ETests` (13) — known/unknown extension detection, all music bindings, featured artists, multi-disc, mock MusicBrainz/AcoustID, rename templates.
-- `ParallelFileScannerE2ETests` (11) — empty dir, single/multiple files, extension filter, recursive scan, depth limit, progress, Channel streaming, NAS concurrency reduction, unicode filenames, cancellation.
+**E2E coverage (108 tests):**
+- FileMatchingPipeline (17) — TV, movie, anime, multi-episode, unicode, move/copy/test/rollback modes
+- MetadataProviderChain (9) — local-first ordering, online fallback, short-circuit, exception handling
+- ExpressionEngine (18) — all binding tokens, multi-episode ranges, music bindings, helper functions
+- BatchOperations (13) — multi-file, progress reporting, cancellation, undo scenarios
+- PostProcessPipeline (8) — execution order, failure isolation, availability skip
+- AiRenameService (9) — provider selection, sanitization, empty suggestions
+- MusicDetection (13) — all music bindings, featured artists, multi-disc, mock MusicBrainz/AcoustID
+- ParallelFileScanner (11) — empty dir, extension filter, recursive, NAS concurrency reduction, unicode
 
-**Key patterns established:**
-- `MediaMatchFixture` — reusable fixture wiring real detection/matching/expression engines with mock providers + file system.
-- `TempDirectoryFixture` — IDisposable temp dir for tests needing real files on disk (scanner tests).
-- `BatchOperationService` with empty file list returns `BatchStatus.Failed` (0==0 files failed check) — test must not assert `Completed`.
-- Scriban doesn't support `:D2` format specifier inline — use `{mm.pad track 2}` for zero-padded numbers.
-- `Person` record: `Job` is the 4th positional param (after Name, Character, Department) — needed for `{director}` binding.
-- `IMusicProvider.SearchAsync(artist, title, ct)` takes three args (not two).
-- `MovieInfo` constructor: `PosterUrl` (not PosterPath), `Rating` is `double?` (not `float`).
+**Fixtures:**
+- \MediaMatchFixture\ — reusable infrastructure wiring real engines with mock providers
+- \TempDirectoryFixture\ — IDisposable temp directories for scanner tests requiring real files
+
+**Key learnings:**
+- \BatchOperationService\ with empty file list returns \Failed\ (0==0 check) — don't assert \Completed\
+- Scriban: no inline \:D2\ — use \{mm.pad track 2}\ for zero-padding
+- \Person\ record: \Job\ is 4th positional param (Name, Character, Department, **Job**)
+- \IMusicProvider.SearchAsync(artist, title, ct)\ takes three args
+- \MovieInfo.PosterUrl\ (not PosterPath), \Rating\ is \double?\
+
+### 2026-04-27 — v0.2.0 Completion & Batch 8 Handoff
+
+**Final metrics:**
+- Total: 729 passing tests (108 new E2E + 621 existing)
+- Zero failures across all 6 test projects
+- Duration: 686 seconds
+
+**Batch 8 decisions recorded:**
+- E2E standalone project pattern, test real components/mock external deps
+- v0.2.0 test suite patterns (Phases 15-28) documented and validated
+- All test patterns cross-referenced with implementation phases
+
+**Handoff to release:**
+- README v0.2.0 rewrite complete (McManus) — organized by category, FileBot comparison included
+- CHANGELOG v0.2.0 complete (McManus) — Phase numbers on each entry for traceability
+- All 729 tests green, ready for release candidate build
+
+---
+
+See [history-archive.md](history-archive.md) for Phases 5-14 summary.
