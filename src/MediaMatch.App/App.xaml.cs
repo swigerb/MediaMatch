@@ -1,12 +1,7 @@
+using MediaMatch.App.Services;
+using MediaMatch.App.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace MediaMatch.App;
 
@@ -15,24 +10,44 @@ namespace MediaMatch.App;
 /// </summary>
 public partial class App : Microsoft.UI.Xaml.Application
 {
-    private Window? _window;
-    
+    private static IServiceProvider _serviceProvider = null!;
+
     /// <summary>
-    /// Initializes the singleton application object.  This is the first line of authored code
-    /// executed, and as such is the logical equivalent of main() or WinMain().
+    /// Gets the main window instance for HWND access (folder pickers, etc.).
     /// </summary>
+    public static MainWindow MainWindow { get; private set; } = null!;
+
+    /// <summary>
+    /// Resolves a service from the DI container.
+    /// </summary>
+    public static T GetService<T>() where T : class
+        => _serviceProvider.GetRequiredService<T>();
+
     public App()
     {
         InitializeComponent();
+        _serviceProvider = ConfigureServices();
     }
 
-    /// <summary>
-    /// Invoked when the application is launched.
-    /// </summary>
-    /// <param name="args">Details about the launch request and process.</param>
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _window = new MainWindow();
-        _window.Activate();
+        MainWindow = new MainWindow();
+        MainWindow.Activate();
+    }
+
+    private static IServiceProvider ConfigureServices()
+    {
+        var services = new ServiceCollection();
+
+        // Navigation
+        services.AddSingleton<NavigationService>();
+        services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
+
+        // ViewModels — transient so each page gets a fresh instance if navigated again
+        services.AddSingleton<HomeViewModel>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<AboutViewModel>();
+
+        return services.BuildServiceProvider();
     }
 }

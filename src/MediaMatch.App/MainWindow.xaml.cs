@@ -1,10 +1,8 @@
+using MediaMatch.App.Pages;
+using MediaMatch.App.Services;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using MediaMatch.App.Pages;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace MediaMatch.App;
 
@@ -18,6 +16,13 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         AppWindow.SetIcon("Assets/AppIcon.ico");
+
+        // Wire navigation service to the frame
+        var navigationService = App.GetService<NavigationService>();
+        navigationService.SetFrame(NavFrame);
+
+        // Navigate to Home on startup
+        NavFrame.Navigate(typeof(HomePage));
     }
 
     private void TitleBar_PaneToggleRequested(TitleBar sender, object args)

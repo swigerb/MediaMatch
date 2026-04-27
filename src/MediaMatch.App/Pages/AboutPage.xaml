@@ -8,12 +8,62 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="24,16,24,16" RowSpacing="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="About" />
-        <TextBlock Grid.Row="1" Text="This is the About page" />
-    </Grid>
+    <ScrollViewer>
+        <StackPanel
+            MaxWidth="600"
+            Padding="24,16,24,24"
+            Spacing="24">
+
+            <!-- Header -->
+            <StackPanel Spacing="4">
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{x:Bind ViewModel.AppName}" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="{x:Bind ViewModel.Version}" />
+            </StackPanel>
+
+            <!-- Description -->
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                Text="{x:Bind ViewModel.Description}"
+                TextWrapping="WrapWholeWords" />
+
+            <!-- Links -->
+            <StackPanel Spacing="8">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Links" />
+                <HyperlinkButton
+                    Command="{x:Bind ViewModel.OpenGitHubCommand}"
+                    Content="GitHub Repository" />
+            </StackPanel>
+
+            <!-- License -->
+            <StackPanel Spacing="8">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="License" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.License}" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="{x:Bind ViewModel.Copyright}" />
+            </StackPanel>
+
+            <!-- Credits -->
+            <StackPanel Spacing="8">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Credits" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Built with WinUI 3, .NET 10, and the Windows App SDK."
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Inspired by FileBot — the original media renaming tool."
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="Metadata powered by TMDB and TVDB."
+                    TextWrapping="WrapWholeWords" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
 </Page>

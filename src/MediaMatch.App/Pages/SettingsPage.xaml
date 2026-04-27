@@ -8,12 +8,141 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="24,16,24,16" RowSpacing="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Settings" />
-        <TextBlock Grid.Row="1" Text="This is the Settings page" />
-    </Grid>
+    <ScrollViewer>
+        <StackPanel
+            MaxWidth="800"
+            Padding="24,16,24,24"
+            Spacing="24">
+
+            <!-- Header -->
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Settings" />
+
+            <!-- API Keys -->
+            <StackPanel Spacing="16">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="API Keys" />
+
+                <Grid ColumnSpacing="8" RowSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <PasswordBox
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Header="TMDB API Key"
+                        Password="{x:Bind ViewModel.TmdbApiKey, Mode=TwoWay}"
+                        PlaceholderText="Enter your TMDB API key" />
+                    <Button
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        VerticalAlignment="Bottom"
+                        Command="{x:Bind ViewModel.ClearTmdbApiKeyCommand}"
+                        Content="Clear" />
+
+                    <PasswordBox
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Header="TVDB API Key"
+                        Password="{x:Bind ViewModel.TvdbApiKey, Mode=TwoWay}"
+                        PlaceholderText="Enter your TVDB API key" />
+                    <Button
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        VerticalAlignment="Bottom"
+                        Command="{x:Bind ViewModel.ClearTvdbApiKeyCommand}"
+                        Content="Clear" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Rename Patterns -->
+            <StackPanel Spacing="16">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Rename Patterns" />
+
+                <TextBox
+                    Header="Movie Pattern"
+                    PlaceholderText="{}{Name} ({Year})/{Name} ({Year}){extension}"
+                    Text="{x:Bind ViewModel.MovieRenamePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBox
+                    Header="Series Pattern"
+                    PlaceholderText="{}{SeriesName}/Season {Season}/..."
+                    Text="{x:Bind ViewModel.SeriesRenamePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <InfoBar
+                    IsClosable="False"
+                    IsOpen="True"
+                    Message="{x:Bind ViewModel.RenamePreview, Mode=OneWay}"
+                    Severity="Informational"
+                    Title="Preview" />
+            </StackPanel>
+
+            <!-- Output Folders -->
+            <StackPanel Spacing="16">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Output Folders" />
+
+                <Grid ColumnSpacing="8" RowSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBox
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Header="Movies Output Folder"
+                        IsReadOnly="True"
+                        PlaceholderText="Select a folder..."
+                        Text="{x:Bind ViewModel.MovieOutputFolder, Mode=OneWay}" />
+                    <Button
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        VerticalAlignment="Bottom"
+                        Command="{x:Bind ViewModel.BrowseMovieOutputFolderCommand}"
+                        Content="Browse..." />
+
+                    <TextBox
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Header="Series Output Folder"
+                        IsReadOnly="True"
+                        PlaceholderText="Select a folder..."
+                        Text="{x:Bind ViewModel.SeriesOutputFolder, Mode=OneWay}" />
+                    <Button
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        VerticalAlignment="Bottom"
+                        Command="{x:Bind ViewModel.BrowseSeriesOutputFolderCommand}"
+                        Content="Browse..." />
+                </Grid>
+            </StackPanel>
+
+            <!-- Actions -->
+            <StackPanel
+                HorizontalAlignment="Left"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Command="{x:Bind ViewModel.SaveSettingsCommand}"
+                    Content="Save Settings"
+                    Style="{StaticResource AccentButtonStyle}" />
+                <Button
+                    Command="{x:Bind ViewModel.ClearCacheCommand}"
+                    Content="Clear Cache" />
+            </StackPanel>
+
+            <!-- Status -->
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+        </StackPanel>
+    </ScrollViewer>
 </Page>

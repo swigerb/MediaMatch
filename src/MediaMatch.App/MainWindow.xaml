@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:MediaMatch.App"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="MediaMatch.App"
+    Title="MediaMatch"
     mc:Ignorable="d">
     <Window.SystemBackdrop>
         <MicaBackdrop />
@@ -20,7 +20,7 @@
 
         <TitleBar
             x:Name="AppTitleBar"
-            Title="MediaMatch.App"
+            Title="MediaMatch"
             BackRequested="TitleBar_BackRequested"
             IsBackButtonVisible="{x:Bind NavFrame.CanGoBack, Mode=OneWay}"
             IsPaneToggleButtonVisible="True"
@@ -35,6 +35,7 @@
             Grid.Row="1"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
+            IsSettingsVisible="True"
             SelectionChanged="NavView_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem

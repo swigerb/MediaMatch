@@ -1,0 +1,27 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace MediaMatch.App.ViewModels;
+
+/// <summary>
+/// Represents a single file in the rename queue with original/new name and match metadata.
+/// </summary>
+public partial class FileItemViewModel : ViewModelBase
+{
+    [ObservableProperty]
+    public partial string OriginalFileName { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string NewFileName { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial double MatchConfidence { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; }
+
+    [ObservableProperty]
+    public partial string MediaType { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string FilePath { get; set; } = string.Empty;
+}

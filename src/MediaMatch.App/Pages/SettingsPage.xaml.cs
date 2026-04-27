@@ -1,17 +1,15 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-
+using MediaMatch.App.ViewModels;
 using Microsoft.UI.Xaml.Controls;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace MediaMatch.App.Pages;
 
 public sealed partial class SettingsPage : Page
 {
+    public SettingsViewModel ViewModel { get; }
+
     public SettingsPage()
     {
+        ViewModel = App.GetService<SettingsViewModel>();
         InitializeComponent();
     }
 }
