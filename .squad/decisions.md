@@ -355,6 +355,65 @@ Phase 19 required dark mode support, HiDPI validation, and accessibility font sc
 
 ---
 
+### Decision: LLM Provider, File Clone, and Multi-Episode Architecture
+
+**Date:** 2026-04-27  
+**Author:** Fenster  
+**Status:** Implemented  
+**Phases:** 18, 21, 22
+
+#### Context
+
+v0.2.0 required three new capabilities: AI-assisted renaming via LLM providers, filesystem-level clone operations (CoW/hardlink), and multi-episode file detection and naming.
+
+#### Decisions
+
+1. **Pluggable LLM providers** — `ILlmProvider` follows the same pattern as `IEpisodeProvider`: multiple implementations registered in DI, consumers select by `IsAvailable`. Provider selection is config-driven via `LlmProviderType` enum (None/OpenAI/AzureOpenAI/Ollama). Only the first available provider is used per request.
+
+2. **No LLM SDK dependency** — All three providers use raw HTTP via `IHttpClientFactory` named clients + `JsonSerializer`. This avoids pulling in large SDK packages and keeps the provider implementations consistent with existing TMDb/TVDb patterns.
+
+3. **P/Invoke for filesystem clone** — ReFS CoW uses `FSCTL_DUPLICATE_EXTENTS_TO_FILE` and NTFS hard links use `CreateHardLink`, both via LibraryImport source-generated P/Invoke. This requires `<AllowUnsafeBlocks>true</AllowUnsafeBlocks>` in Infrastructure.csproj. CA1416 is suppressed at the DI registration site since the shared TFM is `net10.0` (not windows-specific).
+
+4. **Multi-episode backward compatibility** — `SeasonEpisodeMatch` already had an `EndEpisode` property (nullable). The `IsMultiEpisode` computed property was added without changing the record's constructor signature. `MediaBindings.ForEpisode` gains an optional `endEpisode` parameter — all existing callers continue to work unchanged.
+
+5. **Multi-episode naming strategy** — Added `MultiEpisodeNamingStrategy` enum to `AppSettings` (Plex/Jellyfin/Custom). Plex: `S01E01-E02`, Jellyfin: `S01E01-S01E02`. Expression engine gets `{startEpisode}`, `{endEpisode}`, `{isMultiEpisode}` tokens for custom patterns.
+
+#### Impact
+
+- **McManus:** `LlmSettings` and `MultiEpisodeNaming` are new settings that should appear in the Settings UI. `AiRenameSuggestion` can be shown alongside pattern-based suggestions in the rename preview.
+- **Hockney:** All three LLM providers are testable via `HttpMessageHandler` mock. `FileCloneService` can be tested with mocked handlers. Multi-episode parsing has new regex patterns that need test coverage. 264 existing tests still pass.
+- **Keaton:** `RenameAction.Clone` is a new action type flowing through the pipeline. `AllowUnsafeBlocks` is now enabled for Infrastructure.
+
+---
+
+### Decision: Shell Extension Registry Approach & Dialog Patterns
+
+**Date:** 2026-04-27  
+**Author:** McManus (UI Dev)  
+**Status:** Implemented
+
+#### Context
+
+Phase 20 required conflict/selection dialogs for the rename workflow. Phase 25 required a Windows 11 context menu integration.
+
+#### Decisions
+
+1. **Registry-based shell extension** — Used `HKCU\Software\Classes\*\shell\MediaMatch` with SubCommands instead of COM `IExplorerCommand`. This avoids complex packaging requirements (MSIX/COM registration) and works with Velopack's install/uninstall hooks. The shell extension is a standalone .NET 10 console app that dispatches to `MediaMatch.CLI.exe`.
+
+2. **ContentDialog for conflicts and match selection** — Both dialogs are standard WinUI 3 `ContentDialog` subclasses with dedicated ViewModels. They're invoked from `HomeViewModel` methods (not directly from services) to keep the UI boundary clean. `XamlRoot` is set from `App.MainWindow.Content`.
+
+3. **Preset definitions in Core** — `PresetDefinitionSettings` lives in `Core/Configuration/AppSettings.cs` so both App and Shell Extension can reference the same model. Shell Extension reads its own `shell-presets.json` file for standalone operation.
+
+4. **ThumbnailService as optional** — Returns null when ffmpeg isn't available. UI uses placeholder FontIcon. No hard dependency on ffmpeg being installed.
+
+#### Impact
+
+- **Fenster**: Shell Extension dispatches to CLI commands. Future CLI commands (`rename --files`, `match --files`) should accept the `--files` flag with multiple paths.
+- **Hockney**: `ConflictDialogViewModel` and `MatchSelectionViewModel` are testable without WinUI dependencies. `ThumbnailService` can be tested with mock file system.
+- **Keaton**: Shell Extension is a separate project with no dependency on App or Infrastructure — clean separation. Registry approach is reversible via `uninstall` command.
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus

@@ -9,6 +9,26 @@
 
 ## Learnings
 
+### 2026-04-27 — Batch 5: Phases 20 + 25 Complete
+
+**Phase 20: Dialog Infrastructure:**
+- `ConflictDialog` & `ConflictDialogViewModel` — handles rename conflicts (file exists, target path invalid, etc.)
+- `MatchSelectionDialog` & `MatchSelectionViewModel` — allows user to pick best match when multiple candidates found.
+- Both dialogs are standard WinUI 3 `ContentDialog` subclasses. ViewModels injected from DI, no UI dependencies.
+- Dialogs invoked from `HomeViewModel` methods to keep UI boundary clean. `XamlRoot` set from `App.MainWindow.Content`.
+
+**Phase 25: Shell Extension Registry:**
+- Built standalone .NET 10 console app dispatching to MediaMatch.CLI.exe.
+- Registry-based context menu at `HKCU\Software\Classes\*\shell\MediaMatch`. Avoids COM registration + MSIX packaging.
+- Works with Velopack's install/uninstall hooks.
+- `PresetDefinitionSettings` in Core for shared preset model between App and Shell Extension.
+
+**ThumbnailService Enhancement:**
+- Integrated with ffmpeg via `IMediaInfoExtractor` for fast thumbnail generation.
+- Optional: returns null when ffmpeg unavailable. UI uses placeholder FontIcon.
+
+**Deliverables:** 12 new files (dialogs, ViewModels, shell extension project).
+
 ### 2026-04-27 — Phase 6: MVVM Architecture Implementation
 
 - **CommunityToolkit.Mvvm 8.4.2 requires partial properties (not fields)** for WinRT AOT compatibility. Use `[ObservableProperty] public partial string Foo { get; set; }` instead of `[ObservableProperty] private string _foo;`. Error MVVMTK0045 fires otherwise.

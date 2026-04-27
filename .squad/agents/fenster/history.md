@@ -11,156 +11,32 @@
 
 <!-- Append service patterns, API integration notes, and domain knowledge below -->
 
-### 2026-04-27 — Phase 3: Metadata Provider Implementations
+### 2026-04-27 — Batch 5: Phases 18 + 21 + 22 Complete
 
-**Architecture decisions:**
-- Used private nested DTO classes inside each provider to keep TMDb/TVDb JSON shapes isolated from domain models. No shared DTO assembly needed.
-- `MetadataCache` wraps `IMemoryCache` with a domain-friendly `GetOrCreateAsync<T>` — all providers use it with explicit type arguments to avoid inference issues with covariant return types.
-- `MediaMatchHttpClient` implements a sliding-window rate limiter (38 req/10s with 2-request headroom vs TMDb's 40/10s limit) plus exponential backoff retries for transient HTTP failures.
-- TVDb v4 uses bearer-token auth obtained via POST `/login`. Token is cached in-memory with `SemaphoreSlim` for thread-safe lazy init.
-- Both `IEpisodeProvider` implementations are registered in DI — consumers can enumerate and select by `Name` property ("TMDb" vs "TVDb").
-- `ApiConfiguration` lives in Core (no infrastructure dependency) so the App layer can bind settings UI directly.
+**LLM Provider Architecture:**
+- Built 3 pluggable LLM providers: OpenAI, Azure OpenAI, Ollama. All use raw HTTP via `IHttpClientFactory` (no SDK deps).
+- Config-driven provider selection via `LlmProviderType` enum. `AiRenameService` integrates with existing matching pipeline.
+- Provider registration in DI follows existing pattern: consumers inject `IEnumerable<ILlmProvider>`, select by `IsAvailable`.
 
-**Key file paths:**
-- `src/MediaMatch.Core/Configuration/ApiConfiguration.cs` — API keys, base URLs, timeouts
-- `src/MediaMatch.Infrastructure/Http/MediaMatchHttpClient.cs` — resilient HTTP with rate limiting
-- `src/MediaMatch.Infrastructure/Caching/MetadataCache.cs` — in-memory cache with configurable TTL
-- `src/MediaMatch.Infrastructure/Providers/TmdbMovieProvider.cs` — IMovieProvider (TMDb)
-- `src/MediaMatch.Infrastructure/Providers/TmdbEpisodeProvider.cs` — IEpisodeProvider (TMDb)
-- `src/MediaMatch.Infrastructure/Providers/TvdbEpisodeProvider.cs` — IEpisodeProvider (TVDb v4)
-- `src/MediaMatch.Infrastructure/Providers/TmdbArtworkProvider.cs` — IArtworkProvider (TMDb)
-- `src/MediaMatch.Infrastructure/ServiceCollectionExtensions.cs` — DI registration
+**File Clone Service (Phase 21):**
+- P/Invoke-based filesystem operations: ReFS CoW (`FSCTL_DUPLICATE_EXTENTS_TO_FILE`), NTFS hardlinks (`CreateHardLink`).
+- LibraryImport source-generated bindings. `AllowUnsafeBlocks` enabled in Infrastructure.csproj. CA1416 suppressed at DI site (net10.0 shared TFM).
 
-### 2026-04-27 — Team Consolidation Checkpoint
+**Multi-Episode Detection & Naming (Phase 22):**
+- Extended `SeasonEpisodeMatch` with optional `EndEpisode` property (computed `IsMultiEpisode`). Backward-compatible constructor.
+- `MultiEpisodeNamingStrategy` enum in AppSettings: Plex (S01E01-E02), Jellyfin (S01E01-S01E02), Custom.
+- New tokens in expression engine: `{startEpisode}`, `{endEpisode}`, `{isMultiEpisode}`. 6 regex patterns for detection.
 
-**Cross-team impact:**
-- **From Hockney:** Phase 5 file services pipeline (IFileOrganizationService, IMediaAnalysisService, IRenamePreviewService, IMatchingPipeline) ready for Phase 3 provider integration. 157 tests passing (41 new).
-- **From McManus:** Phase 6 MVVM architecture complete (ViewModelBase, HomeViewModel singleton, SettingsViewModel transient, x:Bind bindings throughout). Ready for Phase 5 service binding.
-- **From Keaton:** 11-phase architecture plan locked in (Phases 3-14), 20-26 session estimate for 3-person team. Critical path: Phase 3 → 5 → 6 → 9 → 8 → 10 → 11 → 7 → 12 → 13 → 14.
+**Test Status:** 0 errors, 264 tests pass.
 
-**Current blockers:** None. Phase 3 metadata providers unblock Phase 5 services which unblock Phase 6 UI integration.
+## Architecture Patterns (Summary)
 
-### 2026-04-27 — Phase 8: CLI Commands & Batch Operations
+**Established across all phases (3-22):**
+- Metadata providers: private nested DTOs, IHttpClientFactory named clients
+- Configuration models: in Core (no infrastructure dependency)
+- Service abstractions: Core interfaces, Infrastructure/Application implementations
+- Rate limiting: sliding-window (burst APIs), timestamp-based (per-request APIs)
+- P/Invoke: LibraryImport source-generated, AllowUnsafeBlocks enabled
+- Testing: HttpMessageHandler mocks, URL-routing for multi-call tests, real MemoryCache
 
-**What was built:**
-- Full Spectre.Console.Cli command framework with DI bridge (`TypeRegistrar`/`TypeResolver`)
-- 4 commands: `match`, `rename`, `config` (set/get/list), `subtitle`
-- `MediaFileScanner` utility scans directories for known media extensions
-- Config stored in `%LOCALAPPDATA%/MediaMatch/config.json` with API key masking
-
-**Architecture decisions:**
-- Used `IServiceCollection` directly (no `Host.CreateApplicationBuilder`) — Spectre.Console.Cli owns the app lifecycle via `CommandApp`
-- All commands use constructor DI; Spectre resolves services through the `TypeRegistrar` bridge
-- Async commands use `AsyncCommand<T>` with `CancellationToken`; sync config commands use `Command<T>`
-- Serilog configured for both console (colored) and file (daily rolling) sinks in Program.cs
-- `ConfigStore` is a static utility — no DI needed since it's pure file I/O with JSON serialization
-
-**Pre-existing fixes applied during this phase:**
-- Fixed `Serilog.Sinks.Console` 7.0.0 → 6.1.1 in Infrastructure.csproj (package didn't exist)
-- Fixed `MatchingPipeline.cs` missing closing braces + method signature between `MatchEpisodeAsync` and `MatchMovieAsync`
-- Fixed `MatchResult.ProviderName` → `ProviderSource` in MatchingPipeline activity tag
-- Added `#pragma warning disable CA1416` in `SettingsEncryption.cs` (already has `[SupportedOSPlatform("windows")]`)
-
-**Spectre.Console.Cli 0.55.x API notes:**
-- `Execute`/`ExecuteAsync` overrides are `protected` (not `public`)
-- Method signatures require `CancellationToken` parameter
-- Base `CommandSettings` cannot be used as generic arg for `Command<T>` — use a dedicated empty settings class
-
-**Key file paths:**
-- `src/MediaMatch.CLI/Program.cs` — entry point with DI + Spectre.Console.Cli setup
-- `src/MediaMatch.CLI/Infrastructure/TypeRegistrar.cs` — MS DI ↔ Spectre bridge
-- `src/MediaMatch.CLI/Infrastructure/MediaFileScanner.cs` — directory scanner for media files
-- `src/MediaMatch.CLI/Commands/MatchCommand.cs` — `mediamatch match`
-- `src/MediaMatch.CLI/Commands/RenameCommand.cs` — `mediamatch rename`
-- `src/MediaMatch.CLI/Commands/ConfigCommand.cs` — `mediamatch config set/get/list`
-- `src/MediaMatch.CLI/Commands/SubtitleCommand.cs` — `mediamatch subtitle` (stub)
-
-### 2026-04-27 — Phase 7: Subtitle Search + Phase 12: Velopack Integration
-
-**Phase 7 — What was built:**
-- `OpenSubtitlesProvider` implementing `ISubtitleProvider` with REST API v1 integration (search by query, hash, IMDB ID)
-- Private nested DTOs for API response shapes (same pattern as TMDb/TVDb providers)
-- `SubtitleDownloadService` in Application layer — downloads, detects encoding, saves alongside video file as UTF-8 with BOM
-- `SubtitleSource` enum (OpenSubtitles, SubDB, Local) for future multi-source support
-- `ISubtitleDownloadService` interface in Core for clean architecture
-- DI registration wired in `ServiceCollectionExtensions`
-
-**Phase 12 — What was built (stub-ready):**
-- `IUpdateCheckService` interface in Core with `CheckForUpdatesAsync` and `DownloadAndApplyAsync`
-- `UpdateCheckService` stub in App layer — TODO markers for Velopack.UpdateManager wiring
-- `UpdateViewModel` with CommunityToolkit.Mvvm `[RelayCommand]` for one-click update + restart
-- Fire-and-forget update check wired into `App.OnLaunched` — never blocks startup
-
-**Architecture decisions:**
-- OpenSubtitles download is a two-step process: POST to `/download` gets a temporary link, then GET the actual file
-- Subtitle download service uses provider's `DownloadAsync` method rather than direct HTTP — keeps the service provider-agnostic
-- Velopack is stubbed because NuGet availability for .NET 10 + WinUI 3 is unconfirmed; interface + ViewModel are fully wired so only the service implementation needs updating
-- Update check on startup uses fire-and-forget async to avoid blocking the UI thread
-
-**Key file paths:**
-- `src/MediaMatch.Core/Models/SubtitleSource.cs` — enum for subtitle sources
-- `src/MediaMatch.Core/Services/ISubtitleDownloadService.cs` — download service contract
-- `src/MediaMatch.Core/Services/IUpdateCheckService.cs` — update service contract
-- `src/MediaMatch.Infrastructure/Providers/OpenSubtitlesProvider.cs` — OpenSubtitles REST API v1
-- `src/MediaMatch.Application/Services/SubtitleDownloadService.cs` — subtitle download + save
-- `src/MediaMatch.App/Services/UpdateCheckService.cs` — Velopack stub
-- `src/MediaMatch.App/ViewModels/UpdateViewModel.cs` — update notification UI binding
-
-### 2026-04-27 — Cross-Agent Impact: McManus Phase 9 & Hockney Phase 10
-
-**From McManus (Phase 9 — Settings Persistence):**
-- SettingsRepository now available via `ISettingsRepository` interface in DI. CLI can inject this to read API keys and output folders.
-- Settings encryption (DPAPI) handles sensitive values; only API keys encrypted with `ENC:` prefix.
-- CLI and App share the same `%LOCALAPPDATA%/MediaMatch/settings.json` file — no duplication of persistence logic.
-
-**From Hockney (Phase 10 — Observability):**
-- Serilog + OpenTelemetry fully integrated. CLI benefits from structured logging and activity tracing out-of-box.
-- All services accept `ILogger<T>?` with NullLogger fallback — CLI commands can log without test churn.
-- `MatchingPipeline` and `FileOrganizationService` instrumented with activity spans; `MatchCommand` and `RenameCommand` will inherit all tracing automatically.
-
-### 2026-04-27 — Phases 15, 16, 17: AniDB Provider, Opportunistic Matching, New Binding Tokens
-
-**Phase 15 — AniDB Provider:**
-- `IAniDbProvider` interface in Core/Providers extends `IEpisodeProvider` with anime-specific methods
-- `AniDbProvider` — full HTTP API integration with XML parsing, dedicated rate limiter (≤1 req/2s), retry with exponential backoff
-- `AniDbTvdbMappingProvider` — downloads/caches anime-lists XML mapping, maps AniDB↔TVDb IDs, provides episode/series fallback via TVDb
-- `AniDbConfiguration` in Core/Configuration — client credentials, rate limit, mapping cache, timeout
-- Both registered in DI via `IHttpClientFactory` named clients
-
-**Phase 16 — Opportunistic Matching:**
-- `OpportunisticMatcher` — triggered when strict matching (≥0.85) fails; relaxes to 0.60, returns top-5 `MatchSuggestion[]`
-- `MatchingPipeline` updated with opportunistic fallback; `AppSettings.EnableOpportunisticMode` (default: true)
-- OTel span `mediamatch.match.opportunistic` instrumented
-
-**Phase 17 — New Binding Tokens:**
-- `MediaInfoExtractor` — ffprobe integration with filename-based fallback for technical metadata
-- `MediaTechnicalInfo` record — AudioChannels, DolbyVision, HdrFormat, Resolution, BitDepth, VideoCodec, AudioCodec
-- New bindings: `{jellyfin}`, `{acf}`, `{dovi}`, `{hdr}`, `{resolution}`, `{bitdepth}`
-- `ReleaseInfo` extended with HdrFormat, DolbyVision, AudioChannels, BitDepth fields
-- `ReleaseInfoParser` updated with HDR10/HDR10+/HLG, DoVi, channel, bit depth regex patterns
-
-**Key file paths:**
-- `src/MediaMatch.Core/Providers/IAniDbProvider.cs`
-- `src/MediaMatch.Core/Configuration/AniDbConfiguration.cs`
-- `src/MediaMatch.Core/Models/MatchSuggestion.cs`
-- `src/MediaMatch.Core/Models/MediaTechnicalInfo.cs`
-- `src/MediaMatch.Infrastructure/Providers/AniDbProvider.cs`
-- `src/MediaMatch.Infrastructure/Providers/AniDbTvdbMappingProvider.cs`
-- `src/MediaMatch.Application/Matching/OpportunisticMatcher.cs`
-- `src/MediaMatch.Application/Detection/MediaInfoExtractor.cs`
-
-### 2026-04-27 — Cross-Agent Impact: McManus Phase 11+14 & Hockney Phase 13
-
-**From McManus (Phase 11+14 — Batch Operations & Polish):**
-- `BatchOperationService` now available for CLI integration. Chunk-based concurrency (configurable) processes files in parallel with per-file failure isolation.
-- `UndoService` provides rolling journal (100-entry limit) at `%LOCALAPPDATA%/MediaMatch/undo.json` — both App and CLI can use it.
-- Keyboard shortcuts wired: Ctrl+O (Organize), Ctrl+A (Select All), Ctrl+Z (Undo), Del (Delete), F5 (Refresh) — established pattern for App layer.
-- HomeViewModel fully instrumented with Serilog + OpenTelemetry from Phase 10; batch operations produce activity spans automatically.
-- README.md and CHANGELOG.md v0.1.0 provide user-facing documentation; architectural decisions documented in squad/decisions.md.
-
-**From Hockney (Phase 13 — Test Suite):**
-- 264 tests now passing (159 → +105). All layers covered: Core models, Application services, Infrastructure providers, CLI commands, integration tests.
-- Test patterns established: mock `HttpMessageHandler` (not sealed `MediaMatchHttpClient`), URL-routing for multi-call tests, real `MemoryCache` for cache tests.
-- `InternalsVisibleTo` wired in CLI .csproj — allows CLI.Tests to access internal command classes.
-- No test churn achieved — optional `ILogger<T>?` pattern with NullLogger fallback means all 159 pre-existing tests pass without modification.
-- Baseline established for future phases: >80% code coverage across all layers. Integration tests cover end-to-end pipeline with mocked providers.
+*Full detailed history archived to history-archive-20260427.md (22 KB)*
