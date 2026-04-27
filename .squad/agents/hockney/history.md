@@ -46,3 +46,29 @@
 - Scriban `Validate()` may return true for patterns that throw NRE during `Evaluate()` — wrap both in try/catch
 - `MediaDetector` and `ReleaseInfoParser` are not interface-backed; inject via concrete class constructors
 - `MatchingPipeline` swallows provider exceptions to allow fallback to next provider
+
+### 2026-04-27 — Phase 10: OpenTelemetry & Serilog Full Integration
+
+**What was built:**
+- `ActivityNames.cs` — constants for all span/activity names organized by domain (Detection, Matching, API, FileOps, Cache)
+- `TelemetryConfig.cs` — static ActivitySource + helper methods for starting spans and recording errors
+- `SerilogConfig.cs` — Serilog setup with JSON file sink (daily rolling, 14-day retention, `%LOCALAPPDATA%/MediaMatch/logs/`) and colored console sink
+
+**Instrumentation added:**
+- `MatchingPipeline` — Activity spans on ProcessAsync with media type/confidence/provider tags; `ILogger<T>` added with NullLogger fallback; provider failures now logged at Warning level
+- `FileOrganizationService` — Activity spans on OrganizeAsync with file count/action tags; `ILogger<T>` added; rename failures and rollbacks logged
+- Infrastructure providers (TmdbMovieProvider, TmdbEpisodeProvider, TvdbEpisodeProvider, TmdbArtworkProvider) already had `ILogger<T>` from Phase 3
+
+**App integration:**
+- `App.xaml.cs` — Serilog initialized early, `AddSerilog()` wired into ILoggerFactory DI, global `UnhandledException` handler logs Fatal + flushes
+- `ServiceCollectionExtensions` — added `AddMediaMatchTelemetry()` method; `AddLogging()` registered in infrastructure
+
+**Package additions:**
+- Infrastructure: OpenTelemetry, OpenTelemetry.Api, Serilog, Serilog.Enrichers.Environment, Serilog.Enrichers.Thread, Serilog.Sinks.Console, Serilog.Sinks.File
+- Application: Microsoft.Extensions.Logging.Abstractions (for NullLogger)
+
+**Key patterns:**
+- Services use `ILogger<T>` abstraction, never Serilog directly — keeps Application layer framework-agnostic
+- Logger parameters are optional with NullLogger fallback — existing tests pass without changes (159 total, all green)
+- Activity spans are null-safe (ActivitySource returns null when no listener attached)
+- No API keys or full file paths logged — only filenames and provider names
