@@ -75,6 +75,37 @@
 - `src/MediaMatch.CLI/Commands/ConfigCommand.cs` — `mediamatch config set/get/list`
 - `src/MediaMatch.CLI/Commands/SubtitleCommand.cs` — `mediamatch subtitle` (stub)
 
+### 2026-04-27 — Phase 7: Subtitle Search + Phase 12: Velopack Integration
+
+**Phase 7 — What was built:**
+- `OpenSubtitlesProvider` implementing `ISubtitleProvider` with REST API v1 integration (search by query, hash, IMDB ID)
+- Private nested DTOs for API response shapes (same pattern as TMDb/TVDb providers)
+- `SubtitleDownloadService` in Application layer — downloads, detects encoding, saves alongside video file as UTF-8 with BOM
+- `SubtitleSource` enum (OpenSubtitles, SubDB, Local) for future multi-source support
+- `ISubtitleDownloadService` interface in Core for clean architecture
+- DI registration wired in `ServiceCollectionExtensions`
+
+**Phase 12 — What was built (stub-ready):**
+- `IUpdateCheckService` interface in Core with `CheckForUpdatesAsync` and `DownloadAndApplyAsync`
+- `UpdateCheckService` stub in App layer — TODO markers for Velopack.UpdateManager wiring
+- `UpdateViewModel` with CommunityToolkit.Mvvm `[RelayCommand]` for one-click update + restart
+- Fire-and-forget update check wired into `App.OnLaunched` — never blocks startup
+
+**Architecture decisions:**
+- OpenSubtitles download is a two-step process: POST to `/download` gets a temporary link, then GET the actual file
+- Subtitle download service uses provider's `DownloadAsync` method rather than direct HTTP — keeps the service provider-agnostic
+- Velopack is stubbed because NuGet availability for .NET 10 + WinUI 3 is unconfirmed; interface + ViewModel are fully wired so only the service implementation needs updating
+- Update check on startup uses fire-and-forget async to avoid blocking the UI thread
+
+**Key file paths:**
+- `src/MediaMatch.Core/Models/SubtitleSource.cs` — enum for subtitle sources
+- `src/MediaMatch.Core/Services/ISubtitleDownloadService.cs` — download service contract
+- `src/MediaMatch.Core/Services/IUpdateCheckService.cs` — update service contract
+- `src/MediaMatch.Infrastructure/Providers/OpenSubtitlesProvider.cs` — OpenSubtitles REST API v1
+- `src/MediaMatch.Application/Services/SubtitleDownloadService.cs` — subtitle download + save
+- `src/MediaMatch.App/Services/UpdateCheckService.cs` — Velopack stub
+- `src/MediaMatch.App/ViewModels/UpdateViewModel.cs` — update notification UI binding
+
 ### 2026-04-27 — Cross-Agent Impact: McManus Phase 9 & Hockney Phase 10
 
 **From McManus (Phase 9 — Settings Persistence):**
