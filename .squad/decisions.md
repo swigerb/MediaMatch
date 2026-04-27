@@ -1,421 +1,103 @@
-# Squad Decisions
 
-## Active Decisions
 
-### Decision: Metadata Provider Implementation Patterns
-
-**Date:** 2026-04-27  
-**Author:** Fenster  
-**Status:** Implemented  
-
-#### Context
-
-Phase 3 required implementing TMDb and TVDb metadata providers against the existing `IMovieProvider`, `IEpisodeProvider`, and `IArtworkProvider` interfaces.
-
-#### Decisions
-
-1. **Private nested DTOs** — Each provider defines its own JSON DTO classes as private nested types rather than sharing a DTO namespace. This keeps API-specific shapes isolated and avoids coupling between providers.
-
-2. **Sliding-window rate limiter** — `MediaMatchHttpClient` enforces 38 req/10s (2-request headroom below TMDb's 40/10s limit). The limiter is built into the shared HTTP client so all providers benefit without coordination.
-
-3. **Dual episode provider registration** — Both `TmdbEpisodeProvider` and `TvdbEpisodeProvider` implement `IEpisodeProvider` and are registered in DI. Consumers can inject `IEnumerable<IEpisodeProvider>` and select by the `Name` property.
-
-4. **ApiConfiguration in Core** — Settings model lives in `MediaMatch.Core.Configuration` so the UI layer can reference it without depending on Infrastructure.
-
-#### Impact
-
-- Hockney: Provider implementations are testable via interface mocking; HTTP client can also be mocked via `HttpMessageHandler`.
-- McManus: `ApiConfiguration` is available in Core for settings UI binding.
-- Keaton: Architecture follows clean architecture boundaries (Core owns contracts, Infrastructure owns implementations).
-
----
-
-### Decision: File Services Architecture (Phase 5)
-
-**Date:** 2026-04-27  
-**Author:** Hockney  
-**Status:** Implemented  
-
-#### Context
-
-Phase 5 required building the file organization pipeline — the services that connect detection/matching/expressions into an end-to-end rename workflow.
-
-#### Decisions
-
-1. **IFileSystem abstraction** — Introduced in `Application/Services/FileOrganizationService.cs`. All file I/O goes through this interface so the entire rename/rollback workflow is unit-testable without disk access. `PhysicalFileSystem` is the default implementation.
-
-2. **Service interfaces in Core/Services/** — `IFileOrganizationService`, `IMediaAnalysisService`, `IRenamePreviewService`, `IMatchingPipeline` all live in Core to maintain clean architecture dependency flow.
-
-3. **Pipeline pattern** — `MatchingPipeline` accepts multiple `IEpisodeProvider` and `IMovieProvider` instances. It tries each provider in order and short-circuits at 0.85 confidence. Provider failures are swallowed to allow fallback.
-
-4. **Rollback on failure** — `FileOrganizationService` tracks completed renames. If any rename fails, all prior renames are reversed in reverse order (best-effort).
-
-5. **Preview-first design** — `FileOrganizationService` delegates to `IRenamePreviewService` for all detection/matching/naming, then applies file operations. `RenameAction.Test` returns previews without touching the filesystem.
-
-#### Impact
-
-- All team members building providers or UI can depend on these interfaces
-- `IFileSystem` must be registered in DI when wiring up the application
-- `MatchingPipeline` needs at least one provider registered to produce matches
-
----
-
-### Decision: WinUI 3 MVVM Architecture Pattern
+# Fenster Decisions — v0.2.0 Batch 6 (Phases 23, 24, 26)
 
 **Date:** 2026-04-27
-**Author:** McManus (UI Dev)
+**Author:** Fenster
 **Status:** Implemented
 
-#### Context
-MediaMatch needed a full MVVM architecture for its WinUI 3 UI layer — ViewModels, DI, navigation, and data binding.
+## Decision: ILocalMetadataProvider Interface for Clean Architecture
 
-#### Decision
-- **CommunityToolkit.Mvvm** with partial property syntax (required for WinRT AOT)
-- **DI via `Microsoft.Extensions.DependencyInjection`** with static `App.GetService<T>()` accessor
-- **NavigationService** wraps `Frame` for ViewModel-friendly navigation
-- **x:Bind** compiled bindings throughout (no `{Binding}`)
-- **HomeViewModel as singleton** to preserve file list state across navigations
-- **SettingsViewModel/AboutViewModel as transient** — no state preservation needed
+### Context
+Phase 23 local metadata providers (NFO/XML) need file-path-based lookup methods that don't exist on `IMovieProvider`/`IEpisodeProvider`. The `MetadataProviderChain` lives in Application layer and cannot reference Infrastructure types.
 
-#### Implications
-- All new ViewModels should inherit `ViewModelBase`
-- Always use `[ObservableProperty] public partial` syntax, never field-based
-- Pages resolve their ViewModel from DI in constructor
-- Build requires `-p:Platform=x64` (or x86/ARM64)
+### Decision
+Created `ILocalMetadataProvider` interface in Core/Providers with `SearchByFileAsync`, `SearchEpisodeByFileAsync`, `GetMovieInfoByFileAsync`, `GetSeriesInfoByFileAsync`. Both NfoMetadataProvider and XmlMetadataProvider implement this alongside the standard interfaces. MetadataProviderChain checks `is ILocalMetadataProvider` for file-based lookup.
+
+### Impact
+- Clean architecture preserved — Application layer only references Core interfaces.
+- Future local providers (e.g., embedded tag providers) can implement the same interface.
 
 ---
 
-### Decision: MediaMatch Remaining Phases (11-Phase Plan)
+## Decision: Raw Byte-Level Tag Parsing for MusicDetector
 
-**Date:** 2026-04-27  
-**Status:** Architecture Planning  
-**Lead:** Keaton (Architect)
+### Context
+Phase 24 requires reading ID3v2/Vorbis tags from music files. Adding a third-party library (TagLib#) would add a dependency.
 
-#### Executive Summary
-MediaMatch has completed Phase 1 (scaffolding) and foundational Phases 2+4 (matching/detection engines). **11 additional phases** remain to deliver a fully functional modern FileBot successor. These phases progress from infrastructure → features → UI → distribution.
+### Decision
+Implemented minimal ID3v2 and Vorbis comment parsing directly in `MusicDetector` using raw byte operations. Only extracts title, artist, album, albumartist, track, disc, genre, year. Falls back to filename parsing.
 
-#### Phases 3-14 Overview
-
-**Phase 3: Metadata Provider Implementations** (Fenster) — TMDb/TVDb providers, HTTP client with rate limiting, metadata caching.
-
-**Phase 5: File System & Media Analysis Services** (Fenster) — FileOrganizationService, MediaAnalysisService, RenamePreviewService, MatchingPipeline orchestrator.
-
-**Phase 6: WinUI 3 UI — Core User Pages & MVVM** (McManus) — HomeViewModel, SettingsViewModel, AboutViewModel, MVVM refactor of all pages with x:Bind and ThemeResource bindings.
-
-**Phase 7: Subtitle Search Integration** (Fenster/McManus) — OpenSubtitlesProvider, SubtitleDatabaseProvider, SubtitleBrowserPage UI.
-
-**Phase 8: CLI Commands & Batch Operations** (Fenster) — RenameCommand, MatchCommand, ConfigCommand, SubtitleCommand using Spectre.Console.Cli.
-
-**Phase 9: Configuration, Settings Persistence & Initialization** (Fenster/McManus) — AppSettings model, SettingsRepository with encryption, first-run wizard.
-
-**Phase 10: OpenTelemetry & Serilog Full Integration** (Fenster) — Centralized observability, structured logging, performance metrics.
-
-**Phase 11: Batch Operations, Undo & Advanced Features** (McManus/Fenster) — BatchOperationService, UndoService, FileOrganizationRule system, parallel processing with progress tracking.
-
-**Phase 12: Velopack Integration** (Fenster) — Installer, auto-update framework, signed releases, delta updates.
-
-**Phase 13: Testing, Validation & Bug Fixes** (Hockney) — Comprehensive test suites for all layers, integration tests, performance benchmarks, >80% code coverage target.
-
-**Phase 14: Polish, Documentation & Release v0.1.0** (McManus/Fenster/Keaton) — README, API documentation, user guides, release preparation, v0.1.0 tag.
-
-#### Execution Order
-1. Phase 3 → 5 → 6 → 9 → 8 → 10 → 11 → 7 → 12 → 13 → 14
-2. Estimated 20-26 development sessions (3-4 weeks for 3-person team)
-3. Parallelizable: Phase 3 + Phase 6 scaffolding; Phase 5 + Phase 6 full impl; Phase 8/9 overlap; Phase 11/13; Phase 12/13
-
-#### Architecture Decisions Locked In
-- **Clean Architecture:** Core → Application → Infrastructure → App/CLI
-- **Provider Pattern:** All external data sources implement interfaces for easy mocking/swapping
-- **Matching Engine Reusability:** BipartiteMatcher + EpisodeMatcher used by both UI and CLI
-- **Logging & Observability:** Serilog structured logs + OpenTelemetry tracing
-
-#### Sign-Off
-**Created by:** Keaton (Architect)  
-**Date:** 2026-04-27  
-**Status:** Pending team review and approval
+### Impact
+- Zero additional NuGet dependencies for music tag reading.
+- Handles the common case (UTF-8/Latin1 tags in first 8KB). Complex edge cases (ID3v1, APEv2, multi-byte BOM) not covered.
+- Future: could swap in TagLib# if more complete tag support is needed.
 
 ---
 
-### Decision: CLI Architecture — Spectre.Console.Cli with Direct DI
+## Decision: Post-Process Actions as Independent DI Services
+
+### Context
+Phase 26 post-processing actions need to run after renames. Different actions have different prerequisites (Plex reachable, ffmpeg installed, script exists).
+
+### Decision
+Each action implements `IPostProcessAction` with `IsAvailable` property for runtime prerequisite checking. All registered in DI as `IEnumerable<IPostProcessAction>`. `PostProcessPipeline` filters by name when `--apply` is used, catches individual failures.
+
+### Impact
+- Adding new actions only requires implementing the interface and registering in DI.
+- CLI `--apply` flag is opt-in — no actions run unless explicitly requested.
+- OTel spans per action enable monitoring action-specific performance.
+
+---
+
+## Decision: Music Provider Registration via IHttpClientFactory
+
+### Context
+MusicBrainz requires User-Agent identification and 1 req/sec rate limiting. AcoustID requires an API key.
+
+### Decision
+Both music providers use `IHttpClientFactory` named clients (same pattern as LLM providers). MusicBrainz provider has its own `SemaphoreSlim`-based rate limiter. AcoustID API key added to `ApiKeySettings`.
+
+### Impact
+- Consistent with existing provider patterns.
+- Rate limiting is per-provider (MusicBrainz 1/sec) independent of the shared `MediaMatchHttpClient` rate limiter.
+
+# McManus — Phase 27 Decisions
 
 **Date:** 2026-04-27  
-**Author:** Fenster  
+**Author:** McManus  
 **Status:** Implemented  
 
-#### Context
-Phase 8 required transforming the stub CLI project into a full command-line tool with match, rename, config, and subtitle commands.
+## Decision: NotificationService uses InfoBar, not Toast
 
-#### Decision
-- **Spectre.Console.Cli** owns the application lifecycle (no Generic Host). A `TypeRegistrar`/`TypeResolver` bridge connects `IServiceCollection` to Spectre's DI.
-- All services (Infrastructure + Application) are registered in a flat `ServiceCollection` in `Program.cs`.
-- Config management uses a simple JSON file at `%LOCALAPPDATA%/MediaMatch/config.json` — independent from `ApiConfiguration` (which is in-memory DI-bound).
+**Context:** Phase 27 required a notification system for operation feedback (batch complete, errors).
 
-#### Rationale
-- Generic Host adds unnecessary complexity for a CLI tool (hosted services, configuration binding we don't need).
-- Spectre.Console.Cli handles argument parsing, help generation, and command routing — no need for a second framework.
-- Flat DI registration in Program.cs keeps the CLI self-contained and easy to reason about.
+**Decision:** Used WinUI 3 `InfoBar` control placed at the top of HomePage rather than Windows Community Toolkit toast notifications. InfoBar is non-modal, auto-dismisses after 5 seconds via `DispatcherTimer`, and supports Success/Error/Info severity levels.
 
-#### Impact
-- Future CLI commands should follow the same pattern: `AsyncCommand<TSettings>` with constructor DI.
-- Config values stored in config.json are user-facing settings; `ApiConfiguration` in DI is the runtime representation.
+**Rationale:** InfoBar is built into WinUI 3 (no extra package), stays within the app window (no OS-level toast permission needed), and matches Fluent 2 design patterns already used in SettingsPage.
+
+**Impact:** The `NotificationService` is registered as a singleton in DI. Any page that wants notifications calls `SetInfoBar()` in its code-behind to wire the service to its local InfoBar control. HomeViewModel receives the service via `SetNotificationService()` rather than constructor injection to avoid coupling the ViewModel to UI controls.
 
 ---
 
-### Decision: Settings Persistence Architecture
+## Decision: Accessibility via AutomationProperties, not custom automation peers
 
-**Date:** 2026-04-27
-**Author:** McManus (UI Dev)
-**Status:** Implemented
+**Context:** Screen reader support needed across all interactive controls.
 
-#### Context
-Phase 9 requires settings that both the WinUI App and CLI can share. API keys need encryption at rest.
+**Decision:** Used `AutomationProperties.Name`, `AutomationProperties.HelpText`, `AutomationProperties.LiveSetting`, and `AutomationProperties.HeadingLevel` attributes directly in XAML rather than implementing custom `AutomationPeer` classes.
 
-#### Decision
-- Interfaces (`ISettingsRepository`, `ISettingsEncryption`) live in **Core** so both App and CLI depend on them without coupling to Infrastructure.
-- Implementations live in **Infrastructure/Persistence/** — `SettingsRepository` (JSON file at `%LOCALAPPDATA%/MediaMatch/settings.json`) and `SettingsEncryption` (Windows DPAPI, current-user scope).
-- Only API key values are encrypted (prefixed `ENC:`); the rest of the JSON stays human-readable for debugging.
-- File I/O uses `FileShare.Read` so CLI can read settings while the App has them open. Writes are atomic via temp file + `File.Move`.
-- `SettingsEncryption` is annotated `[SupportedOSPlatform("windows")]` because the shared TFM is `net10.0` (not windows-specific). If cross-platform support is ever needed, a platform-agnostic encryption adapter would replace this.
-- Infrastructure's `AddMediaMatchInfrastructure()` registers both settings services as singletons. The App calls this in `ConfigureServices()`.
+**Rationale:** The built-in automation properties cover all requirements (labeling, help text, live regions, heading structure) without the complexity of custom peers. WinUI 3's default automation peers for standard controls (Button, TextBox, ListView) already handle most interaction patterns correctly.
 
-#### Impact
-- CLI team (Fenster) can inject `ISettingsRepository` to read API keys and output folders without duplicating persistence code.
-- Any new settings fields go in `AppSettings` model in Core — both surfaces pick them up automatically.
+**Impact:** All pages — ensures consistent screen reader experience. Future controls should follow the same pattern: add `AutomationProperties.Name` to any control lacking a visible label.
 
 ---
 
-### Decision: Observability Architecture
+## Decision: Font scale preview in Settings, not global preview mode
 
-**Date:** 2026-04-27
-**Author:** Hockney (Tester)
-**Phase:** 10 — OpenTelemetry & Serilog Full Integration
+**Context:** Need to verify font scale propagates to all text elements.
 
-#### Decision
+**Decision:** Added a preview section within the Settings page Appearance section showing sample text at the current scale, rather than a separate preview mode or floating overlay.
 
-Services use `ILogger<T>` from Microsoft.Extensions.Logging — never Serilog types directly. Serilog is the backend, wired only in the App composition root via `AddSerilog()`. Logger parameters in Application-layer constructors are optional (`ILogger<T>? logger = null`) with `NullLogger<T>` fallback so existing tests don't need updating.
+**Rationale:** The existing `ApplyFontScale` method sets `ContentControlFontSize` resource and root `FontSize` on the content element, which propagates to all descendant controls. A local preview section demonstrates this immediately. No additional propagation mechanism needed — WinUI's resource inheritance handles it.
 
-OpenTelemetry uses `System.Diagnostics.ActivitySource` directly — no OTel SDK dependency in Application layer. Activity spans are started via static `TelemetryConfig` helpers in Infrastructure, but Application-layer services create their own local `ActivitySource` for pipeline-level spans.
-
-#### Rationale
-
-- Keeps Application and Core layers framework-agnostic (clean architecture)
-- Optional logger parameters mean zero test churn — all 159 tests pass unchanged
-- `ActivitySource` returns null when no listener is attached, so spans are zero-cost in tests
-- Serilog file sink logs to `%LOCALAPPDATA%/MediaMatch/logs/` with 14-day retention — standard Windows app pattern
-
-#### Impact
-
-All agents adding new services should follow the same pattern: accept `ILogger<T>?` with NullLogger fallback, never reference Serilog directly.
-
-### Decision: Subtitle Provider & Velopack Update Architecture
-
-**Date:** 2026-04-27  
-**Author:** Fenster  
-**Status:** Implemented (Velopack stubbed)
-
-#### Context
-
-Phase 7 (Subtitle Search) and Phase 12 (Velopack Integration) were implemented together. Both involve external service integration with graceful degradation requirements.
-
-#### Decisions
-
-1. **OpenSubtitles two-step download** — The v1 API requires a POST to `/download` with a `file_id` to get a temporary download link, then a separate GET to fetch the file. The `DownloadAsync` method on the provider handles both steps internally.
-
-2. **Provider-agnostic download service** — `SubtitleDownloadService` resolves the correct `ISubtitleProvider` by matching the descriptor's `ProviderName`, then delegates download to the provider. This keeps the service independent of any specific API.
-
-3. **Velopack stubbed with full interface** — `IUpdateCheckService` and `UpdateViewModel` are fully wired. Only `UpdateCheckService` needs its TODO replaced with real `Velopack.UpdateManager` calls when the package is available for .NET 10.
-
-4. **Fire-and-forget startup update check** — `App.OnLaunched` kicks off `CheckForUpdatesAsync` without awaiting. Failures are swallowed and logged. The app never blocks on update checks.
-
-#### Impact
-
-- **McManus:** `UpdateViewModel` is ready for UI binding. Properties: `IsUpdateAvailable`, `LatestVersion`, `ReleaseNotes`, `IsChecking`, `IsApplying`. Commands: `CheckForUpdatesCommand`, `ApplyUpdateCommand`.
-- **Hockney:** `OpenSubtitlesProvider` is testable via `MediaMatchHttpClient` mock. `SubtitleDownloadService` can be tested by mocking `ISubtitleProvider`.
-- **All:** When Velopack NuGet is confirmed, only `UpdateCheckService.cs` needs modification — no interface or ViewModel changes required.
-
----
-
-### Decision: Test Infrastructure Patterns (Phase 13)
-
-**Date:** 2026-04-27  
-**Author:** Hockney  
-**Status:** Implemented
-
-#### Context
-
-Phase 13 required comprehensive test coverage across all projects. Several infrastructure classes (sealed HTTP client, static file paths) required specific testing strategies.
-
-#### Decisions
-
-1. **Mock HttpMessageHandler, not MediaMatchHttpClient** — Since `MediaMatchHttpClient` is sealed, provider tests mock `HttpMessageHandler` via `Moq.Protected()` and inject it into a real `HttpClient`. This gives full control over HTTP responses without modifying production code.
-
-2. **URL-routing handler for multi-call tests** — Tests that exercise code paths making multiple HTTP requests use a dictionary-based handler that matches URL patterns to JSON responses.
-
-3. **Real MemoryCache in cache tests** — `MetadataCache` wraps `IMemoryCache`. Tests use the real `Microsoft.Extensions.Caching.Memory.MemoryCache` since it's fast and deterministic.
-
-4. **CLI test project with InternalsVisibleTo** — Created `MediaMatch.CLI.Tests` and added `<InternalsVisibleTo Include="MediaMatch.CLI.Tests" />` to CLI .csproj to access internal command classes.
-
-5. **App.Tests references Core, not App** — WinUI 3 App project can't be referenced from a `net10.0` test project. App.Tests validates Core models, configuration, and validation logic instead.
-
-#### Impact
-
-- Fenster: When adding new providers, follow the `HttpMessageHandler` mock pattern from `TmdbMovieProviderTests`
-- McManus: If SettingsRepository gets path injection, add file-system round-trip tests
-- Keaton: 264 tests baseline. Integration tests in `Application.Tests/Integration/` cover the full pipeline with mocked providers.
-
----
-
-### Decision: Batch Operations & Undo Architecture
-
-**Date:** 2026-04-27  
-**Author:** McManus (UI Dev)  
-**Status:** Implemented
-
-#### Context
-
-Phase 11 required batch rename operations with progress tracking and undo support. Phase 14 required documentation and UI polish.
-
-#### Decisions
-
-1. **Chunk-based concurrency** — `BatchOperationService` processes files in chunks of N (default 4) using `Task.WhenAll`. Each file is individually sent to `IFileOrganizationService.OrganizeAsync()` so per-file failure doesn't block the batch. This is simpler than `SemaphoreSlim`-based throttling and sufficient for file I/O workloads.
-
-2. **Undo journal at `%LOCALAPPDATA%`** — `UndoService` stores a rolling JSON journal (max 100 entries) at `%LOCALAPPDATA%/MediaMatch/undo.json`. Atomic writes via `.tmp` + `File.Move`. Thread-safe with `SemaphoreSlim`. Uses Hockney's `IFileSystem` abstraction so the entire undo flow is unit-testable.
-
-3. **HomeViewModel constructor injection** — `HomeViewModel` now takes `IBatchOperationService`, `IUndoService`, and `ILogger` via DI. A parameterless constructor remains for design-time scenarios. This keeps the ViewModel fully testable without WinUI dependencies.
-
-4. **Keyboard accelerators via Page override** — Used `Page.KeyboardAccelerators` in XAML with `OnKeyboardAcceleratorInvoked` override in code-behind (not ViewModel). Keyboard input is inherently a View concern; the handler simply dispatches to ViewModel commands.
-
-#### Impact
-
-- **Hockney**: `IBatchOperationService` and `IUndoService` interfaces in Core are ready for unit test coverage.
-- **Fenster**: CLI can reuse `BatchOperationService` and `UndoService` directly — they have no UI dependencies.
-- **Keaton**: Architecture maintains clean separation. No circular dependencies introduced.
-
----
-
-### Decision: Phases 15-17 Implementation Patterns
-
-**Date:** 2026-04-27  
-**Author:** Fenster  
-**Status:** Implemented  
-
-#### Context
-
-Phases 15 (AniDB Provider), 16 (Opportunistic Matching), and 17 (New Binding Tokens) add anime metadata, fallback matching, and technical media metadata to MediaMatch v0.2.0.
-
-#### Decisions
-
-1. **AniDB rate limiter is timestamp-based** — Unlike MediaMatchHttpClient's sliding-window rate limiter (for TMDb's burst-based limits), AniDB enforces a simple per-request interval (≤1 req/2s). Uses `SemaphoreSlim` + last-request timestamp tracking with configurable interval.
-
-2. **AniDB uses raw HttpClient, not MediaMatchHttpClient** — AniDB returns XML (not JSON), so the shared JSON-based HTTP client doesn't apply. AniDB gets its own `HttpClient` via `IHttpClientFactory` named clients.
-
-3. **OpportunisticMatcher is composed, not injected** — MatchingPipeline creates its own `OpportunisticMatcher` internally, reusing the same provider instances. This keeps DI registration simple and avoids circular dependencies.
-
-4. **MediaInfoExtractor is best-effort** — ffprobe integration catches `Win32Exception` and falls back to filename-based regex parsing. No hard dependency on ffprobe being installed.
-
-5. **MediaBindings.ForEpisode/ForMovie signatures extended** — Added optional `MediaTechnicalInfo?` parameter (default null) to maintain backward compatibility. Existing callers are unaffected.
-
-6. **ReleaseInfo extended with optional fields** — HdrFormat, DolbyVision, AudioChannels, BitDepth added as optional parameters to preserve backward compatibility with existing record construction.
-
-#### Impact
-
-- **Hockney:** New providers, matcher, and extractor all follow the optional-logger pattern — testable without DI changes.
-- **McManus:** New bindings (`{jellyfin}`, `{acf}`, `{dovi}`, `{hdr}`, `{resolution}`, `{bitdepth}`) available for rename pattern UI.
-- **Keaton:** AniDB provider registered alongside TMDb/TVDb in `IEnumerable<IEpisodeProvider>` — no architectural changes needed.
-
----
-
-### Decision: Theme & Font Scale Architecture
-
-**Date:** 2026-04-27  
-**Author:** McManus (UI Dev)  
-**Status:** Implemented  
-
-#### Context
-
-Phase 19 required dark mode support, HiDPI validation, and accessibility font scaling for MediaMatch.
-
-#### Decisions
-
-1. **Theme applied via `RequestedTheme` on root FrameworkElement** — not per-page. This gives immediate system-wide theme switching without app restart. `ElementTheme.Default` follows the OS setting.
-
-2. **Title bar colors updated manually** — WinUI 3's `AppWindowTitleBar` button colors don't auto-follow theme changes. `UpdateTitleBarColors()` is called on `ActualThemeChanged` to keep title bar buttons visually consistent.
-
-3. **Font scale via `Control.FontSize` on root + resource override** — WinUI 3 `FrameworkElement` lacks `FontSize`; only `Control` has it. The root Grid (a Panel/Control) accepts the property. A `ContentControlFontSize` resource override provides additional coverage.
-
-4. **ThemeMode and FontScale enums in Core** — Kept in `AppSettings.cs` alongside existing settings so both App and CLI can reference them. CLI ignores these values (headless), but they persist in the shared `settings.json`.
-
-5. **Live preview** — Both theme and font scale apply immediately as the user changes the ComboBox selection via `partial void OnChanged` handlers. No "Apply" button needed.
-
-#### Impact
-
-- **Fenster:** `ThemeMode` and `FontScale` fields added to `AppSettings` — CLI serialization picks them up automatically. No action needed unless CLI wants to expose theme config.
-- **Hockney:** New SettingsViewModel properties (`SelectedThemeIndex`, `SelectedFontScaleIndex`) and static methods (`ApplyTheme`, `ApplyFontScale`, `UpdateTitleBarColors`) are testable via mocking the window.
-- **Keaton:** Architecture stays clean — enums in Core, application logic in ViewModel, no new Infrastructure dependencies.
-
----
-
-### Decision: LLM Provider, File Clone, and Multi-Episode Architecture
-
-**Date:** 2026-04-27  
-**Author:** Fenster  
-**Status:** Implemented  
-**Phases:** 18, 21, 22
-
-#### Context
-
-v0.2.0 required three new capabilities: AI-assisted renaming via LLM providers, filesystem-level clone operations (CoW/hardlink), and multi-episode file detection and naming.
-
-#### Decisions
-
-1. **Pluggable LLM providers** — `ILlmProvider` follows the same pattern as `IEpisodeProvider`: multiple implementations registered in DI, consumers select by `IsAvailable`. Provider selection is config-driven via `LlmProviderType` enum (None/OpenAI/AzureOpenAI/Ollama). Only the first available provider is used per request.
-
-2. **No LLM SDK dependency** — All three providers use raw HTTP via `IHttpClientFactory` named clients + `JsonSerializer`. This avoids pulling in large SDK packages and keeps the provider implementations consistent with existing TMDb/TVDb patterns.
-
-3. **P/Invoke for filesystem clone** — ReFS CoW uses `FSCTL_DUPLICATE_EXTENTS_TO_FILE` and NTFS hard links use `CreateHardLink`, both via LibraryImport source-generated P/Invoke. This requires `<AllowUnsafeBlocks>true</AllowUnsafeBlocks>` in Infrastructure.csproj. CA1416 is suppressed at the DI registration site since the shared TFM is `net10.0` (not windows-specific).
-
-4. **Multi-episode backward compatibility** — `SeasonEpisodeMatch` already had an `EndEpisode` property (nullable). The `IsMultiEpisode` computed property was added without changing the record's constructor signature. `MediaBindings.ForEpisode` gains an optional `endEpisode` parameter — all existing callers continue to work unchanged.
-
-5. **Multi-episode naming strategy** — Added `MultiEpisodeNamingStrategy` enum to `AppSettings` (Plex/Jellyfin/Custom). Plex: `S01E01-E02`, Jellyfin: `S01E01-S01E02`. Expression engine gets `{startEpisode}`, `{endEpisode}`, `{isMultiEpisode}` tokens for custom patterns.
-
-#### Impact
-
-- **McManus:** `LlmSettings` and `MultiEpisodeNaming` are new settings that should appear in the Settings UI. `AiRenameSuggestion` can be shown alongside pattern-based suggestions in the rename preview.
-- **Hockney:** All three LLM providers are testable via `HttpMessageHandler` mock. `FileCloneService` can be tested with mocked handlers. Multi-episode parsing has new regex patterns that need test coverage. 264 existing tests still pass.
-- **Keaton:** `RenameAction.Clone` is a new action type flowing through the pipeline. `AllowUnsafeBlocks` is now enabled for Infrastructure.
-
----
-
-### Decision: Shell Extension Registry Approach & Dialog Patterns
-
-**Date:** 2026-04-27  
-**Author:** McManus (UI Dev)  
-**Status:** Implemented
-
-#### Context
-
-Phase 20 required conflict/selection dialogs for the rename workflow. Phase 25 required a Windows 11 context menu integration.
-
-#### Decisions
-
-1. **Registry-based shell extension** — Used `HKCU\Software\Classes\*\shell\MediaMatch` with SubCommands instead of COM `IExplorerCommand`. This avoids complex packaging requirements (MSIX/COM registration) and works with Velopack's install/uninstall hooks. The shell extension is a standalone .NET 10 console app that dispatches to `MediaMatch.CLI.exe`.
-
-2. **ContentDialog for conflicts and match selection** — Both dialogs are standard WinUI 3 `ContentDialog` subclasses with dedicated ViewModels. They're invoked from `HomeViewModel` methods (not directly from services) to keep the UI boundary clean. `XamlRoot` is set from `App.MainWindow.Content`.
-
-3. **Preset definitions in Core** — `PresetDefinitionSettings` lives in `Core/Configuration/AppSettings.cs` so both App and Shell Extension can reference the same model. Shell Extension reads its own `shell-presets.json` file for standalone operation.
-
-4. **ThumbnailService as optional** — Returns null when ffmpeg isn't available. UI uses placeholder FontIcon. No hard dependency on ffmpeg being installed.
-
-#### Impact
-
-- **Fenster**: Shell Extension dispatches to CLI commands. Future CLI commands (`rename --files`, `match --files`) should accept the `--files` flag with multiple paths.
-- **Hockney**: `ConflictDialogViewModel` and `MatchSelectionViewModel` are testable without WinUI dependencies. `ThumbnailService` can be tested with mock file system.
-- **Keaton**: Shell Extension is a separate project with no dependency on App or Infrastructure — clean separation. Registry approach is reversible via `uninstall` command.
-
----
-
-## Governance
-
-- All meaningful changes require team consensus
-- Document architectural decisions here
-- Keep history focused on work, decisions focused on direction
+**Impact:** `SettingsViewModel` now has `FontPreviewText` and `FontPreviewCaption` computed properties. The caption updates when `SelectedFontScaleIndex` changes.

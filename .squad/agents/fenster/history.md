@@ -40,3 +40,58 @@
 - Testing: HttpMessageHandler mocks, URL-routing for multi-call tests, real MemoryCache
 
 *Full detailed history archived to history-archive-20260427.md (22 KB)*
+
+### 2026-04-27 — Batch 6: Phases 23 + 24 + 26 Complete
+
+**Phase 23 — Local Metadata (NFO/XML) Provider:**
+- `NfoMetadataProvider` reads Kodi-style `.nfo` (XML with `<movie>`, `<episodedetails>`, `<tvshow>` roots). Searches same dir for matching `.nfo`.
+- `XmlMetadataProvider` reads Plex/Jellyfin `.xml` sidecars with attribute-or-element flexible parsing.
+- Both implement `IMovieProvider`, `IEpisodeProvider`, and new `ILocalMetadataProvider` interface for file-path-based lookup (clean architecture).
+- `MetadataProviderChain` in Application/Services orders providers: local first (NFO→XML) when `PreferLocalMetadata` is true, then online. Short-circuits at ≥0.90 for local, ≥0.85 for online.
+
+**Phase 24 — Music Mode (MusicBrainz + AcoustID):**
+- `IMusicProvider` interface in Core/Providers: fingerprint lookup + artist/title search.
+- `MusicTrack` model: Artist, Album, AlbumArtist, Title, TrackNumber, DiscNumber, TotalDiscs, Genre, Year, FeaturedArtists, MusicBrainzId, Duration.
+- `MusicBrainzProvider`: REST API JSON, 1 req/sec rate limiter, private nested DTOs.
+- `AcoustIdProvider`: fingerprint lookup via AcoustID REST API, API key from `ApiKeySettings.AcoustIdApiKey`.
+- `MusicDetector`: extension detection, ID3v2/Vorbis tag parsing (raw byte-level), multi-disc detection (CD01/Disc patterns), featured artist regex extraction.
+- `MediaBindings.ForMusic()`: `{artist}`, `{album}`, `{track}`, `{disc}`, `{albumartist}`, `{genre}`, `{featuring}`, `{extension}` tokens.
+- CLI: `--mode music` added to match/rename commands.
+
+**Phase 26 — Scripting Engine (Post-Processing Actions):**
+- `IPostProcessAction` interface in Core/Services: Name, ExecuteAsync, IsAvailable.
+- 4 built-in actions: `PlexRefreshAction` (X-Plex-Token auth), `JellyfinRefreshAction` (X-Emby-Authorization), `ThumbnailGenerateAction` (ffmpeg), `CustomScriptAction` (PowerShell/bash with env vars).
+- `PostProcessPipeline` in Application/Services: executes actions sequentially, catches/logs individual failures, OTel span per action.
+- Settings: `PlexSettings`, `JellyfinSettings`, `PostProcessActionSettings` in AppSettings.
+- CLI: `--apply` flag on rename command (comma-separated action names).
+- All providers and actions registered in DI via `ServiceCollectionExtensions`.
+
+**Key file paths:**
+- `src/MediaMatch.Core/Providers/ILocalMetadataProvider.cs` — file-based lookup contract
+- `src/MediaMatch.Core/Providers/IMusicProvider.cs` — music provider interface
+- `src/MediaMatch.Core/Models/MusicTrack.cs` — music track model
+- `src/MediaMatch.Core/Services/IPostProcessAction.cs` — post-process action interface
+- `src/MediaMatch.Infrastructure/Providers/NfoMetadataProvider.cs` — NFO reader
+- `src/MediaMatch.Infrastructure/Providers/XmlMetadataProvider.cs` — XML sidecar reader
+- `src/MediaMatch.Infrastructure/Providers/MusicBrainzProvider.cs` — MusicBrainz API
+- `src/MediaMatch.Infrastructure/Providers/AcoustIdProvider.cs` — AcoustID fingerprint
+- `src/MediaMatch.Infrastructure/Actions/PlexRefreshAction.cs` — Plex refresh
+- `src/MediaMatch.Infrastructure/Actions/JellyfinRefreshAction.cs` — Jellyfin refresh
+- `src/MediaMatch.Infrastructure/Actions/ThumbnailGenerateAction.cs` — ffmpeg thumbnails
+- `src/MediaMatch.Infrastructure/Actions/CustomScriptAction.cs` — custom script runner
+- `src/MediaMatch.Application/Services/MetadataProviderChain.cs` — ordered provider pipeline
+- `src/MediaMatch.Application/Services/PostProcessPipeline.cs` — post-process executor
+- `src/MediaMatch.Application/Detection/MusicDetector.cs` — music file detection + tag reading
+
+
+## Batch 6 Orchestration — 2026-04-27 08:28:35
+
+### Team Status
+- **fenster-5:** Phases 23+24+26 ✅ Metadata providers (NfoMetadataProvider, XmlMetadataProvider, MetadataProviderChain), Music providers (MusicBrainzProvider, AcoustIdProvider, MusicDetector), Post-processing pipeline (4 actions, CLI --apply)
+- **mcmanus-5:** Phase 27 ✅ UI Accessibility (AutomationProperties, F1 help, InfoBar, ProgressRing, font scale, badges)
+- **scribe-4:** Batch 5 ✅ Decisions archived (cut old entries), inbox merged, history consolidated
+
+### Scribal Actions
+- Decisions: Archived old entries (30-day cutoff), merged 2 inbox files
+- Logs: Created orchestration logs + session log
+- Status: All agents complete, ready for integration
