@@ -45,6 +45,21 @@
 - **Pre-existing build issue**: Serilog 5.0.3 not found on nuget.org — downgraded to 4.2.0. MatchingPipeline.cs has syntax errors unrelated to this phase.
 - **DPAPI package**: Added `System.Security.Cryptography.ProtectedData 9.0.5` to Infrastructure.csproj.
 
+### 2026-04-27 — Phase 11: Batch Operations & Undo + Phase 14: Polish & Documentation
+
+- **BatchOperationService** (`Application/Services/BatchOperationService.cs`) — processes files in parallel via configurable chunk-based concurrency (default 4). Delegates to `IFileOrganizationService.OrganizeAsync()` per file. Reports progress via `IProgress<BatchProgress>`. Cancellation marks remaining items as Skipped.
+- **UndoService** (`Application/Services/UndoService.cs`) — rolling journal of up to 100 `UndoEntry` records stored at `%LOCALAPPDATA%/MediaMatch/undo.json`. Atomic write (`.tmp` + `File.Move`). Thread-safe via `SemaphoreSlim`. Uses `IFileSystem` abstraction from Hockney's Phase 5 for testability.
+- **Core models**: `BatchJob.cs` (Id, Files, Status, Progress, timestamps), `UndoEntry.cs` (record: OriginalPath, NewPath, Timestamp, MediaType). Core interfaces: `IBatchOperationService`, `IUndoService`.
+- **BatchProgressViewModel** — exposes TotalFiles, CompletedFiles, FailedFiles, CurrentFile, ProgressPercent, ProgressText for UI binding.
+- **HomeViewModel updated**: Constructor now accepts `IBatchOperationService`, `IUndoService`, `ILogger` via DI. New commands: `SelectAll`, `CancelBatch`, `UndoLast`, `Refresh`. `ApplyRenames` now uses batch service with progress reporting and records undo entries on success. Error handling wraps all async operations.
+- **HomePage.xaml updated**: Added batch progress bar (ProgressBar + text), Cancel button (visible during batch), Undo Last and Refresh toolbar buttons, Select All button. Added `Page.KeyboardAccelerators` for Ctrl+O, Ctrl+A, Delete, Ctrl+Z, F5.
+- **HomePage.xaml.cs updated**: `OnKeyboardAcceleratorInvoked` override dispatches to ViewModel commands.
+- **DI registration** in `App.xaml.cs`: `IFileSystem`, `IBatchOperationService`, `IUndoService` registered as singletons. `HomeViewModel` factory uses `sp.GetRequiredService` for all three dependencies.
+- **README.md** — Complete rewrite: project description, features list, quick start guide, FileBot comparison table, keyboard shortcuts, architecture diagram, tech stack, contributing guide.
+- **CHANGELOG.md** — v0.1.0 entry covering all implemented features across all phases.
+- **Theme support verified**: All new UI elements use `{ThemeResource}` bindings — no hardcoded colors. Progress bar, status text, and toolbar all respect dark/light theme.
+- **Error handling polish**: All ViewModel async commands wrapped in try/catch with user-friendly StatusMessage updates. No stack traces exposed to UI. Logger captures full exception details.
+
 ### 2026-04-27 — Cross-Agent Impact: Fenster Phase 8 & Hockney Phase 10
 
 **From Fenster (Phase 8 — CLI Commands):**

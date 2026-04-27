@@ -1,16 +1,28 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MediaMatch.Core.Enums;
+using MediaMatch.Core.Models;
+using MediaMatch.Core.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Windows.Storage.Pickers;
 
 namespace MediaMatch.App.ViewModels;
 
 /// <summary>
-/// ViewModel for the Home page — manages file list, folder selection, and rename operations.
+/// ViewModel for the Home page — manages file list, folder selection, batch rename, and undo.
 /// </summary>
 public partial class HomeViewModel : ViewModelBase
 {
+    private readonly IBatchOperationService? _batchService;
+    private readonly IUndoService? _undoService;
+    private readonly ILogger<HomeViewModel> _logger;
+    private CancellationTokenSource? _batchCts;
+
     public ObservableCollection<FileItemViewModel> Files { get; } = [];
+
+    public BatchProgressViewModel BatchProgress { get; } = new();
 
     [ObservableProperty]
     public partial string SelectedFolder { get; set; } = string.Empty;
@@ -21,13 +33,28 @@ public partial class HomeViewModel : ViewModelBase
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = "No files loaded. Add a folder to get started.";
 
+    [ObservableProperty]
+    public partial bool CanUndo { get; set; }
+
     public int FileCount => Files.Count;
     public int SelectedCount => Files.Count(f => f.IsSelected);
     public bool HasFiles => Files.Count > 0;
     public bool HasNoFiles => Files.Count == 0;
 
-    public HomeViewModel()
+    /// <summary>
+    /// Design-time / test constructor (no services).
+    /// </summary>
+    public HomeViewModel() : this(null, null, null) { }
+
+    public HomeViewModel(
+        IBatchOperationService? batchService,
+        IUndoService? undoService,
+        ILogger<HomeViewModel>? logger)
     {
+        _batchService = batchService;
+        _undoService = undoService;
+        _logger = logger ?? NullLogger<HomeViewModel>.Instance;
+
         Files.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(FileCount));
@@ -36,6 +63,8 @@ public partial class HomeViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasNoFiles));
             UpdateStatusMessage();
         };
+
+        _ = RefreshCanUndoAsync();
     }
 
     [RelayCommand]
@@ -45,7 +74,6 @@ public partial class HomeViewModel : ViewModelBase
         picker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
         picker.FileTypeFilter.Add("*");
 
-        // Get the current window's HWND for the picker
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
@@ -59,6 +87,11 @@ public partial class HomeViewModel : ViewModelBase
         try
         {
             await ScanFolderAsync(folder.Path);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to scan folder {Folder}", folder.Path);
+            StatusMessage = $"Error scanning folder: {ex.Message}";
         }
         finally
         {
@@ -79,28 +112,149 @@ public partial class HomeViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void SelectAll()
+    {
+        foreach (var file in Files)
+        {
+            file.IsSelected = true;
+        }
+        OnPropertyChanged(nameof(SelectedCount));
+    }
+
+    [RelayCommand]
     private async Task ApplyRenamesAsync()
     {
         if (Files.Count == 0) return;
 
+        if (_batchService is null)
+        {
+            StatusMessage = "Batch service not available.";
+            return;
+        }
+
         IsProcessing = true;
-        StatusMessage = "Applying renames...";
+        BatchProgress.IsRunning = true;
+        _batchCts = new CancellationTokenSource();
+
+        var filePaths = Files.Select(f => f.FilePath).ToList();
+        var progress = new Progress<BatchProgress>(p =>
+        {
+            App.MainWindow.DispatcherQueue.TryEnqueue(() =>
+            {
+                BatchProgress.Update(p.TotalFiles, p.CompletedFiles, p.FailedFiles, p.CurrentFile);
+                StatusMessage = $"Renaming: {p.CompletedFiles + p.FailedFiles}/{p.TotalFiles}...";
+            });
+        });
 
         try
         {
-            // Rename logic will be wired to the Application layer service
-            await Task.Delay(100); // Placeholder for actual rename operation
-            StatusMessage = "Renames applied successfully.";
+            // Default pattern — will use settings in future
+            var job = await _batchService.ExecuteAsync(filePaths, "{n}", progress, _batchCts.Token);
+
+            // Record successful renames for undo
+            if (_undoService is not null)
+            {
+                var undoEntries = job.Files
+                    .Where(f => f.Status == BatchFileStatus.Success && f.NewPath is not null)
+                    .Select(f => new UndoEntry(
+                        f.FilePath,
+                        f.NewPath!,
+                        DateTimeOffset.UtcNow,
+                        MediaType.Unknown))
+                    .ToList();
+
+                if (undoEntries.Count > 0)
+                {
+                    await _undoService.RecordAsync(undoEntries);
+                }
+            }
+
+            StatusMessage = job.Status switch
+            {
+                BatchStatus.Completed => $"Done — {job.CompletedCount} renamed, {job.FailedCount} failed.",
+                BatchStatus.Cancelled => $"Cancelled — {job.CompletedCount} renamed before cancellation.",
+                BatchStatus.Failed => "Batch operation failed.",
+                _ => "Renames completed."
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Batch rename failed");
+            StatusMessage = $"Rename error: {ex.Message}";
         }
         finally
         {
             IsProcessing = false;
+            BatchProgress.IsRunning = false;
+            _batchCts?.Dispose();
+            _batchCts = null;
+            await RefreshCanUndoAsync();
+        }
+    }
+
+    [RelayCommand]
+    private void CancelBatch()
+    {
+        _batchCts?.Cancel();
+        StatusMessage = "Cancelling...";
+    }
+
+    [RelayCommand]
+    private async Task UndoLastAsync()
+    {
+        if (_undoService is null)
+        {
+            StatusMessage = "Undo service not available.";
+            return;
+        }
+
+        IsProcessing = true;
+        try
+        {
+            int undone = await _undoService.UndoAsync(1);
+            StatusMessage = undone > 0
+                ? $"Undid {undone} rename operation(s)."
+                : "Nothing to undo.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Undo failed");
+            StatusMessage = $"Undo error: {ex.Message}";
+        }
+        finally
+        {
+            IsProcessing = false;
+            await RefreshCanUndoAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task RefreshAsync()
+    {
+        if (string.IsNullOrEmpty(SelectedFolder)) return;
+
+        Files.Clear();
+        IsProcessing = true;
+        StatusMessage = "Refreshing...";
+
+        try
+        {
+            await ScanFolderAsync(SelectedFolder);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Refresh failed");
+            StatusMessage = $"Refresh error: {ex.Message}";
+        }
+        finally
+        {
+            IsProcessing = false;
+            UpdateStatusMessage();
         }
     }
 
     private async Task ScanFolderAsync(string folderPath)
     {
-        // Scan for media files — will be wired to Application layer
         var mediaExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             ".mkv", ".mp4", ".avi", ".mov", ".wmv", ".flv", ".m4v",
@@ -120,7 +274,7 @@ public partial class HomeViewModel : ViewModelBase
                 var item = new FileItemViewModel
                 {
                     OriginalFileName = file.Name,
-                    NewFileName = file.Name, // Placeholder until matching runs
+                    NewFileName = file.Name,
                     FilePath = file.FullName,
                     MediaType = GetMediaType(file.Extension),
                     MatchConfidence = 0
@@ -149,6 +303,21 @@ public partial class HomeViewModel : ViewModelBase
         else
         {
             StatusMessage = $"{Files.Count} file(s) loaded";
+        }
+    }
+
+    private async Task RefreshCanUndoAsync()
+    {
+        if (_undoService is not null)
+        {
+            try
+            {
+                CanUndo = await _undoService.CanUndoAsync();
+            }
+            catch
+            {
+                CanUndo = false;
+            }
         }
     }
 }

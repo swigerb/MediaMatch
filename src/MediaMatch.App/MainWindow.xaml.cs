@@ -56,4 +56,12 @@ public sealed partial class MainWindow : Window
             }
         }
     }
+
+    /// <summary>
+    /// Programmatically navigates to the Settings page (used for first-run detection).
+    /// </summary>
+    public void NavigateToSettings(bool firstRun = false)
+    {
+        NavFrame.Navigate(typeof(SettingsPage), firstRun ? "first-run" : null);
+    }
 }

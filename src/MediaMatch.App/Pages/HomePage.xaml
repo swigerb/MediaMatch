@@ -14,8 +14,17 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
     </Page.Resources>
 
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="O" Modifiers="Control" />
+        <KeyboardAccelerator Key="A" Modifiers="Control" />
+        <KeyboardAccelerator Key="Delete" />
+        <KeyboardAccelerator Key="Z" Modifiers="Control" />
+        <KeyboardAccelerator Key="F5" />
+    </Page.KeyboardAccelerators>
+
     <Grid Padding="24,16,24,16" RowSpacing="16">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -36,20 +45,64 @@
             <AppBarButton
                 Command="{x:Bind ViewModel.AddFolderCommand}"
                 Icon="OpenLocal"
-                Label="Add Folder" />
+                Label="Add Folder"
+                ToolTipService.ToolTip="Add folder (Ctrl+O)" />
             <AppBarButton
                 Command="{x:Bind ViewModel.RemoveSelectedCommand}"
                 Icon="Delete"
-                Label="Remove Selected" />
+                Label="Remove Selected"
+                ToolTipService.ToolTip="Remove selected (Delete)" />
+            <AppBarButton
+                Command="{x:Bind ViewModel.SelectAllCommand}"
+                Icon="SelectAll"
+                Label="Select All"
+                ToolTipService.ToolTip="Select all (Ctrl+A)" />
             <AppBarSeparator />
             <AppBarButton
                 Command="{x:Bind ViewModel.ApplyRenamesCommand}"
                 Icon="Accept"
                 Label="Apply Renames" />
+            <AppBarButton
+                Command="{x:Bind ViewModel.CancelBatchCommand}"
+                Icon="Cancel"
+                Label="Cancel"
+                Visibility="{x:Bind ViewModel.BatchProgress.IsRunning, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+            <AppBarSeparator />
+            <AppBarButton
+                Command="{x:Bind ViewModel.UndoLastCommand}"
+                Icon="Undo"
+                Label="Undo Last"
+                ToolTipService.ToolTip="Undo last rename (Ctrl+Z)" />
+            <AppBarButton
+                Command="{x:Bind ViewModel.RefreshCommand}"
+                Icon="Refresh"
+                Label="Refresh"
+                ToolTipService.ToolTip="Refresh (F5)" />
         </CommandBar>
 
+        <!-- Batch Progress Bar -->
+        <StackPanel
+            Grid.Row="2"
+            Spacing="4"
+            Visibility="{x:Bind ViewModel.BatchProgress.IsRunning, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <ProgressBar
+                Maximum="100"
+                Value="{x:Bind ViewModel.BatchProgress.ProgressPercent, Mode=OneWay}" />
+            <Grid>
+                <TextBlock
+                    HorizontalAlignment="Left"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.BatchProgress.ProgressText, Mode=OneWay}" />
+                <TextBlock
+                    HorizontalAlignment="Right"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="{x:Bind ViewModel.BatchProgress.CurrentFile, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </StackPanel>
+
         <!-- File Grid / Empty State -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <!-- Empty state -->
             <StackPanel
                 HorizontalAlignment="Center"
@@ -69,7 +122,7 @@
                 <TextBlock
                     HorizontalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                    Text="Click &quot;Add Folder&quot; to scan for media files" />
+                    Text="Click &quot;Add Folder&quot; or press Ctrl+O to scan for media files" />
             </StackPanel>
 
             <!-- File list -->
@@ -148,7 +201,7 @@
 
         <!-- Status Bar -->
         <Grid
-            Grid.Row="3"
+            Grid.Row="4"
             Padding="12,8"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             CornerRadius="4">
