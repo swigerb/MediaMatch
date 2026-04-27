@@ -7,6 +7,7 @@
     <Project Path="src/MediaMatch.CLI/MediaMatch.CLI.csproj" />
     <Project Path="src/MediaMatch.Core/MediaMatch.Core.csproj" />
     <Project Path="src/MediaMatch.Infrastructure/MediaMatch.Infrastructure.csproj" />
+    <Project Path="src/MediaMatch.ShellExtension/MediaMatch.ShellExtension.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MediaMatch.App.Tests/MediaMatch.App.Tests.csproj" />

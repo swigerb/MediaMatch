@@ -1,6 +1,7 @@
 using MediaMatch.App.Services;
 using MediaMatch.App.ViewModels;
 using MediaMatch.Application.Services;
+using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Services;
 using MediaMatch.Infrastructure;
 using MediaMatch.Infrastructure.Observability;
@@ -44,13 +45,42 @@ public partial class App : Microsoft.UI.Xaml.Application
         Log.Information("MediaMatch application started");
     }
 
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainWindow = new MainWindow();
         MainWindow.Activate();
 
+        // Apply saved theme and font scale
+        await ApplySavedAppearanceAsync();
+
+        // Listen for actual theme changes to keep title bar in sync
+        if (MainWindow.Content is FrameworkElement rootElement)
+        {
+            rootElement.ActualThemeChanged += (s, _) =>
+            {
+                if (s is FrameworkElement fe)
+                    SettingsViewModel.UpdateTitleBarColors(fe.ActualTheme);
+            };
+        }
+
         // Fire-and-forget update check — don't block app launch
         _ = CheckForUpdatesAsync();
+    }
+
+    private static async Task ApplySavedAppearanceAsync()
+    {
+        try
+        {
+            var settingsRepo = _serviceProvider.GetRequiredService<ISettingsRepository>();
+            var settings = await settingsRepo.LoadAsync();
+
+            SettingsViewModel.ApplyTheme(settings.ThemeMode);
+            SettingsViewModel.ApplyFontScale(settings.FontScale);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to apply saved appearance settings");
+        }
     }
 
     private static async Task CheckForUpdatesAsync()
@@ -98,6 +128,9 @@ public partial class App : Microsoft.UI.Xaml.Application
             sp.GetRequiredService<ILogger<HomeViewModel>>()));
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();
+
+        // Thumbnail service
+        services.AddSingleton<ThumbnailService>();
 
         // Update services
         services.AddSingleton<IUpdateCheckService, UpdateCheckService>();

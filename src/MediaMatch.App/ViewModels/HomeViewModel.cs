@@ -1,11 +1,13 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MediaMatch.App.Dialogs;
 using MediaMatch.Core.Enums;
 using MediaMatch.Core.Models;
 using MediaMatch.Core.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
 
 namespace MediaMatch.App.ViewModels;
@@ -319,5 +321,43 @@ public partial class HomeViewModel : ViewModelBase
                 CanUndo = false;
             }
         }
+    }
+
+    /// <summary>
+    /// Shows the conflict resolution dialog when a target file already exists.
+    /// Returns the user's chosen resolution.
+    /// </summary>
+    public async Task<ConflictResolution> ShowConflictDialogAsync(string sourcePath, string targetPath)
+    {
+        var vm = new ConflictDialogViewModel();
+        vm.LoadFromFiles(sourcePath, targetPath);
+
+        var dialog = new ConflictDialog(vm)
+        {
+            XamlRoot = App.MainWindow.Content.XamlRoot
+        };
+
+        await dialog.ShowAsync();
+        return vm.Resolution;
+    }
+
+    /// <summary>
+    /// Shows the match selection dialog when opportunistic matching returns candidates.
+    /// Returns the selected match, or null if the user skipped.
+    /// </summary>
+    public async Task<MatchSuggestion?> ShowMatchSelectionDialogAsync(
+        string fileName,
+        IEnumerable<MatchSuggestion> suggestions)
+    {
+        var vm = new MatchSelectionViewModel();
+        vm.LoadSuggestions(fileName, suggestions);
+
+        var dialog = new MatchSelectionDialog(vm)
+        {
+            XamlRoot = App.MainWindow.Content.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        return result == ContentDialogResult.Primary ? vm.SelectedMatch : null;
     }
 }

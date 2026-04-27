@@ -86,3 +86,17 @@
 - Test patterns established for subtitle providers: mock `HttpMessageHandler` for API responses, URL-routing for two-step download flow.
 - `ISubtitleDownloadService` mock contracts documented; easy to add tests for ViewModel integration with batch operations.
 - No test churn — all existing tests pass. Optional `ILogger<T>?` pattern ensures backward compatibility.
+
+### 2026-04-27 — Phase 20: Enhanced Conflict & Selection Dialogs + Phase 25: Shell Extension
+
+- **ConflictDialog** (`Dialogs/ConflictDialog.xaml(.cs)`) — ContentDialog for file conflict resolution during rename. Shows source/target path, formatted file sizes, last modified dates. Four resolution options: Overwrite (Primary), Skip (Secondary), Rename/append number (custom Button), Cancel All (Close). Uses `ConflictDialogViewModel` with `LoadFromFiles()` method that reads `FileInfo` for size/date formatting.
+- **MatchSelectionDialog** (`Dialogs/MatchSelectionDialog.xaml(.cs)`) — ContentDialog for opportunistic match selection. ListView displays `MatchSuggestionItem` wrappers with title+year, provider name, confidence % (ProgressBar), description. Thumbnail placeholder (FontIcon) for artwork. `MatchSelectionViewModel` loads from `IEnumerable<MatchSuggestion>`. Primary button requires selection before closing.
+- **ThumbnailService** (`Services/ThumbnailService.cs`) — Generates video thumbnails via ffmpeg (`-ss 00:00:30 -frames:v 1`). Caches in `%TEMP%/MediaMatch/thumbs/` using SHA256 hash of path as filename. Returns `BitmapImage` for XAML binding. Graceful null return if ffmpeg not found. Thread-safe via `SemaphoreSlim`.
+- **HomeViewModel wiring** — Added `ShowConflictDialogAsync(source, target)` and `ShowMatchSelectionDialogAsync(fileName, suggestions)` methods. Both set `XamlRoot` from `App.MainWindow.Content` for proper dialog placement.
+- **AppSettings extended** — Added `PresetDefinitionSettings` class and `List<PresetDefinitionSettings> Presets` property to `AppSettings` in Core. Both Shell Extension and App can read preset definitions.
+- **Shell Extension project** (`src/MediaMatch.ShellExtension/`) — .NET 10 console app targeting `net10.0-windows10.0.22621.0`. Registry-based context menu using `HKCU\Software\Classes\*\shell\MediaMatch` key approach. Sub-commands: Rename, Match & Preview, Organize to Library, plus custom presets from `ShellSettings`.
+- **RegistryManager** — Handles `install`/`uninstall` of registry keys. Creates sub-commands under the MediaMatch shell key. Preset names sanitized for registry key compatibility.
+- **Program entry point** — Routes `install`, `uninstall`, `rename`, `match`, `organize`, `preset` commands. Resolves CLI path from settings or same directory. Launches `MediaMatch.CLI.exe` with appropriate arguments.
+- **Solution updated** — `MediaMatch.slnx` includes `MediaMatch.ShellExtension.csproj`.
+- **Build status**: Core, Application, ShellExtension all compile clean. Infrastructure has pre-existing errors (SYSLIB1032/1050 JsonSerializerContext, AllowUnsafeBlocks) unrelated to this phase.
+- **All XAML uses ThemeResource** — ConflictDialog and MatchSelectionDialog use `TextFillColorSecondaryBrush`, `TextFillColorTertiaryBrush`, `CardBackgroundFillColorSecondaryBrush` for dark/light theme support.

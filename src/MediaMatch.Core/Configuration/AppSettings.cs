@@ -29,6 +29,51 @@ public sealed class AppSettings
     /// Falls back to a 0.60 threshold and returns ranked suggestions.
     /// </summary>
     public bool EnableOpportunisticMode { get; set; } = true;
+
+    /// <summary>LLM provider settings for AI-assisted renaming.</summary>
+    public LlmConfiguration LlmSettings { get; set; } = new();
+
+    /// <summary>Multi-episode naming strategy.</summary>
+    public MultiEpisodeNamingStrategy MultiEpisodeNaming { get; set; } = MultiEpisodeNamingStrategy.Plex;
+
+    /// <summary>
+    /// Custom preset definitions for quick-action context menu and batch operations.
+    /// </summary>
+    public List<PresetDefinitionSettings> Presets { get; set; } = [];
+}
+
+/// <summary>
+/// Multi-episode naming conventions for different media servers.
+/// </summary>
+public enum MultiEpisodeNamingStrategy
+{
+    /// <summary>Plex style: Show - S01E01-E02 - Title1 &amp; Title2.mkv</summary>
+    Plex = 0,
+
+    /// <summary>Jellyfin style: Show S01E01-S01E02.mkv</summary>
+    Jellyfin = 1,
+
+    /// <summary>Custom pattern using {startEpisode} and {endEpisode} tokens.</summary>
+    Custom = 2
+}
+
+/// <summary>
+/// A named preset for quick rename/organize operations.
+/// Used by both the Shell Extension context menu and the App UI.
+/// </summary>
+public sealed class PresetDefinitionSettings
+{
+    /// <summary>Display name (e.g., "TV Shows → Plex").</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Rename pattern tokens (e.g., "{SeriesName}/Season {Season}/...").</summary>
+    public string RenamePattern { get; set; } = string.Empty;
+
+    /// <summary>Target output folder.</summary>
+    public string OutputFolder { get; set; } = string.Empty;
+
+    /// <summary>Optional post-rename actions.</summary>
+    public List<string> PostActions { get; set; } = [];
 }
 
 /// <summary>
