@@ -2,6 +2,9 @@ using MediaMatch.Core.Enums;
 
 namespace MediaMatch.Application.Detection;
 
+/// <summary>
+/// Detects the media type of a file based on its extension, filename patterns, and release info.
+/// </summary>
 public sealed class MediaDetector
 {
     private static readonly HashSet<string> VideoExtensions =
@@ -28,11 +31,18 @@ public sealed class MediaDetector
 
     private readonly ReleaseInfoParser _releaseParser;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaDetector"/> class.
+    /// </summary>
     public MediaDetector()
     {
         _releaseParser = new ReleaseInfoParser();
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaDetector"/> class.
+    /// </summary>
+    /// <param name="releaseParser">The release info parser to use for filename analysis.</param>
     public MediaDetector(ReleaseInfoParser releaseParser)
     {
         _releaseParser = releaseParser;
@@ -111,8 +121,7 @@ public sealed class MediaDetector
 
         // Absolute episode with no season marker is often anime
         if (se is { AbsoluteNumber: not null, Season: 1 }
-            && !fileName.Contains("S01", StringComparison.OrdinalIgnoreCase)
-            && !fileName.Contains("s01", StringComparison.OrdinalIgnoreCase))
+            && !fileName.Contains("S01", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

@@ -2,11 +2,21 @@ using MediaMatch.Core.Matching;
 
 namespace MediaMatch.Application.Matching;
 
-public class BipartiteMatcher<TValue, TCandidate>
+/// <summary>
+/// Performs greedy bipartite matching between values and candidates using configurable similarity metrics.
+/// </summary>
+/// <typeparam name="TValue">The type of values to match.</typeparam>
+/// <typeparam name="TCandidate">The type of candidates to match against.</typeparam>
+public sealed class BipartiteMatcher<TValue, TCandidate>
 {
     private readonly IReadOnlyList<ISimilarityMetric> _metrics;
     private readonly float _threshold;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BipartiteMatcher{TValue, TCandidate}"/> class.
+    /// </summary>
+    /// <param name="metrics">The similarity metrics used to score value-candidate pairs.</param>
+    /// <param name="threshold">The minimum score required for a pair to be considered a match.</param>
     public BipartiteMatcher(IReadOnlyList<ISimilarityMetric> metrics, float threshold = 0.5f)
     {
         ArgumentNullException.ThrowIfNull(metrics);
@@ -14,6 +24,14 @@ public class BipartiteMatcher<TValue, TCandidate>
         _threshold = threshold;
     }
 
+    /// <summary>
+    /// Matches values to candidates using a greedy best-first strategy, returning disjoint one-to-one pairings.
+    /// </summary>
+    /// <param name="values">The values to match.</param>
+    /// <param name="candidates">The candidates to match against.</param>
+    /// <param name="valueTransform">Transforms a value into the object used for similarity comparison.</param>
+    /// <param name="candidateTransform">Transforms a candidate into the object used for similarity comparison.</param>
+    /// <returns>A list of disjoint matches sorted by descending score.</returns>
     public IReadOnlyList<Match<TValue, TCandidate>> Match(
         IReadOnlyList<TValue> values,
         IReadOnlyList<TCandidate> candidates,

@@ -3,6 +3,9 @@ using MediaMatch.Core.Enums;
 
 namespace MediaMatch.Application.Detection;
 
+/// <summary>
+/// Parses media release filenames to extract season/episode numbers, quality, codecs, and other metadata.
+/// </summary>
 public sealed partial class ReleaseInfoParser
 {
     // ── Season / Episode ────────────────────────────────────────────────
@@ -168,10 +171,21 @@ public sealed partial class ReleaseInfoParser
     [GeneratedRegex(@"\b10bit\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex BitDepth10Regex();
 
+    [GeneratedRegex(@"\s{2,}", RegexOptions.Compiled)]
+    private static partial Regex CollapseWhitespaceRegex();
+
+    [GeneratedRegex(@"\s*-\s*$", RegexOptions.Compiled)]
+    private static partial Regex TrailingDashRegex();
+
     // ────────────────────────────────────────────────────────────────────
     // Public API
     // ────────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Parses season and episode numbers from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>A <see cref="SeasonEpisodeMatch"/> if found; otherwise, <see langword="null"/>.</returns>
     public SeasonEpisodeMatch? ParseSeasonEpisode(string fileName)
     {
         var name = StripExtension(fileName);
@@ -255,12 +269,22 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Parses the release year from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The year if found; otherwise, <see langword="null"/>.</returns>
     public int? ParseYear(string fileName)
     {
         var m = YearRegex().Match(StripExtension(fileName));
         return m.Success ? int.Parse(m.Groups[1].Value) : null;
     }
 
+    /// <summary>
+    /// Parses the video quality (e.g., 1080p, 4K) from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The detected <see cref="VideoQuality"/>.</returns>
     public VideoQuality ParseVideoQuality(string fileName)
     {
         var name = StripExtension(fileName);
@@ -279,6 +303,11 @@ public sealed partial class ReleaseInfoParser
         return VideoQuality.Unknown;
     }
 
+    /// <summary>
+    /// Parses the release group name from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The release group name if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseReleaseGroup(string fileName)
     {
         var name = StripExtension(fileName);
@@ -300,6 +329,11 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Parses the video source (e.g., BluRay, WEB-DL) from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The video source if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseVideoSource(string fileName)
     {
         var name = StripExtension(fileName);
@@ -315,6 +349,11 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Parses the video codec (e.g., H.265, AV1) from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The video codec if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseVideoCodec(string fileName)
     {
         var name = StripExtension(fileName);
@@ -327,6 +366,11 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Parses the audio codec (e.g., TrueHD, DTS, AAC) from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The audio codec if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseAudioCodec(string fileName)
     {
         var name = StripExtension(fileName);
@@ -341,6 +385,11 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Extracts a clean title by stripping release noise, codecs, quality tags, and group names from a filename.
+    /// </summary>
+    /// <param name="fileName">The filename to clean.</param>
+    /// <returns>The cleaned title string.</returns>
     public string CleanTitle(string fileName)
     {
         var name = StripExtension(fileName);
@@ -376,20 +425,30 @@ public sealed partial class ReleaseInfoParser
 
         // Replace dots / underscores with spaces and collapse whitespace
         name = name.Replace('.', ' ').Replace('_', ' ');
-        name = Regex.Replace(name, @"\s{2,}", " ");
+        name = CollapseWhitespaceRegex().Replace(name, " ");
 
         // Remove trailing dash/group fragment
-        name = Regex.Replace(name, @"\s*-\s*$", "");
+        name = TrailingDashRegex().Replace(name, "");
 
         return name.Trim();
     }
 
+    /// <summary>
+    /// Parses the language tag from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The language code in uppercase if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseLanguage(string fileName)
     {
         var m = LanguageRegex().Match(StripExtension(fileName));
         return m.Success ? m.Groups[1].Value.ToUpperInvariant() : null;
     }
 
+    /// <summary>
+    /// Parses the HDR format (e.g., HDR10, HDR10+, HLG) from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The HDR format if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseHdrFormat(string fileName)
     {
         var name = StripExtension(fileName);
@@ -400,6 +459,11 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Parses the Dolby Vision profile from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The Dolby Vision descriptor if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseDolbyVision(string fileName)
     {
         var name = StripExtension(fileName);
@@ -409,6 +473,11 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Parses the audio channel layout (e.g., 5.1, 7.1 Atmos) from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The audio channel layout if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseAudioChannels(string fileName)
     {
         var name = StripExtension(fileName);
@@ -418,6 +487,11 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Parses the bit depth (e.g., 10bit) from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>The bit depth if found; otherwise, <see langword="null"/>.</returns>
     public string? ParseBitDepth(string fileName)
     {
         var name = StripExtension(fileName);
@@ -425,6 +499,11 @@ public sealed partial class ReleaseInfoParser
         return null;
     }
 
+    /// <summary>
+    /// Parses all available release metadata from a media filename.
+    /// </summary>
+    /// <param name="fileName">The filename to parse.</param>
+    /// <returns>A <see cref="ReleaseInfo"/> containing all detected metadata.</returns>
     public ReleaseInfo Parse(string fileName)
     {
         return new ReleaseInfo(
@@ -455,7 +534,7 @@ public sealed partial class ReleaseInfoParser
         if (string.IsNullOrEmpty(ext))
             return fileName;
 
-        return KnownExtensions.Contains(ext.ToLowerInvariant())
+        return KnownExtensions.Contains(ext)
             ? Path.GetFileNameWithoutExtension(fileName)
             : fileName;
     }

@@ -8,7 +8,7 @@ namespace MediaMatch.Application.Expressions;
 /// Exposes media metadata as Scriban template variables.
 /// Maps FileBot-style bindings to Scriban ScriptObject properties.
 /// </summary>
-public class MediaBindings : ScriptObject, IMediaBindings
+public sealed class MediaBindings : ScriptObject, IMediaBindings
 {
     private MediaBindings() { }
 
@@ -81,12 +81,14 @@ public class MediaBindings : ScriptObject, IMediaBindings
 
     // ── IMediaBindings ──────────────────────────────────────────
 
+    /// <inheritdoc />
     public object? GetValue(string name)
     {
         TryGetValue(null!, new Scriban.Parsing.SourceSpan(), name, out var value);
         return value;
     }
 
+    /// <inheritdoc />
     public IReadOnlyDictionary<string, object?> GetAllBindings()
     {
         var dict = new Dictionary<string, object?>();
@@ -98,6 +100,7 @@ public class MediaBindings : ScriptObject, IMediaBindings
         return dict;
     }
 
+    /// <inheritdoc />
     public bool HasBinding(string name) => Contains(name);
 
     // ── helpers ─────────────────────────────────────────────────

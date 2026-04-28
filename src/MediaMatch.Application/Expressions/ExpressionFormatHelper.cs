@@ -7,7 +7,7 @@ namespace MediaMatch.Application.Expressions;
 /// Custom Scriban functions available in expressions.
 /// Registered as a global "mm" object: {{mm.pad e 2}}
 /// </summary>
-public class ExpressionFormatHelper : ScriptObject
+public sealed class ExpressionFormatHelper : ScriptObject
 {
     private static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
 

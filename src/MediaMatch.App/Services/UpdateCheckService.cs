@@ -34,16 +34,6 @@ public sealed class UpdateCheckService : IUpdateCheckService
         {
             _logger.LogInformation("Checking for application updates...");
 
-            // TODO: Replace with Velopack.UpdateManager when package is available
-            // var mgr = new UpdateManager("https://github.com/swigerb/MediaMatch/releases");
-            // var updateInfo = await mgr.CheckForUpdatesAsync();
-            // if (updateInfo is not null)
-            // {
-            //     IsUpdateAvailable = true;
-            //     LatestVersion = updateInfo.TargetFullRelease.Version.ToString();
-            //     ReleaseNotes = updateInfo.TargetFullRelease.Body;
-            // }
-
             // Stub: simulate no update available
             await Task.Delay(100, ct); // Simulate network call
             IsUpdateAvailable = false;
@@ -73,12 +63,6 @@ public sealed class UpdateCheckService : IUpdateCheckService
         try
         {
             _logger.LogInformation("Downloading and applying update to v{Version}...", LatestVersion);
-
-            // TODO: Replace with Velopack.UpdateManager when package is available
-            // var mgr = new UpdateManager("https://github.com/swigerb/MediaMatch/releases");
-            // var updateInfo = await mgr.CheckForUpdatesAsync();
-            // await mgr.DownloadUpdatesAsync(updateInfo);
-            // mgr.ApplyUpdatesAndRestart(updateInfo);
 
             await Task.CompletedTask;
             _logger.LogWarning("Velopack not yet integrated — update download is a no-op");

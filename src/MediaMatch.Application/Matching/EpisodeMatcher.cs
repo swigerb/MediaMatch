@@ -4,8 +4,17 @@ using MediaMatch.Core.Models;
 
 namespace MediaMatch.Application.Matching;
 
-public class EpisodeMatcher
+/// <summary>
+/// Matches file paths to episodes using season/episode numbers, name similarity, and date metrics.
+/// </summary>
+public sealed class EpisodeMatcher
 {
+    /// <summary>
+    /// Matches file paths to episodes using a cascading set of similarity metrics.
+    /// </summary>
+    /// <param name="filePaths">The file paths to match.</param>
+    /// <param name="episodes">The candidate episodes to match against.</param>
+    /// <returns>A list of file-to-episode matches ordered by descending score.</returns>
     public IReadOnlyList<Match<string, Episode>> MatchFiles(
         IReadOnlyList<string> filePaths,
         IReadOnlyList<Episode> episodes)
