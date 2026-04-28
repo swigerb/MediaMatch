@@ -55,7 +55,12 @@ public partial class PresetEditorViewModel : ViewModelBase
     public partial int SelectedRenameActionIndex { get; set; }
 
     /// <summary>Gets the available data source labels.</summary>
-    public string[] DatasourceOptions { get; } = ["Auto", "TMDb", "TVDb", "AniDB", "MusicBrainz"];
+    public string[] DatasourceOptions { get; } =
+    [
+        "Auto", "TheTVDB", "AniDB", "TheMovieDB::TV", "TVmaze",
+        "TheMovieDB", "OMDb", "AcoustID", "ID3 Tags",
+        "Exif Metadata", "Extended Attributes", "Plain File"
+    ];
 
     /// <summary>Gets the available language labels with flag emoji.</summary>
     public string[] LanguageOptions { get; } =
@@ -137,7 +142,12 @@ public partial class PresetEditorViewModel : ViewModelBase
         "Ctrl+NumPad6", "Ctrl+NumPad7", "Ctrl+NumPad8", "Ctrl+NumPad9"
     ];
 
-    private static readonly string[] DatasourceValues = ["auto", "tmdb", "tvdb", "anidb", "musicbrainz"];
+    private static readonly string[] DatasourceValues =
+    [
+        "auto", "tvdb", "anidb", "tmdb_tv", "tvmaze",
+        "tmdb", "omdb", "acoustid", "id3",
+        "exif", "xattr", "plain"
+    ];
     private static readonly string[] LanguageCodes =
     [
         "en", "de", "fr", "es", "pt-BR", "ru", "zh", "zh-TW", "ja", "ja-Latn",

@@ -52,7 +52,7 @@ public sealed class PresetEditorViewModelTests
         vm.RenamePattern.Should().Be("{SeriesName}/S{Season:D2}E{Episode:D2}");
         vm.OutputFolder.Should().Be(@"D:\Media\TV");
         vm.SelectedShortcutIndex.Should().Be(1); // "Ctrl+1"
-        vm.SelectedDatasourceIndex.Should().Be(2); // TVDb
+        vm.SelectedDatasourceIndex.Should().Be(1); // TVDb
         vm.SelectedLanguageIndex.Should().Be(8);   // Japanese
         vm.SelectedEpisodeOrderIndex.Should().Be(2); // Absolute
         vm.SelectedMatchModeIndex.Should().Be(1);    // Strict
@@ -70,7 +70,7 @@ public sealed class PresetEditorViewModelTests
             RenamePattern = "{SeriesName} - {Episode}",
             OutputFolder = @"D:\Anime",
             SelectedShortcutIndex = 2, // Ctrl+2
-            SelectedDatasourceIndex = 3,  // AniDB
+            SelectedDatasourceIndex = 2,  // AniDB
             SelectedLanguageIndex = 8,    // Japanese
             SelectedEpisodeOrderIndex = 2, // Absolute
             SelectedMatchModeIndex = 0,    // Opportunistic
