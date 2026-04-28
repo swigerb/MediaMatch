@@ -25,10 +25,10 @@ jobs:
         run: dotnet restore MediaMatch.slnx
       
       - name: Build
-        run: dotnet build MediaMatch.slnx --no-restore --configuration Release -p:Platform=x64
+        run: dotnet build MediaMatch.slnx --no-restore --configuration Release
       
       - name: Test
-        run: dotnet test MediaMatch.slnx --no-build --configuration Release -p:Platform=x64 --verbosity normal --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test MediaMatch.slnx --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
