@@ -19,14 +19,10 @@
             <StackPanel Spacing="12" HorizontalAlignment="Center">
                 <Image
                     Source="ms-appx:///Assets/MediaMatch_Logo.png"
-                    Width="80"
-                    Height="80"
+                    MaxWidth="520"
+                    MaxHeight="280"
+                    Stretch="Uniform"
                     AutomationProperties.Name="Media Match logo" />
-                <TextBlock
-                    Style="{StaticResource TitleTextBlockStyle}"
-                    Text="{x:Bind ViewModel.AppName}"
-                    HorizontalAlignment="Center"
-                    AutomationProperties.HeadingLevel="Level1" />
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource SubtitleTextBlockStyle}"
