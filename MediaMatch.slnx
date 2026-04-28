@@ -2,7 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/MediaMatch.App/MediaMatch.App.csproj">
       <Platform Solution="Debug|*" Project="x64" />
-      <Platform Solution="Release|*" Project="x86" />
+      <Platform Solution="Release|*" Project="x64" />
       <Deploy Solution="Debug|*" />
     </Project>
     <Project Path="src/MediaMatch.Application/MediaMatch.Application.csproj" />

@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: swigerb.MediaMatch
+PackageVersion: "${VERSION}"
+PackageLocale: en-US
+Publisher: swigerb
+PublisherUrl: https://github.com/swigerb
+PackageName: MediaMatch
+PackageUrl: https://github.com/swigerb/MediaMatch
+License: MIT
+LicenseUrl: https://github.com/swigerb/MediaMatch/blob/master/LICENSE
+ShortDescription: Media file organization and rename tool with metadata matching
+Description: |-
+  MediaMatch is a desktop media file organization tool that automatically matches,
+  renames, and organizes your movies, TV episodes, music, and subtitle files.
+  Features include metadata matching from TMDb/TVDb/AniDB/MusicBrainz, expression-based
+  rename patterns, checksum verification (SFV/MD5/SHA), batch operations with undo,
+  and a modern WinUI 3 Fluent 2 interface.
+Moniker: mediamatch
+Tags:
+  - media
+  - rename
+  - organize
+  - movies
+  - tv-shows
+  - subtitles
+  - metadata
+  - filebot-alternative
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
