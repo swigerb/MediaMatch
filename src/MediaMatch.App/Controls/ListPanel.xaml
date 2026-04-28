@@ -153,15 +153,30 @@
                 </StackPanel>
             </Button>
 
-            <Button
+            <DropDownButton
                 Grid.Column="1"
-                Command="{x:Bind ViewModel.LoadFilesCommand}"
-                AutomationProperties.Name="Load files">
+                AutomationProperties.Name="Load files or folder">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <FontIcon Glyph="&#xE838;" FontSize="14" />
                     <TextBlock Text="Load" />
                 </StackPanel>
-            </Button>
+                <DropDownButton.Flyout>
+                    <MenuFlyout Placement="Top">
+                        <MenuFlyoutItem Text="Files..." Command="{x:Bind ViewModel.LoadFilesCommand}"
+                                        AutomationProperties.Name="Load individual files">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE8E5;" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="Folder..." Command="{x:Bind ViewModel.LoadFolderCommand}"
+                                        AutomationProperties.Name="Load all files from a folder">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE8B7;" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </DropDownButton.Flyout>
+            </DropDownButton>
 
             <Button
                 Grid.Column="2"

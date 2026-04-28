@@ -130,6 +130,27 @@ public partial class ListPanelViewModel : ViewModelBase
 
         AddFiles(files.Select(f => f.Path));
     }
+
+    [RelayCommand]
+    private async Task LoadFolderAsync()
+    {
+        var picker = new FolderPicker();
+        picker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+        picker.FileTypeFilter.Add("*");
+
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        var folder = await picker.PickSingleFolderAsync();
+        if (folder is null) return;
+
+        var dirInfo = new DirectoryInfo(folder.Path);
+        if (!dirInfo.Exists) return;
+
+        var filePaths = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories)
+            .Select(f => f.FullName);
+        AddFiles(filePaths);
+    }
 #endif
 }
 
