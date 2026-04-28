@@ -101,27 +101,64 @@
                     </DoubleAnimation>
                 </Storyboard>
             </Grid.Resources>
-            <StackPanel
+
+            <!-- Centered card — roughly 1/3 of the window -->
+            <Border
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Spacing="12">
-                <Image
-                    Source="Assets/MediaMatch_Logo.png"
-                    Width="96"
-                    Height="96"
-                    HorizontalAlignment="Center" />
-                <TextBlock
-                    Text="Media Match"
-                    FontSize="18"
-                    FontWeight="SemiBold"
-                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                    HorizontalAlignment="Center" />
-                <ProgressRing
-                    IsActive="True"
-                    Width="24"
-                    Height="24"
-                    HorizontalAlignment="Center" />
-            </StackPanel>
+                MinWidth="340"
+                MaxWidth="420"
+                MinHeight="320"
+                Padding="40,36"
+                CornerRadius="8"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <Border.Shadow>
+                    <ThemeShadow />
+                </Border.Shadow>
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="16">
+
+                    <!-- Large logo -->
+                    <Image
+                        Source="Assets/MediaMatch_Logo.png"
+                        Width="180"
+                        Height="180"
+                        HorizontalAlignment="Center"
+                        Stretch="Uniform" />
+
+                    <!-- App name -->
+                    <TextBlock
+                        Text="Media Match"
+                        FontSize="24"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        HorizontalAlignment="Center" />
+
+                    <!-- Version -->
+                    <TextBlock
+                        x:Name="SplashVersionText"
+                        FontSize="13"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        HorizontalAlignment="Center" />
+
+                    <!-- Loading indicator -->
+                    <ProgressBar
+                        IsIndeterminate="True"
+                        Width="200"
+                        HorizontalAlignment="Center"
+                        Margin="0,8,0,0" />
+
+                    <TextBlock
+                        Text="Loading…"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 </Window>

@@ -22,7 +22,9 @@ public sealed partial class MainWindow : Window
 
         // Set version text
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-        VersionText.Text = $"v{version?.Major}.{version?.Minor}.{version?.Build}";
+        var versionString = $"v{version?.Major}.{version?.Minor}.{version?.Build}";
+        VersionText.Text = versionString;
+        SplashVersionText.Text = versionString;
 
         // Wire navigation service to the frame
         var navigationService = App.GetService<NavigationService>();
