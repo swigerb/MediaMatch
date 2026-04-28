@@ -67,6 +67,49 @@ public partial class HomeViewModel : ViewModelBase
     [ObservableProperty]
     public partial int SelectedRenameActionIndex { get; set; }
 
+    /// <summary>Active match mode category: "none", "episode", "movie", "music", or "smart".</summary>
+    [ObservableProperty]
+    public partial string ActiveMatchMode { get; set; } = "none";
+
+    /// <summary>Display label for the currently active datasource (e.g., "TheTVDB").</summary>
+    [ObservableProperty]
+    public partial string ActiveDatasourceLabel { get; set; } = string.Empty;
+
+    /// <summary>Whether a match mode is currently active.</summary>
+    public bool HasActiveMatchMode => ActiveMatchMode != "none" && !string.IsNullOrEmpty(ActiveMatchMode);
+
+    /// <summary>Display text for the active mode banner (e.g., "Episode Mode — TheTVDB").</summary>
+    public string ActiveMatchModeDisplay => ActiveMatchMode switch
+    {
+        "episode" => $"Episode Mode — {ActiveDatasourceLabel}",
+        "movie"   => $"Movie Mode — {ActiveDatasourceLabel}",
+        "music"   => $"Music Mode — {ActiveDatasourceLabel}",
+        "smart"   => $"Smart Mode — {ActiveDatasourceLabel}",
+        _         => string.Empty
+    };
+
+    /// <summary>Glyph icon for the active match mode.</summary>
+    public string ActiveMatchModeGlyph => ActiveMatchMode switch
+    {
+        "episode" => "\uE786",  // TV
+        "movie"   => "\uE8B2",  // Video
+        "music"   => "\uE8D6",  // Music
+        "smart"   => "\uE945",  // Processing
+        _         => string.Empty
+    };
+
+    partial void OnActiveMatchModeChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasActiveMatchMode));
+        OnPropertyChanged(nameof(ActiveMatchModeDisplay));
+        OnPropertyChanged(nameof(ActiveMatchModeGlyph));
+    }
+
+    partial void OnActiveDatasourceLabelChanged(string value)
+    {
+        OnPropertyChanged(nameof(ActiveMatchModeDisplay));
+    }
+
     /// <summary>Saved presets loaded from settings.</summary>
     public ObservableCollection<PresetDefinitionSettings> Presets { get; } = [];
 
@@ -143,6 +186,13 @@ public partial class HomeViewModel : ViewModelBase
             OnPropertyChanged(nameof(ShowEmptyState));
             OnPropertyChanged(nameof(FileCountDisplay));
             UpdateStatusMessage();
+
+            // Clear match mode indicator when all files are removed
+            if (OriginalFiles.Count == 0)
+            {
+                ActiveMatchMode = "none";
+                ActiveDatasourceLabel = string.Empty;
+            }
         };
 
         MatchedFiles.CollectionChanged += (_, _) =>
@@ -290,7 +340,17 @@ public partial class HomeViewModel : ViewModelBase
     [RelayCommand]
     private async Task MatchWithDatasourceAsync(string datasource)
     {
-        if (OriginalFiles.Count == 0) return;
+        // Set the active mode indicator regardless of files
+        var (category, label) = CategorizeDatasource(datasource);
+        ActiveMatchMode = category;
+        ActiveDatasourceLabel = label;
+
+        if (OriginalFiles.Count == 0)
+        {
+            StatusMessage = "No files loaded. Load a folder first, then match.";
+            _notificationService?.ShowWarning("No files loaded. Drop files or click Load to get started.");
+            return;
+        }
 
         if (_matchingPipeline is null)
         {
@@ -798,4 +858,22 @@ public partial class HomeViewModel : ViewModelBase
             _notificationService?.ShowSuccess("Presets saved");
         }
     }
+
+    /// <summary>
+    /// Maps a datasource string to its mode category and display label.
+    /// </summary>
+    private static (string Category, string Label) CategorizeDatasource(string datasource) => datasource switch
+    {
+        "tvdb"     => ("episode", "TheTVDB"),
+        "anidb"    => ("episode", "AniDB"),
+        "tmdb_tv"  => ("episode", "TheMovieDB"),
+        "tvmaze"   => ("episode", "TVmaze"),
+        "tmdb"     => ("movie", "TheMovieDB"),
+        "omdb"     => ("movie", "OMDb"),
+        "acoustid" => ("music", "AcoustID"),
+        "id3"      => ("music", "ID3 Tags"),
+        "auto"     => ("smart", "Automatic"),
+        "xattr"    => ("smart", "Attributes"),
+        _          => ("smart", datasource)
+    };
 }

@@ -27,6 +27,9 @@ public sealed class NotificationService
     public void ShowError(string message)
         => Show(message, InfoBarSeverity.Error);
 
+    public void ShowWarning(string message)
+        => Show(message, InfoBarSeverity.Warning);
+
     public void ShowInfo(string message)
         => Show(message, InfoBarSeverity.Informational);
 

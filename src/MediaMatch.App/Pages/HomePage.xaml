@@ -17,6 +17,7 @@
 
     <Page.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+        <converters:MatchModeBrushConverter x:Key="MatchModeBrush" />
 
         <!-- Extension badge style -->
         <Style x:Key="ExtensionBadgeStyle" TargetType="Border">
@@ -39,6 +40,7 @@
 
     <Grid Padding="16,12,16,12" RowSpacing="8">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -124,8 +126,34 @@
             </Grid>
         </StackPanel>
 
+        <!-- Match Mode Indicator Banner -->
+        <Border
+            Grid.Row="3"
+            Padding="12,8"
+            CornerRadius="4"
+            Background="{x:Bind ViewModel.ActiveMatchMode, Mode=OneWay, Converter={StaticResource MatchModeBrush}}"
+            Opacity="0.15"
+            Visibility="{x:Bind ViewModel.HasActiveMatchMode, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+        <Grid
+            Grid.Row="3"
+            Padding="12,8"
+            Visibility="{x:Bind ViewModel.HasActiveMatchMode, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+            AutomationProperties.Name="Active match mode indicator">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon
+                    Glyph="{x:Bind ViewModel.ActiveMatchModeGlyph, Mode=OneWay}"
+                    FontSize="16"
+                    Foreground="{x:Bind ViewModel.ActiveMatchMode, Mode=OneWay, Converter={StaticResource MatchModeBrush}}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Foreground="{x:Bind ViewModel.ActiveMatchMode, Mode=OneWay, Converter={StaticResource MatchModeBrush}}"
+                    Text="{x:Bind ViewModel.ActiveMatchModeDisplay, Mode=OneWay}" />
+            </StackPanel>
+        </Grid>
+
         <!-- Main Content Area (Rename Mode = Dual Pane) -->
-        <Grid Grid.Row="3" x:Name="RenamePanel">
+        <Grid Grid.Row="4" x:Name="RenamePanel">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -150,7 +178,7 @@
 
                 <!-- File list or empty state -->
                 <Border Grid.Row="1"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderBrush="{x:Bind ViewModel.ActiveMatchMode, Mode=OneWay, Converter={StaticResource MatchModeBrush}}"
                         BorderThickness="1"
                         CornerRadius="4">
                     <Grid>
@@ -332,7 +360,7 @@
 
                 <!-- Matched files list or placeholder -->
                 <Border Grid.Row="1"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderBrush="{x:Bind ViewModel.ActiveMatchMode, Mode=OneWay, Converter={StaticResource MatchModeBrush}}"
                         BorderThickness="1"
                         CornerRadius="4">
                 <Grid>
@@ -396,15 +424,15 @@
         </Grid>
 
         <!-- Mode Panels -->
-        <controls:EpisodesPanel Grid.Row="3" x:Name="EpisodesPanel" Visibility="Collapsed" />
-        <controls:SubtitlePanel Grid.Row="3" x:Name="SubtitlesPanel" Visibility="Collapsed" />
-        <controls:SfvPanel Grid.Row="3" x:Name="SfvPanel" Visibility="Collapsed" />
-        <controls:FilterPanel Grid.Row="3" x:Name="FilterPanel" Visibility="Collapsed" />
-        <controls:ListPanel Grid.Row="3" x:Name="ListPanel" Visibility="Collapsed" />
+        <controls:EpisodesPanel Grid.Row="4" x:Name="EpisodesPanel" Visibility="Collapsed" />
+        <controls:SubtitlePanel Grid.Row="4" x:Name="SubtitlesPanel" Visibility="Collapsed" />
+        <controls:SfvPanel Grid.Row="4" x:Name="SfvPanel" Visibility="Collapsed" />
+        <controls:FilterPanel Grid.Row="4" x:Name="FilterPanel" Visibility="Collapsed" />
+        <controls:ListPanel Grid.Row="4" x:Name="ListPanel" Visibility="Collapsed" />
 
         <!-- Status Bar -->
         <Grid
-            Grid.Row="4"
+            Grid.Row="5"
             Padding="12,8"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             CornerRadius="4"
