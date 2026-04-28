@@ -71,6 +71,15 @@ public partial class SettingsViewModel : ViewModelBase
     /// <summary>Preview text showing current font scale.</summary>
     public string FontPreviewText => "The quick brown fox jumps over the lazy dog. MediaMatch renames your media files automatically.";
 
+    /// <summary>Font size in pixels for the preview TextBlock.</summary>
+    public double FontPreviewSize => SelectedFontScaleIndex switch
+    {
+        0 => 12.0,
+        2 => 16.0,
+        3 => 18.0,
+        _ => 14.0
+    };
+
     /// <summary>Caption describing the current font scale selection.</summary>
     public string FontPreviewCaption => SelectedFontScaleIndex switch
     {
@@ -90,6 +99,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         ApplyFontScale((FontScale)value);
         OnPropertyChanged(nameof(FontPreviewCaption));
+        OnPropertyChanged(nameof(FontPreviewSize));
     }
 
     public SettingsViewModel(ISettingsRepository settingsRepository)
@@ -299,7 +309,8 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Applies the font scale globally by overriding the root FontSize resource.
+    /// Applies the font scale globally by setting FontSize on the NavigationView,
+    /// which cascades to all child controls via WinUI font inheritance.
     /// </summary>
     public static void ApplyFontScale(FontScale fontScale)
     {
@@ -313,12 +324,21 @@ public partial class SettingsViewModel : ViewModelBase
                 _ => 14.0
             };
 
-            rootElement.Resources["ContentControlFontSize"] = baseFontSize;
-
-            // For controls that inherit from Control, set FontSize directly
-            if (rootElement is Microsoft.UI.Xaml.Controls.Control control)
+            // The root content is a Grid; find the NavigationView inside it
+            // which is a Control and supports FontSize inheritance.
+            if (rootElement is Microsoft.UI.Xaml.Controls.Panel panel)
             {
-                control.FontSize = baseFontSize;
+                foreach (var child in panel.Children)
+                {
+                    if (child is Microsoft.UI.Xaml.Controls.Control control)
+                    {
+                        control.FontSize = baseFontSize;
+                    }
+                }
+            }
+            else if (rootElement is Microsoft.UI.Xaml.Controls.Control rootControl)
+            {
+                rootControl.FontSize = baseFontSize;
             }
         }
     }

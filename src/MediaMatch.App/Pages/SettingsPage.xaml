@@ -71,6 +71,7 @@
                         CornerRadius="4">
                         <StackPanel Spacing="6">
                             <TextBlock
+                                FontSize="{x:Bind ViewModel.FontPreviewSize, Mode=OneWay}"
                                 Text="{x:Bind ViewModel.FontPreviewText, Mode=OneWay}"
                                 TextWrapping="Wrap" />
                             <TextBlock
