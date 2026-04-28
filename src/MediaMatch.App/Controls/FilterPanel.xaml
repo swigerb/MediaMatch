@@ -85,7 +85,7 @@
                         Grid.Row="1"
                         ItemsSource="{x:Bind ViewModel.MediaInfoEntries}"
                         SelectionMode="None"
-                        Visibility="{x:Bind IsMediaInfoTab, Mode=OneWay}"
+                        Visibility="{x:Bind IsMediaInfoTab, Mode=OneTime}"
                         Padding="8,4"
                         AutomationProperties.Name="Media info entries">
                         <ListView.ItemTemplate>
@@ -113,7 +113,7 @@
                     <TextBlock
                         Grid.Row="1"
                         Text="Select a file to view details."
-                        Visibility="{x:Bind IsNotMediaInfoTab, Mode=OneWay}"
+                        Visibility="{x:Bind IsNotMediaInfoTab, Mode=OneTime}"
                         Style="{ThemeResource BodyTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         HorizontalAlignment="Center"

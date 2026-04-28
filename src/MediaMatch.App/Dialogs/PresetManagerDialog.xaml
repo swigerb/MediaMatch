@@ -29,7 +29,7 @@
                         <TextBlock
                             Grid.Column="0"
                             VerticalAlignment="Center"
-                            Text="{x:Bind Name, Mode=OneWay}" />
+                            Text="{x:Bind Name, Mode=OneTime}" />
                         <Button
                             Grid.Column="1"
                             Content="&#xE70F;"
