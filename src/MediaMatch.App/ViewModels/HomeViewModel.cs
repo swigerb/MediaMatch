@@ -288,6 +288,94 @@ public partial class HomeViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task MatchWithDatasourceAsync(string datasource)
+    {
+        if (OriginalFiles.Count == 0) return;
+
+        if (_matchingPipeline is null)
+        {
+            StatusMessage = "Matching pipeline not available.";
+            return;
+        }
+
+        IsProcessing = true;
+        StatusMessage = $"Matching via {datasource}...";
+        MatchedFiles.Clear();
+
+        try
+        {
+            var filePaths = OriginalFiles.Select(f => f.FilePath).ToList();
+            var results = await _matchingPipeline.ProcessBatchAsync(filePaths, datasource);
+
+            for (var i = 0; i < results.Count; i++)
+            {
+                var result = results[i];
+                var original = i < OriginalFiles.Count ? OriginalFiles[i] : null;
+
+                var newName = result.IsMatch
+                    ? BuildNewFileName(result, original?.OriginalFileName ?? string.Empty)
+                    : original?.OriginalFileName ?? string.Empty;
+
+                var matchedItem = new FileItemViewModel
+                {
+                    OriginalFileName = original?.OriginalFileName ?? string.Empty,
+                    NewFileName = newName,
+                    FilePath = original?.FilePath ?? string.Empty,
+                    FileExtension = original?.FileExtension ?? string.Empty,
+                    MatchConfidence = result.Confidence,
+                    MediaType = result.MediaType.ToString(),
+                    ProviderSource = result.ProviderSource,
+                    IsMatched = result.IsMatch
+                };
+
+                App.MainWindow.DispatcherQueue.TryEnqueue(() => MatchedFiles.Add(matchedItem));
+            }
+
+            var matchCount = results.Count(r => r.IsMatch);
+            StatusMessage = $"Matched {matchCount}/{results.Count} file(s) via {datasource}.";
+            _notificationService?.ShowSuccess($"Matched {matchCount} of {results.Count} file(s).");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Matching with {Datasource} failed", datasource);
+            StatusMessage = $"Match error: {ex.Message}";
+            _notificationService?.ShowError($"Match error: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task EditFormatAsync()
+    {
+        try
+        {
+            var dialog = new ExpressionEditorDialog { XamlRoot = App.MainWindow.Content.XamlRoot };
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to open expression editor");
+        }
+    }
+
+    [RelayCommand]
+    private void OpenPreferences()
+    {
+        // Navigate to Settings page
+        if (App.MainWindow.Content is Microsoft.UI.Xaml.Controls.Grid rootGrid)
+        {
+            var navView = rootGrid.Children.OfType<Microsoft.UI.Xaml.Controls.NavigationView>().FirstOrDefault();
+            if (navView is not null)
+            {
+                navView.SelectedItem = navView.SettingsItem;
+            }
+        }
+    }
+
+    [RelayCommand]
     private async Task RenameAsync()
     {
         if (MatchedFiles.Count == 0) return;

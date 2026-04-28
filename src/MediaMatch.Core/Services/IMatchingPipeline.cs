@@ -24,4 +24,16 @@ public interface IMatchingPipeline
     Task<IReadOnlyList<MatchResult>> ProcessBatchAsync(
         IReadOnlyList<string> filePaths,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Run the matching pipeline for a batch of files using a specific datasource.
+    /// </summary>
+    /// <param name="filePaths">The file paths to process.</param>
+    /// <param name="datasource">The datasource identifier (e.g., "tvdb", "tmdb", "auto").</param>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>A read-only list of match results.</returns>
+    Task<IReadOnlyList<MatchResult>> ProcessBatchAsync(
+        IReadOnlyList<string> filePaths,
+        string datasource,
+        CancellationToken ct = default);
 }

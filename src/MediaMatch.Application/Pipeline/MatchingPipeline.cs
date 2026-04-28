@@ -151,6 +151,28 @@ public sealed class MatchingPipeline : IMatchingPipeline
         return results;
     }
 
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<MatchResult>> ProcessBatchAsync(
+        IReadOnlyList<string> filePaths,
+        string datasource,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+
+        // For now, delegate to the standard pipeline.
+        // The datasource hint is logged for future provider-specific routing.
+        _logger.LogInformation("Batch match with datasource hint: {Datasource}", datasource);
+
+        var results = new MatchResult[filePaths.Count];
+        for (int i = 0; i < filePaths.Count; i++)
+        {
+            ct.ThrowIfCancellationRequested();
+            results[i] = await ProcessAsync(filePaths[i], ct).ConfigureAwait(false);
+        }
+
+        return results;
+    }
+
     private async Task<MatchResult> MatchEpisodeAsync(
         string filePath, DetectionResult detection, CancellationToken ct)
     {

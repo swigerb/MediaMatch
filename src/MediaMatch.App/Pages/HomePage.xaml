@@ -265,9 +265,8 @@
                 Padding="12,0"
                 AutomationProperties.Name="Actions">
 
-                <Button
+                <DropDownButton
                     Width="72" Height="72"
-                    Command="{x:Bind ViewModel.MatchCommand}"
                     ToolTipService.ToolTip="Match files against metadata providers"
                     Style="{StaticResource AccentButtonStyle}"
                     AutomationProperties.Name="Match files">
@@ -275,7 +274,33 @@
                         <FontIcon Glyph="&#xE8AF;" FontSize="24" HorizontalAlignment="Center" />
                         <TextBlock Text="Match" HorizontalAlignment="Center" FontSize="11" />
                     </StackPanel>
-                </Button>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout Placement="Bottom">
+                            <MenuFlyoutSubItem Text="Episode Mode">
+                                <MenuFlyoutItem Text="TheTVDB" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="tvdb" />
+                                <MenuFlyoutItem Text="AniDB" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="anidb" />
+                                <MenuFlyoutItem Text="TheMovieDB" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="tmdb_tv" />
+                                <MenuFlyoutItem Text="TVmaze" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="tvmaze" />
+                            </MenuFlyoutSubItem>
+                            <MenuFlyoutSubItem Text="Movie Mode">
+                                <MenuFlyoutItem Text="TheMovieDB" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="tmdb" />
+                                <MenuFlyoutItem Text="OMDb" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="omdb" />
+                            </MenuFlyoutSubItem>
+                            <MenuFlyoutSubItem Text="Music Mode">
+                                <MenuFlyoutItem Text="AcoustID" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="acoustid" />
+                                <MenuFlyoutItem Text="ID3 Tags" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="id3" />
+                            </MenuFlyoutSubItem>
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutSubItem Text="Smart Mode">
+                                <MenuFlyoutItem Text="Automatic" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="auto" />
+                                <MenuFlyoutItem Text="Attributes" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="xattr" />
+                            </MenuFlyoutSubItem>
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Text="Edit Format..." Command="{x:Bind ViewModel.EditFormatCommand}" />
+                            <MenuFlyoutItem Text="Preferences..." Command="{x:Bind ViewModel.OpenPreferencesCommand}" />
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
 
                 <Button
                     Width="72" Height="72"
