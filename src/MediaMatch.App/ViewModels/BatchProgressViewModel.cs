@@ -7,18 +7,23 @@ namespace MediaMatch.App.ViewModels;
 /// </summary>
 public partial class BatchProgressViewModel : ViewModelBase
 {
+    /// <summary>Gets or sets the total number of files in the batch.</summary>
     [ObservableProperty]
     public partial int TotalFiles { get; set; }
 
+    /// <summary>Gets or sets the number of successfully completed files.</summary>
     [ObservableProperty]
     public partial int CompletedFiles { get; set; }
 
+    /// <summary>Gets or sets the number of files that failed processing.</summary>
     [ObservableProperty]
     public partial int FailedFiles { get; set; }
 
+    /// <summary>Gets or sets the name of the file currently being processed.</summary>
     [ObservableProperty]
     public partial string CurrentFile { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether the batch operation is running.</summary>
     [ObservableProperty]
     public partial bool IsRunning { get; set; }
 
@@ -29,10 +34,18 @@ public partial class BatchProgressViewModel : ViewModelBase
         ? (double)(CompletedFiles + FailedFiles) / TotalFiles * 100
         : 0;
 
+    /// <summary>Gets a formatted progress string (e.g., "3/10 (1 failed)").</summary>
     public string ProgressText => TotalFiles > 0
         ? $"{CompletedFiles + FailedFiles}/{TotalFiles} ({FailedFiles} failed)"
         : string.Empty;
 
+    /// <summary>
+    /// Updates progress counters and raises property-change notifications.
+    /// </summary>
+    /// <param name="total">Total number of files.</param>
+    /// <param name="completed">Number of completed files.</param>
+    /// <param name="failed">Number of failed files.</param>
+    /// <param name="currentFile">The file currently being processed.</param>
     public void Update(int total, int completed, int failed, string? currentFile)
     {
         TotalFiles = total;
@@ -43,6 +56,9 @@ public partial class BatchProgressViewModel : ViewModelBase
         OnPropertyChanged(nameof(ProgressText));
     }
 
+    /// <summary>
+    /// Resets all progress counters to their initial state.
+    /// </summary>
     public void Reset()
     {
         TotalFiles = 0;

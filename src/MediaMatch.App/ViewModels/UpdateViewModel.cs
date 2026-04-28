@@ -14,24 +14,35 @@ public sealed partial class UpdateViewModel : ViewModelBase
     private readonly IUpdateCheckService _updateService;
     private readonly ILogger<UpdateViewModel> _logger;
 
+    /// <summary>Gets or sets a value indicating whether an update is available.</summary>
     [ObservableProperty]
     public partial bool IsUpdateAvailable { get; set; }
 
+    /// <summary>Gets or sets the latest available version string.</summary>
     [ObservableProperty]
     public partial string? LatestVersion { get; set; }
 
+    /// <summary>Gets or sets the release notes for the latest version.</summary>
     [ObservableProperty]
     public partial string? ReleaseNotes { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether an update check is in progress.</summary>
     [ObservableProperty]
     public partial bool IsChecking { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether an update is being applied.</summary>
     [ObservableProperty]
     public partial bool IsApplying { get; set; }
 
+    /// <summary>Gets or sets the status message for update operations.</summary>
     [ObservableProperty]
     public partial string? StatusMessage { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UpdateViewModel"/> class.
+    /// </summary>
+    /// <param name="updateService">The update check service.</param>
+    /// <param name="logger">The logger instance.</param>
     public UpdateViewModel(IUpdateCheckService updateService, ILogger<UpdateViewModel> logger)
     {
         _updateService = updateService;

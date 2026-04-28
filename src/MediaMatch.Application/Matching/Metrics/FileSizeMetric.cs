@@ -2,12 +2,17 @@ using MediaMatch.Core.Matching;
 
 namespace MediaMatch.Application.Matching.Metrics;
 
+/// <summary>
+/// Computes similarity between two file sizes, returning 1.0 when within a 5% tolerance and decaying beyond that.
+/// </summary>
 public sealed class FileSizeMetric : ISimilarityMetric
 {
     private const double Tolerance = 0.05;
 
+    /// <inheritdoc/>
     public string Name => "FileSize";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         if (!TryGetSize(a, out var sizeA) || !TryGetSize(b, out var sizeB))

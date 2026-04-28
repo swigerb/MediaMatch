@@ -14,6 +14,10 @@ public interface ILlmProvider
     /// <summary>
     /// Sends a prompt to the LLM and returns a suggested filename.
     /// </summary>
+    /// <param name="prompt">The prompt text to send to the LLM.</param>
+    /// <param name="context">The media context for the file being renamed.</param>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>The suggested filename.</returns>
     Task<string> GenerateRenameAsync(string prompt, MediaContext context, CancellationToken ct = default);
 }
 

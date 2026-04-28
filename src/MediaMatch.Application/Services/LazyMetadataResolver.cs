@@ -24,6 +24,12 @@ public sealed class LazyMetadataResolver : ILazyMetadataResolver
     private readonly ConcurrentDictionary<string, IReadOnlyList<Movie>> _movieCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, IReadOnlyList<SearchResult>> _episodeCache = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LazyMetadataResolver"/> class.
+    /// </summary>
+    /// <param name="movieProviders">The movie metadata providers to query during resolution.</param>
+    /// <param name="episodeProviders">The episode metadata providers to query during resolution.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public LazyMetadataResolver(
         IEnumerable<IMovieProvider> movieProviders,
         IEnumerable<IEpisodeProvider> episodeProviders,
@@ -34,6 +40,7 @@ public sealed class LazyMetadataResolver : ILazyMetadataResolver
         _logger = logger ?? NullLogger<LazyMetadataResolver>.Instance;
     }
 
+    /// <inheritdoc />
     public void Register(string filePath, string cleanTitle, int? year = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -41,6 +48,7 @@ public sealed class LazyMetadataResolver : ILazyMetadataResolver
         _logger.LogDebug("Registered lazy metadata for {FilePath}: title={Title}, year={Year}", filePath, cleanTitle, year);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Movie>> ResolveMovieAsync(string filePath, CancellationToken ct = default)
     {
         if (_movieCache.TryGetValue(filePath, out var cached))
@@ -57,7 +65,7 @@ public sealed class LazyMetadataResolver : ILazyMetadataResolver
         {
             try
             {
-                var movies = await provider.SearchAsync(registration.CleanTitle, registration.Year, ct);
+                var movies = await provider.SearchAsync(registration.CleanTitle, registration.Year, ct).ConfigureAwait(false);
                 results.AddRange(movies);
                 if (results.Count > 0) break;
             }
@@ -72,6 +80,7 @@ public sealed class LazyMetadataResolver : ILazyMetadataResolver
         return readOnlyResults;
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> ResolveEpisodeSearchAsync(string filePath, CancellationToken ct = default)
     {
         if (_episodeCache.TryGetValue(filePath, out var cached))
@@ -88,7 +97,7 @@ public sealed class LazyMetadataResolver : ILazyMetadataResolver
         {
             try
             {
-                var searchResults = await provider.SearchAsync(registration.CleanTitle, ct);
+                var searchResults = await provider.SearchAsync(registration.CleanTitle, ct).ConfigureAwait(false);
                 results.AddRange(searchResults);
                 if (results.Count > 0) break;
             }
@@ -103,6 +112,7 @@ public sealed class LazyMetadataResolver : ILazyMetadataResolver
         return readOnlyResults;
     }
 
+    /// <inheritdoc />
     public void ClearCache()
     {
         _movieCache.Clear();

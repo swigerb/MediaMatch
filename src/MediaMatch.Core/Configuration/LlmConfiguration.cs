@@ -49,8 +49,15 @@ public sealed class LlmConfiguration
 /// </summary>
 public enum LlmProviderType
 {
+    /// <summary>No LLM provider configured.</summary>
     None = 0,
+
+    /// <summary>OpenAI API provider.</summary>
     OpenAI = 1,
+
+    /// <summary>Azure OpenAI Service provider.</summary>
     AzureOpenAI = 2,
+
+    /// <summary>Ollama local LLM provider.</summary>
     Ollama = 3
 }

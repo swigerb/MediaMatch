@@ -127,6 +127,8 @@ public partial class App : Microsoft.UI.Xaml.Application
         // Load persisted settings so API keys flow into provider singletons
         var encryption = new SettingsEncryption();
         var settingsRepo = new SettingsRepository(encryption);
+        // Sync-over-async: DI container setup requires synchronous registration.
+        // Safe here because no SynchronizationContext exists yet during startup.
         var savedSettings = settingsRepo.SettingsFileExists()
             ? settingsRepo.LoadAsync().GetAwaiter().GetResult()
             : new AppSettings();

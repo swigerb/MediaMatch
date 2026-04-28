@@ -15,6 +15,11 @@ public sealed class SubtitleDownloadService : ISubtitleDownloadService
     private readonly IEnumerable<ISubtitleProvider> _providers;
     private readonly ILogger<SubtitleDownloadService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubtitleDownloadService"/> class.
+    /// </summary>
+    /// <param name="providers">The subtitle providers available for downloading.</param>
+    /// <param name="logger">The logger instance.</param>
     public SubtitleDownloadService(
         IEnumerable<ISubtitleProvider> providers,
         ILogger<SubtitleDownloadService> logger)
@@ -40,11 +45,12 @@ public sealed class SubtitleDownloadService : ISubtitleDownloadService
             "Downloading subtitle '{SubName}' for '{Video}' from {Provider}",
             subtitle.Name, Path.GetFileName(videoFilePath), provider.Name);
 
-        await using var stream = await provider.DownloadAsync(subtitle, ct);
+        var stream = await provider.DownloadAsync(subtitle, ct).ConfigureAwait(false);
+        await using var _ = stream.ConfigureAwait(false);
 
         // Read content and detect encoding
         using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
-        var content = await reader.ReadToEndAsync(ct);
+        var content = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
         var detectedEncoding = reader.CurrentEncoding;
 
         // Build output path: same directory and base name as the video, with subtitle extension
@@ -54,7 +60,7 @@ public sealed class SubtitleDownloadService : ISubtitleDownloadService
         var outputPath = Path.Combine(directory, $"{baseName}{extension}");
 
         // Write as UTF-8 with BOM for maximum player compatibility
-        await File.WriteAllTextAsync(outputPath, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true), ct);
+        await File.WriteAllTextAsync(outputPath, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true), ct).ConfigureAwait(false);
 
         _logger.LogInformation(
             "Saved subtitle to {OutputPath} (detected encoding: {Encoding})",

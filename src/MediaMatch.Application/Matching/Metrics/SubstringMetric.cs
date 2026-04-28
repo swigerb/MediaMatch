@@ -2,10 +2,15 @@ using MediaMatch.Core.Matching;
 
 namespace MediaMatch.Application.Matching.Metrics;
 
+/// <summary>
+/// Computes similarity by checking whether either string value contains the other as a substring (case-insensitive).
+/// </summary>
 public sealed class SubstringMetric : ISimilarityMetric
 {
+    /// <inheritdoc/>
     public string Name => "Substring";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         var sa = a?.ToString();

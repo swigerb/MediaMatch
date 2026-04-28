@@ -15,24 +15,40 @@ public partial class FilterPanelViewModel : ViewModelBase
     private readonly IMediaAnalysisService? _analysisService;
     private readonly ILogger<FilterPanelViewModel> _logger;
 
+    /// <summary>Gets the collection of files loaded for analysis.</summary>
     public ObservableCollection<FilterFileItemViewModel> Files { get; } = [];
+
+    /// <summary>Gets the collection of media info key-value entries for the selected file.</summary>
     public ObservableCollection<MediaInfoEntry> MediaInfoEntries { get; } = [];
 
+    /// <summary>Gets or sets the currently selected file in the panel.</summary>
     [ObservableProperty]
     public partial FilterFileItemViewModel? SelectedFile { get; set; }
 
+    /// <summary>Gets or sets the selected detail tab index.</summary>
     [ObservableProperty]
     public partial int SelectedTabIndex { get; set; }
 
+    /// <summary>Gets or sets the status message displayed in the panel.</summary>
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
+    /// <summary>Gets the available tab labels for the detail view.</summary>
     public string[] TabOptions { get; } = ["Archives", "Types", "Parts", "Attributes", "MediaInfo"];
 
+    /// <summary>Gets a value indicating whether any files are loaded.</summary>
     public bool HasFiles => Files.Count > 0;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FilterPanelViewModel"/> class for design-time use.
+    /// </summary>
     public FilterPanelViewModel() : this(null, null) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FilterPanelViewModel"/> class.
+    /// </summary>
+    /// <param name="analysisService">The media analysis service.</param>
+    /// <param name="logger">The logger instance.</param>
     public FilterPanelViewModel(IMediaAnalysisService? analysisService, ILogger<FilterPanelViewModel>? logger)
     {
         _analysisService = analysisService;
@@ -41,6 +57,10 @@ public partial class FilterPanelViewModel : ViewModelBase
         Files.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFiles));
     }
 
+    /// <summary>
+    /// Adds files from the specified paths to the panel.
+    /// </summary>
+    /// <param name="filePaths">The file paths to add.</param>
     public void AddFiles(IEnumerable<string> filePaths)
     {
         foreach (var path in filePaths)
@@ -108,15 +128,19 @@ public partial class FilterPanelViewModel : ViewModelBase
 /// </summary>
 public partial class FilterFileItemViewModel : ViewModelBase
 {
+    /// <summary>Gets or sets the file name.</summary>
     [ObservableProperty]
     public partial string FileName { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the full file path.</summary>
     [ObservableProperty]
     public partial string FilePath { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the parent folder name.</summary>
     [ObservableProperty]
     public partial string FolderName { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether this item is selected.</summary>
     [ObservableProperty]
     public partial bool IsSelected { get; set; }
 }
@@ -124,4 +148,6 @@ public partial class FilterFileItemViewModel : ViewModelBase
 /// <summary>
 /// A key-value pair for media info display.
 /// </summary>
+/// <param name="Key">The property key.</param>
+/// <param name="Value">The property value.</param>
 public sealed record MediaInfoEntry(string Key, string Value);

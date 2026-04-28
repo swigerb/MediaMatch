@@ -16,6 +16,11 @@ public sealed class AiRenameService : IAiRenameService
     private readonly IEnumerable<ILlmProvider> _providers;
     private readonly ILogger<AiRenameService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AiRenameService"/> class.
+    /// </summary>
+    /// <param name="providers">The available LLM providers for generating rename suggestions.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public AiRenameService(
         IEnumerable<ILlmProvider> providers,
         ILogger<AiRenameService>? logger = null)
@@ -24,6 +29,7 @@ public sealed class AiRenameService : IAiRenameService
         _logger = logger ?? NullLogger<AiRenameService>.Instance;
     }
 
+    /// <inheritdoc/>
     public async Task<AiRenameSuggestion?> SuggestRenameAsync(MediaContext context, CancellationToken ct = default)
     {
         using var activity = Activity.StartActivity("mediamatch.ai.rename");
@@ -43,7 +49,7 @@ public sealed class AiRenameService : IAiRenameService
 
         try
         {
-            var suggestion = await provider.GenerateRenameAsync(prompt, context, ct);
+            var suggestion = await provider.GenerateRenameAsync(prompt, context, ct).ConfigureAwait(false);
             sw.Stop();
 
             if (string.IsNullOrWhiteSpace(suggestion))

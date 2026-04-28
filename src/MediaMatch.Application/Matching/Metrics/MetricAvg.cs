@@ -9,14 +9,20 @@ public sealed class MetricAvg : ISimilarityMetric
 {
     private readonly IReadOnlyList<ISimilarityMetric> _metrics;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MetricAvg"/> class.
+    /// </summary>
+    /// <param name="metrics">The collection of metrics to average.</param>
     public MetricAvg(IReadOnlyList<ISimilarityMetric> metrics)
     {
         ArgumentNullException.ThrowIfNull(metrics);
         _metrics = metrics;
     }
 
+    /// <inheritdoc/>
     public string Name => "Average";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         if (_metrics.Count == 0)

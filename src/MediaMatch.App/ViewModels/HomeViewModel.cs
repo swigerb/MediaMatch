@@ -36,44 +36,69 @@ public partial class HomeViewModel : ViewModelBase
     /// <summary>Legacy single collection for backward compatibility with tests.</summary>
     public ObservableCollection<FileItemViewModel> Files => OriginalFiles;
 
+    /// <summary>Gets the batch progress tracker for rename operations.</summary>
     public BatchProgressViewModel BatchProgress { get; } = new();
 
+    /// <summary>Gets or sets the currently selected folder path.</summary>
     [ObservableProperty]
     public partial string SelectedFolder { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether a batch operation is in progress.</summary>
     [ObservableProperty]
     public partial bool IsProcessing { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether the folder scan is in progress.</summary>
     [ObservableProperty]
     public partial bool IsScanning { get; set; }
 
+    /// <summary>Gets or sets the status bar message displayed to the user.</summary>
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = "No files loaded. Drop files or click Load.";
 
+    /// <summary>Gets or sets a value indicating whether an undo operation is available.</summary>
     [ObservableProperty]
     public partial bool CanUndo { get; set; }
 
+    /// <summary>Gets or sets the selected matching mode index.</summary>
     [ObservableProperty]
     public partial int SelectedModeIndex { get; set; }
 
+    /// <summary>Gets or sets the selected rename action index.</summary>
     [ObservableProperty]
     public partial int SelectedRenameActionIndex { get; set; }
 
     /// <summary>Saved presets loaded from settings.</summary>
     public ObservableCollection<PresetDefinitionSettings> Presets { get; } = [];
 
+    /// <summary>Gets or sets the currently selected preset.</summary>
     [ObservableProperty]
     public partial PresetDefinitionSettings? SelectedPreset { get; set; }
 
+    /// <summary>Gets the number of files in the original files pane.</summary>
     public int FileCount => OriginalFiles.Count;
+
+    /// <summary>Gets the number of files in the matched files pane.</summary>
     public int MatchedCount => MatchedFiles.Count;
+
+    /// <summary>Gets a value indicating whether original files have been loaded.</summary>
     public bool HasFiles => OriginalFiles.Count > 0;
+
+    /// <summary>Gets a value indicating whether the original files pane is empty.</summary>
     public bool HasNoFiles => OriginalFiles.Count == 0;
+
+    /// <summary>Gets a value indicating whether matched files exist.</summary>
     public bool HasMatchedFiles => MatchedFiles.Count > 0;
+
+    /// <summary>Gets a value indicating whether no matched files exist.</summary>
     public bool HasNoMatchedFiles => MatchedFiles.Count == 0;
+
+    /// <summary>Gets a value indicating whether the empty-state placeholder should be shown.</summary>
     public bool ShowEmptyState => HasNoFiles && !IsScanning;
+
+    /// <summary>Gets a formatted display string showing original and matched file counts.</summary>
     public string FileCountDisplay => $"{OriginalFiles.Count} file(s) | {MatchedFiles.Count} matched";
 
+    /// <summary>Gets the available rename action labels for the UI combo box.</summary>
     public string[] RenameActionOptions { get; } = ["Move", "Copy", "Hard Link", "Symlink", "Test"];
 
     /// <summary>
@@ -89,6 +114,14 @@ public partial class HomeViewModel : ViewModelBase
     /// </summary>
     public HomeViewModel() : this(null, null, null, null, null) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HomeViewModel"/> class.
+    /// </summary>
+    /// <param name="batchService">The batch rename service.</param>
+    /// <param name="undoService">The undo/redo journal service.</param>
+    /// <param name="matchingPipeline">The metadata matching pipeline.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="settingsRepository">The settings repository for loading presets.</param>
     public HomeViewModel(
         IBatchOperationService? batchService,
         IUndoService? undoService,

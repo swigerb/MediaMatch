@@ -15,42 +15,55 @@ public partial class SettingsViewModel : ViewModelBase
 {
     private readonly ISettingsRepository _settingsRepository;
 
+    /// <summary>Gets or sets the TMDb API key.</summary>
     [ObservableProperty]
     public partial string TmdbApiKey { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the TVDb API key.</summary>
     [ObservableProperty]
     public partial string TvdbApiKey { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the OpenSubtitles API key.</summary>
     [ObservableProperty]
     public partial string OpenSubtitlesApiKey { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the movie rename pattern template.</summary>
     [ObservableProperty]
     public partial string MovieRenamePattern { get; set; } = "{Name} ({Year})/{Name} ({Year}){extension}";
 
+    /// <summary>Gets or sets the TV series rename pattern template.</summary>
     [ObservableProperty]
     public partial string SeriesRenamePattern { get; set; } = "{SeriesName}/Season {Season}/{SeriesName} - S{Season:D2}E{Episode:D2} - {Title}{extension}";
 
+    /// <summary>Gets or sets the anime rename pattern template.</summary>
     [ObservableProperty]
     public partial string AnimeRenamePattern { get; set; } = "{SeriesName}/Season {Season}/{SeriesName} - S{Season:D2}E{Episode:D2} - {Title}{extension}";
 
+    /// <summary>Gets or sets the output folder for renamed movies.</summary>
     [ObservableProperty]
     public partial string MovieOutputFolder { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the output folder for renamed TV series.</summary>
     [ObservableProperty]
     public partial string SeriesOutputFolder { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the live rename preview text.</summary>
     [ObservableProperty]
     public partial string RenamePreview { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether settings are being saved.</summary>
     [ObservableProperty]
     public partial bool IsSaving { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether settings are being loaded.</summary>
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
 
+    /// <summary>Gets or sets the status message displayed after save/load operations.</summary>
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether the first-run welcome banner is visible.</summary>
     [ObservableProperty]
     public partial bool ShowWelcomeBanner { get; set; }
 
@@ -62,7 +75,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     public partial int SelectedFontScaleIndex { get; set; } = 1;
 
-    /// <summary>Font scale label descriptions for the UI.</summary>
+    /// <summary>Gets the available theme mode labels.</summary>
     public string[] ThemeOptions { get; } = ["System", "Light", "Dark"];
 
     /// <summary>Font scale label descriptions for the UI.</summary>
@@ -102,6 +115,10 @@ public partial class SettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(FontPreviewSize));
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
+    /// </summary>
+    /// <param name="settingsRepository">The settings persistence service.</param>
     public SettingsViewModel(ISettingsRepository settingsRepository)
     {
         _settingsRepository = settingsRepository;

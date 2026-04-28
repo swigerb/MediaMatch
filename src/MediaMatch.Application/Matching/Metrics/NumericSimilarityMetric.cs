@@ -4,13 +4,18 @@ using MediaMatch.Core.Matching;
 
 namespace MediaMatch.Application.Matching.Metrics;
 
+/// <summary>
+/// Computes similarity between two numeric values using relative difference scaling.
+/// </summary>
 public sealed partial class NumericSimilarityMetric : ISimilarityMetric
 {
     [GeneratedRegex(@"-?\d+(\.\d+)?", RegexOptions.Compiled)]
     private static partial Regex NumberPattern();
 
+    /// <inheritdoc/>
     public string Name => "NumericSimilarity";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         if (!TryExtractNumber(a, out var na) || !TryExtractNumber(b, out var nb))

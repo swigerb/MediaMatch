@@ -7,12 +7,25 @@ namespace MediaMatch.App.ViewModels;
 /// </summary>
 public sealed class HistorySessionViewModel
 {
+    /// <summary>Gets the timestamp of the earliest entry in this session.</summary>
     public DateTimeOffset Timestamp { get; }
+
+    /// <summary>Gets the undo entries belonging to this session.</summary>
     public IReadOnlyList<UndoEntry> Entries { get; }
+
+    /// <summary>Gets the number of files in this session.</summary>
     public int FileCount => Entries.Count;
+
+    /// <summary>Gets a human-readable summary of the session.</summary>
     public string Summary => $"{FileCount} file{(FileCount == 1 ? "" : "s")} renamed";
+
+    /// <summary>Gets the most common media type in this session.</summary>
     public string MediaType { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HistorySessionViewModel"/> class.
+    /// </summary>
+    /// <param name="entries">The undo entries that belong to this session.</param>
     public HistorySessionViewModel(IReadOnlyList<UndoEntry> entries)
     {
         ArgumentNullException.ThrowIfNull(entries);
@@ -30,5 +43,6 @@ public sealed class HistorySessionViewModel
             .ToString();
     }
 
+    /// <summary>Gets the session timestamp formatted for display.</summary>
     public string FormattedTimestamp => Timestamp.LocalDateTime.ToString("g");
 }

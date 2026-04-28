@@ -11,11 +11,17 @@ public interface IMediaAnalysisService
     /// <summary>
     /// Analyze a single file to detect media type and extract metadata.
     /// </summary>
+    /// <param name="filePath">The path to the media file.</param>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>The analysis result containing detected media type and metadata.</returns>
     Task<MediaAnalysisResult> AnalyzeAsync(string filePath, CancellationToken ct = default);
 
     /// <summary>
     /// Analyze a batch of files.
     /// </summary>
+    /// <param name="filePaths">The file paths to analyze.</param>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>A read-only list of analysis results.</returns>
     Task<IReadOnlyList<MediaAnalysisResult>> AnalyzeBatchAsync(
         IReadOnlyList<string> filePaths,
         CancellationToken ct = default);

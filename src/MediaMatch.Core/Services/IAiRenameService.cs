@@ -7,8 +7,11 @@ public interface IAiRenameService
 {
     /// <summary>
     /// Generates an AI-suggested rename for the given media file context.
-    /// Returns null if no LLM provider is configured or the provider is unavailable.
+    /// Returns <see langword="null"/> if no LLM provider is configured or the provider is unavailable.
     /// </summary>
+    /// <param name="context">The media context describing the file to rename.</param>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>The AI rename suggestion, or <see langword="null"/> if unavailable.</returns>
     Task<AiRenameSuggestion?> SuggestRenameAsync(MediaContext context, CancellationToken ct = default);
 }
 

@@ -9,14 +9,20 @@ public sealed class MetricCascade : ISimilarityMetric
 {
     private readonly IReadOnlyList<ISimilarityMetric> _metrics;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MetricCascade"/> class.
+    /// </summary>
+    /// <param name="metrics">The ordered collection of metrics to try in sequence.</param>
     public MetricCascade(IReadOnlyList<ISimilarityMetric> metrics)
     {
         ArgumentNullException.ThrowIfNull(metrics);
         _metrics = metrics;
     }
 
+    /// <inheritdoc/>
     public string Name => "Cascade";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         foreach (var metric in _metrics)

@@ -103,18 +103,18 @@ internal sealed class RenameCommand : AsyncCommand<RenameSettings>
                 Core.Models.FileOrganizationResult[] items;
                 if (isDryRun)
                 {
-                    var preview = await _previewService.PreviewAsync(files, settings.Pattern);
+                    var preview = await _previewService.PreviewAsync(files, settings.Pattern).ConfigureAwait(false);
                     items = preview.ToArray();
                 }
                 else
                 {
-                    var organized = await _organizationService.OrganizeAsync(files, settings.Pattern, action);
+                    var organized = await _organizationService.OrganizeAsync(files, settings.Pattern, action).ConfigureAwait(false);
                     items = organized.ToArray();
                 }
 
                 task.Value = files.Count;
                 return items;
-            });
+            }).ConfigureAwait(false);
 
         if (settings.Format.Equals("json", StringComparison.OrdinalIgnoreCase))
         {

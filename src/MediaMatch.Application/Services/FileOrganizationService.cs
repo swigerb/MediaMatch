@@ -22,6 +22,12 @@ public sealed class FileOrganizationService : IFileOrganizationService
     private readonly IFileSystem _fileSystem;
     private readonly ILogger<FileOrganizationService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileOrganizationService"/> class.
+    /// </summary>
+    /// <param name="previewService">The service used to generate rename previews.</param>
+    /// <param name="fileSystem">The file system abstraction for rename operations.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public FileOrganizationService(
         IRenamePreviewService previewService,
         IFileSystem fileSystem,
@@ -35,6 +41,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
         _logger = logger ?? NullLogger<FileOrganizationService>.Instance;
     }
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<FileOrganizationResult>> OrganizeAsync(
         IReadOnlyList<string> filePaths,
         string renamePattern,
@@ -43,6 +50,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
         return OrganizeAsync(filePaths, renamePattern, RenameAction.Move, ct);
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<FileOrganizationResult>> OrganizeAsync(
         IReadOnlyList<string> filePaths,
         string renamePattern,
@@ -62,7 +70,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
         _logger.LogInformation("Organizing {FileCount} files with action={Action}", filePaths.Count, action);
 
         // 1. Generate preview (detect + match + template)
-        var previews = await _previewService.PreviewAsync(filePaths, renamePattern, ct);
+        var previews = await _previewService.PreviewAsync(filePaths, renamePattern, ct).ConfigureAwait(false);
 
         // 2. Apply renames with rollback tracking
         if (action == RenameAction.Test)
@@ -98,7 +106,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
 
                 try
                 {
-                    await ApplyRenameAsync(preview.OriginalPath, preview.NewPath, action);
+                    await ApplyRenameAsync(preview.OriginalPath, preview.NewPath, action).ConfigureAwait(false);
                     completed.Add((preview.OriginalPath, preview.NewPath));
                     finalResults.Add(preview);
                 }
@@ -107,7 +115,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
                     _logger.LogError(ex, "Rename failed for file, rolling back {CompletedCount} operations", completed.Count);
 
                     // Rollback all completed renames on failure
-                    await RollbackAsync(completed);
+                    await RollbackAsync(completed).ConfigureAwait(false);
 
                     finalResults.Add(FileOrganizationResult.Failed(
                         preview.OriginalPath,
@@ -127,7 +135,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
         }
         catch (OperationCanceledException)
         {
-            await RollbackAsync(completed);
+            await RollbackAsync(completed).ConfigureAwait(false);
             throw;
         }
 
@@ -153,7 +161,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
                 _fileSystem.CreateHardLink(destination, source);
                 break;
             case RenameAction.Clone:
-                await _fileSystem.CloneFileAsync(source, destination);
+                await _fileSystem.CloneFileAsync(source, destination).ConfigureAwait(false);
                 break;
             default:
                 _fileSystem.MoveFile(source, destination);
@@ -187,10 +195,38 @@ public sealed class FileOrganizationService : IFileOrganizationService
 /// </summary>
 public interface IFileSystem
 {
+    /// <summary>
+    /// Checks whether a file exists at the specified path.
+    /// </summary>
+    /// <param name="path">The path to check.</param>
+    /// <returns><see langword="true"/> if the file exists; otherwise, <see langword="false"/>.</returns>
     bool FileExists(string path);
+
+    /// <summary>
+    /// Moves a file from one location to another.
+    /// </summary>
+    /// <param name="source">The source file path.</param>
+    /// <param name="destination">The destination file path.</param>
     void MoveFile(string source, string destination);
+
+    /// <summary>
+    /// Copies a file from one location to another.
+    /// </summary>
+    /// <param name="source">The source file path.</param>
+    /// <param name="destination">The destination file path.</param>
     void CopyFile(string source, string destination);
+
+    /// <summary>
+    /// Creates a hard link at the specified path pointing to the target file.
+    /// </summary>
+    /// <param name="linkPath">The path for the new hard link.</param>
+    /// <param name="targetPath">The path to the existing target file.</param>
     void CreateHardLink(string linkPath, string targetPath);
+
+    /// <summary>
+    /// Creates a directory at the specified path, including any intermediate directories.
+    /// </summary>
+    /// <param name="path">The directory path to create.</param>
     void CreateDirectory(string path);
 
     /// <summary>
@@ -204,17 +240,26 @@ public interface IFileSystem
 /// </summary>
 public sealed class PhysicalFileSystem : IFileSystem
 {
+    /// <inheritdoc/>
     public bool FileExists(string path) => File.Exists(path);
+
+    /// <inheritdoc/>
     public void MoveFile(string source, string destination) => File.Move(source, destination);
+
+    /// <inheritdoc/>
     public void CopyFile(string source, string destination) => File.Copy(source, destination);
+
+    /// <inheritdoc/>
     public void CreateDirectory(string path) => Directory.CreateDirectory(path);
 
+    /// <inheritdoc/>
     public void CreateHardLink(string linkPath, string targetPath)
     {
         // .NET doesn't have a built-in hard link API; fall back to copy
         File.Copy(targetPath, linkPath);
     }
 
+    /// <inheritdoc/>
     public Task CloneFileAsync(string source, string destination, CancellationToken ct = default)
     {
         // Default implementation falls back to copy

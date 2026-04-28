@@ -25,6 +25,12 @@ public sealed class UndoService : IUndoService
     private readonly string _journalPath;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UndoService"/> class.
+    /// </summary>
+    /// <param name="fileSystem">The file system abstraction for move operations.</param>
+    /// <param name="logger">Optional logger instance.</param>
+    /// <param name="journalPath">Optional custom path for the undo journal file.</param>
     public UndoService(
         IFileSystem fileSystem,
         ILogger<UndoService>? logger = null,
@@ -40,14 +46,15 @@ public sealed class UndoService : IUndoService
             "undo.json");
     }
 
+    /// <inheritdoc />
     public async Task RecordAsync(IReadOnlyList<UndoEntry> entries)
     {
         if (entries.Count == 0) return;
 
-        await _lock.WaitAsync();
+        await _lock.WaitAsync().ConfigureAwait(false);
         try
         {
-            var journal = await LoadJournalAsync();
+            var journal = await LoadJournalAsync().ConfigureAwait(false);
             journal.AddRange(entries);
 
             // Keep only the most recent MaxEntries
@@ -56,7 +63,7 @@ public sealed class UndoService : IUndoService
                 journal = journal.Skip(journal.Count - MaxEntries).ToList();
             }
 
-            await SaveJournalAsync(journal);
+            await SaveJournalAsync(journal).ConfigureAwait(false);
             _logger.LogInformation("Recorded {Count} undo entries ({Total} total)", entries.Count, journal.Count);
         }
         finally
@@ -65,14 +72,15 @@ public sealed class UndoService : IUndoService
         }
     }
 
+    /// <inheritdoc />
     public async Task<int> UndoAsync(int count = 1, CancellationToken ct = default)
     {
         if (count <= 0) return 0;
 
-        await _lock.WaitAsync(ct);
+        await _lock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            var journal = await LoadJournalAsync();
+            var journal = await LoadJournalAsync().ConfigureAwait(false);
             if (journal.Count == 0) return 0;
 
             int toUndo = Math.Min(count, journal.Count);
@@ -110,7 +118,7 @@ public sealed class UndoService : IUndoService
 
             // Remove undone entries from journal
             journal.RemoveRange(journal.Count - toUndo, toUndo);
-            await SaveJournalAsync(journal);
+            await SaveJournalAsync(journal).ConfigureAwait(false);
 
             return undone;
         }
@@ -120,15 +128,17 @@ public sealed class UndoService : IUndoService
         }
     }
 
+    /// <inheritdoc />
     public async Task<bool> CanUndoAsync()
     {
-        var journal = await LoadJournalAsync();
+        var journal = await LoadJournalAsync().ConfigureAwait(false);
         return journal.Count > 0;
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<UndoEntry>> GetJournalAsync()
     {
-        var journal = await LoadJournalAsync();
+        var journal = await LoadJournalAsync().ConfigureAwait(false);
         journal.Reverse();
         return journal;
     }
@@ -140,7 +150,7 @@ public sealed class UndoService : IUndoService
             if (!File.Exists(_journalPath))
                 return [];
 
-            var json = await File.ReadAllTextAsync(_journalPath);
+            var json = await File.ReadAllTextAsync(_journalPath).ConfigureAwait(false);
             return JsonSerializer.Deserialize<List<UndoEntry>>(json, JsonOptions) ?? [];
         }
         catch (Exception ex)
@@ -158,7 +168,7 @@ public sealed class UndoService : IUndoService
 
         var json = JsonSerializer.Serialize(journal, JsonOptions);
         var tempPath = _journalPath + ".tmp";
-        await File.WriteAllTextAsync(tempPath, json);
+        await File.WriteAllTextAsync(tempPath, json).ConfigureAwait(false);
         File.Move(tempPath, _journalPath, overwrite: true);
     }
 }

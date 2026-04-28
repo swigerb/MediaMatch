@@ -15,6 +15,11 @@ public sealed class RenamePreviewService : IRenamePreviewService
     private readonly IMatchingPipeline _pipeline;
     private readonly IExpressionEngine _expressionEngine;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RenamePreviewService"/> class.
+    /// </summary>
+    /// <param name="pipeline">The matching pipeline used to detect and match media files.</param>
+    /// <param name="expressionEngine">The expression engine used to evaluate rename patterns.</param>
     public RenamePreviewService(IMatchingPipeline pipeline, IExpressionEngine expressionEngine)
     {
         ArgumentNullException.ThrowIfNull(pipeline);
@@ -24,6 +29,7 @@ public sealed class RenamePreviewService : IRenamePreviewService
         _expressionEngine = expressionEngine;
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<FileOrganizationResult>> PreviewAsync(
         IReadOnlyList<string> filePaths,
         string renamePattern,
@@ -55,7 +61,7 @@ public sealed class RenamePreviewService : IRenamePreviewService
 
             try
             {
-                var matchResult = await _pipeline.ProcessAsync(filePath, ct);
+                var matchResult = await _pipeline.ProcessAsync(filePath, ct).ConfigureAwait(false);
                 var result = GeneratePreview(filePath, matchResult, renamePattern);
                 results.Add(result);
             }

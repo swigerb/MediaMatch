@@ -11,12 +11,17 @@ public interface IMediaInfoService
 {
     /// <summary>
     /// Extracts all media properties from a file.
-    /// Returns null if the file cannot be probed (not a media file, ffprobe unavailable, etc.).
+    /// Returns <see langword="null"/> if the file cannot be probed (not a media file, ffprobe unavailable, etc.).
     /// </summary>
+    /// <param name="filePath">The path to the media file.</param>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>The media info result, or <see langword="null"/> if the file cannot be probed.</returns>
     Task<MediaInfoResult?> GetMediaInfoAsync(string filePath, CancellationToken ct = default);
 
     /// <summary>
     /// Checks whether the media info backend (ffprobe or mediainfo) is available.
     /// </summary>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>A value indicating whether the backend is available.</returns>
     Task<bool> IsAvailableAsync(CancellationToken ct = default);
 }

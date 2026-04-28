@@ -18,6 +18,8 @@ public sealed class FileOrganizationRules
     /// <summary>
     /// Returns the organization rule pattern for the given media type string.
     /// </summary>
+    /// <param name="mediaType">The media type string (e.g., "Movie", "Series", "Anime").</param>
+    /// <returns>The matching organization rule pattern.</returns>
     public string GetRuleForMediaType(string mediaType) => mediaType.ToUpperInvariant() switch
     {
         "MOVIE" => MovieRule,

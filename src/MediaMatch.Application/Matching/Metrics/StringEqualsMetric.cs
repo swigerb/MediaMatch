@@ -2,10 +2,15 @@ using MediaMatch.Core.Matching;
 
 namespace MediaMatch.Application.Matching.Metrics;
 
+/// <summary>
+/// Computes similarity by performing a case-insensitive string equality check, returning 1.0 or 0.0.
+/// </summary>
 public sealed class StringEqualsMetric : ISimilarityMetric
 {
+    /// <inheritdoc/>
     public string Name => "StringEquals";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         var sa = a?.ToString();

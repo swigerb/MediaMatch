@@ -126,9 +126,16 @@ public sealed class PresetDefinitionSettings
 /// </summary>
 public sealed class ApiKeySettings
 {
+    /// <summary>Gets or sets the TMDb API key.</summary>
     public string TmdbApiKey { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the TVDb API key.</summary>
     public string TvdbApiKey { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the OpenSubtitles API key.</summary>
     public string OpenSubtitlesApiKey { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the AcoustID API key.</summary>
     public string AcoustIdApiKey { get; set; } = string.Empty;
 }
 
@@ -138,8 +145,13 @@ public sealed class ApiKeySettings
 /// </summary>
 public sealed class RenameSettings
 {
+    /// <summary>Gets or sets the rename pattern for movie files.</summary>
     public string MoviePattern { get; set; } = "{Name} ({Year})/{Name} ({Year}){extension}";
+
+    /// <summary>Gets or sets the rename pattern for TV series episodes.</summary>
     public string SeriesPattern { get; set; } = "{SeriesName}/Season {Season}/{SeriesName} - S{Season:D2}E{Episode:D2} - {Title}{extension}";
+
+    /// <summary>Gets or sets the rename pattern for anime episodes.</summary>
     public string AnimePattern { get; set; } = "{SeriesName}/Season {Season}/{SeriesName} - S{Season:D2}E{Episode:D2} - {Title}{extension}";
 }
 
@@ -148,7 +160,10 @@ public sealed class RenameSettings
 /// </summary>
 public sealed class OutputFolderSettings
 {
+    /// <summary>Gets or sets the root output folder for organized movie files.</summary>
     public string MoviesRoot { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the root output folder for organized TV series files.</summary>
     public string SeriesRoot { get; set; } = string.Empty;
 }
 
@@ -168,31 +183,51 @@ public sealed class PostProcessActionSettings
 /// <summary>Plex media server connection settings.</summary>
 public sealed class PlexSettings
 {
+    /// <summary>Gets or sets the Plex server URL.</summary>
     public string Url { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the Plex authentication token.</summary>
     public string Token { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the library section IDs to refresh after rename.</summary>
     public List<string> LibrarySectionIds { get; set; } = [];
 }
 
 /// <summary>Jellyfin media server connection settings.</summary>
 public sealed class JellyfinSettings
 {
+    /// <summary>Gets or sets the Jellyfin server URL.</summary>
     public string Url { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the Jellyfin API key.</summary>
     public string ApiKey { get; set; } = string.Empty;
 }
 
 /// <summary>App theme modes.</summary>
 public enum ThemeMode
 {
+    /// <summary>Follows the operating system theme.</summary>
     System = 0,
+
+    /// <summary>Light theme.</summary>
     Light = 1,
+
+    /// <summary>Dark theme.</summary>
     Dark = 2
 }
 
 /// <summary>Accessibility font scale levels.</summary>
 public enum FontScale
 {
+    /// <summary>Smaller than default font size.</summary>
     Small = 0,
+
+    /// <summary>Default font size.</summary>
     Medium = 1,
+
+    /// <summary>Larger than default font size.</summary>
     Large = 2,
+
+    /// <summary>Maximum font size for accessibility.</summary>
     ExtraLarge = 3
 }

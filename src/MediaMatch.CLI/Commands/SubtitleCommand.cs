@@ -67,7 +67,7 @@ internal sealed class SubtitleCommand : AsyncCommand<SubtitleSettings>
                     try
                     {
                         var query = Path.GetFileNameWithoutExtension(fullPath);
-                        var results = await provider.SearchAsync(query, settings.Language);
+                        var results = await provider.SearchAsync(query, settings.Language).ConfigureAwait(false);
                         allResults.AddRange(results);
                     }
                     catch (Exception ex)
@@ -75,7 +75,7 @@ internal sealed class SubtitleCommand : AsyncCommand<SubtitleSettings>
                         AnsiConsole.MarkupLine($"[red]✗[/] {provider.Name}: {Markup.Escape(ex.Message)}");
                     }
                 }
-            });
+            }).ConfigureAwait(false);
 
         if (allResults.Count == 0)
         {

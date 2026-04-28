@@ -24,5 +24,6 @@ public interface IPlatformService
     bool SupportsReFsClone { get; }
 
     /// <summary>Gets the platform-appropriate settings directory path.</summary>
+    /// <returns>The full path to the settings directory.</returns>
     string GetSettingsDirectory();
 }

@@ -12,6 +12,7 @@ public sealed class ChecksumService : IChecksumService
 {
     private const int BufferSize = 81920; // 80 KB chunks
 
+    /// <inheritdoc/>
     public async Task<string> ComputeAsync(
         string filePath,
         ChecksumAlgorithm algorithm,
@@ -30,12 +31,12 @@ public sealed class ChecksumService : IChecksumService
 
         if (algorithm == ChecksumAlgorithm.Crc32)
         {
-            return await ComputeCrc32Async(stream, totalBytes, buffer, progress, ct);
+            return await ComputeCrc32Async(stream, totalBytes, buffer, progress, ct).ConfigureAwait(false);
         }
 
         using var hasher = CreateHashAlgorithm(algorithm);
         int read;
-        while ((read = await stream.ReadAsync(buffer, ct)) > 0)
+        while ((read = await stream.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
         {
             hasher.TransformBlock(buffer, 0, read, null, 0);
             bytesRead += read;
@@ -46,13 +47,14 @@ public sealed class ChecksumService : IChecksumService
         return Convert.ToHexStringLower(hasher.Hash!);
     }
 
+    /// <inheritdoc/>
     public async Task<bool> VerifyAsync(
         string filePath,
         string expectedHash,
         ChecksumAlgorithm algorithm,
         CancellationToken ct = default)
     {
-        var computed = await ComputeAsync(filePath, algorithm, ct: ct);
+        var computed = await ComputeAsync(filePath, algorithm, ct: ct).ConfigureAwait(false);
         return string.Equals(computed, expectedHash, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -67,7 +69,7 @@ public sealed class ChecksumService : IChecksumService
         long bytesRead = 0;
         int read;
 
-        while ((read = await stream.ReadAsync(buffer, ct)) > 0)
+        while ((read = await stream.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
         {
             crc.Append(buffer.AsSpan(0, read));
             bytesRead += read;

@@ -13,10 +13,10 @@ public interface IPostProcessAction
     /// <summary>
     /// Execute the post-processing action for a completed rename.
     /// </summary>
+    /// <param name="result">The file organization result to process.</param>
+    /// <param name="ct">A cancellation token.</param>
     Task ExecuteAsync(FileOrganizationResult result, CancellationToken ct = default);
 
-    /// <summary>
-    /// Whether this action's prerequisites are met (e.g., Plex is reachable).
-    /// </summary>
+    /// <summary>Gets a value indicating whether this action's prerequisites are met.</summary>
     bool IsAvailable { get; }
 }

@@ -17,6 +17,11 @@ public sealed class PostProcessPipeline
     private readonly IReadOnlyList<IPostProcessAction> _actions;
     private readonly ILogger<PostProcessPipeline> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PostProcessPipeline"/> class.
+    /// </summary>
+    /// <param name="actions">The post-processing actions to execute after each rename.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public PostProcessPipeline(
         IEnumerable<IPostProcessAction> actions,
         ILogger<PostProcessPipeline>? logger = null)
@@ -30,7 +35,7 @@ public sealed class PostProcessPipeline
     /// </summary>
     public async Task ExecuteAsync(FileOrganizationResult result, CancellationToken ct = default)
     {
-        await ExecuteAsync(result, actionFilter: null, ct);
+        await ExecuteAsync(result, actionFilter: null, ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -59,7 +64,7 @@ public sealed class PostProcessPipeline
             try
             {
                 _logger.LogInformation("Running post-process action: {Action}", action.Name);
-                await action.ExecuteAsync(result, ct);
+                await action.ExecuteAsync(result, ct).ConfigureAwait(false);
                 activity?.SetTag("mediamatch.action.success", true);
             }
             catch (Exception ex)

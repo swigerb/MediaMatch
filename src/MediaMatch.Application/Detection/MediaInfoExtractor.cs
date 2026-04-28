@@ -15,6 +15,10 @@ public sealed partial class MediaInfoExtractor
 {
     private readonly ILogger<MediaInfoExtractor> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaInfoExtractor"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger instance for diagnostic output.</param>
     public MediaInfoExtractor(ILogger<MediaInfoExtractor>? logger = null)
     {
         _logger = logger ?? NullLogger<MediaInfoExtractor>.Instance;
@@ -29,7 +33,7 @@ public sealed partial class MediaInfoExtractor
         // Try ffprobe first
         try
         {
-            var ffprobeResult = await RunFfprobeAsync(filePath, ct);
+            var ffprobeResult = await RunFfprobeAsync(filePath, ct).ConfigureAwait(false);
             if (ffprobeResult is not null)
                 return ffprobeResult;
         }
@@ -88,9 +92,9 @@ public sealed partial class MediaInfoExtractor
             return null;
         }
 
-        var output = await process.StandardOutput.ReadToEndAsync(ct);
+        var output = await process.StandardOutput.ReadToEndAsync(ct).ConfigureAwait(false);
 
-        await process.WaitForExitAsync(ct);
+        await process.WaitForExitAsync(ct).ConfigureAwait(false);
 
         if (process.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
             return null;

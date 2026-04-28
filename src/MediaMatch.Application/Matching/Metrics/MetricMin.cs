@@ -9,14 +9,20 @@ public sealed class MetricMin : ISimilarityMetric
 {
     private readonly IReadOnlyList<ISimilarityMetric> _metrics;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MetricMin"/> class.
+    /// </summary>
+    /// <param name="metrics">The collection of metrics whose minimum score is returned.</param>
     public MetricMin(IReadOnlyList<ISimilarityMetric> metrics)
     {
         ArgumentNullException.ThrowIfNull(metrics);
         _metrics = metrics;
     }
 
+    /// <inheritdoc/>
     public string Name => "Min";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         if (_metrics.Count == 0)

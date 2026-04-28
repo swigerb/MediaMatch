@@ -14,18 +14,28 @@ public sealed class MediaAnalysisService : IMediaAnalysisService
     private readonly MediaDetector _detector;
     private readonly ReleaseInfoParser _releaseParser;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaAnalysisService"/> class
+    /// with default detector and parser instances.
+    /// </summary>
     public MediaAnalysisService()
     {
         _releaseParser = new ReleaseInfoParser();
         _detector = new MediaDetector(_releaseParser);
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaAnalysisService"/> class.
+    /// </summary>
+    /// <param name="detector">The media detector used to identify media types from file paths.</param>
+    /// <param name="releaseParser">The parser used to extract release information from filenames.</param>
     public MediaAnalysisService(MediaDetector detector, ReleaseInfoParser releaseParser)
     {
         _detector = detector;
         _releaseParser = releaseParser;
     }
 
+    /// <inheritdoc />
     public Task<MediaAnalysisResult> AnalyzeAsync(string filePath, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -35,6 +45,7 @@ public sealed class MediaAnalysisService : IMediaAnalysisService
         return Task.FromResult(result);
     }
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<MediaAnalysisResult>> AnalyzeBatchAsync(
         IReadOnlyList<string> filePaths,
         CancellationToken ct = default)

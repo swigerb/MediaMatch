@@ -3,10 +3,15 @@ using MediaMatch.Core.Models;
 
 namespace MediaMatch.Application.Matching.Metrics;
 
+/// <summary>
+/// Computes similarity between two date values, with score decaying as the day difference increases.
+/// </summary>
 public sealed class DateMetric : ISimilarityMetric
 {
+    /// <inheritdoc/>
     public string Name => "Date";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         if (!TryExtractDate(a, out var da) || !TryExtractDate(b, out var db))

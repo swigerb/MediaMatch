@@ -15,24 +15,38 @@ public partial class ListPanelViewModel : ViewModelBase
     private readonly IExpressionEngine? _expressionEngine;
     private readonly ILogger<ListPanelViewModel> _logger;
 
+    /// <summary>Gets the collection of files for pattern-based listing.</summary>
     public ObservableCollection<ListFileItemViewModel> Files { get; } = [];
 
+    /// <summary>Gets or sets the rename pattern template.</summary>
     [ObservableProperty]
     public partial string Pattern { get; set; } = "{fn}";
 
+    /// <summary>Gets or sets the starting sequence number.</summary>
     [ObservableProperty]
     public partial int FromNumber { get; set; } = 1;
 
+    /// <summary>Gets or sets the ending sequence number.</summary>
     [ObservableProperty]
     public partial int ToNumber { get; set; } = 100;
 
+    /// <summary>Gets or sets the status message displayed in the panel.</summary>
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
+    /// <summary>Gets a value indicating whether any files are loaded.</summary>
     public bool HasFiles => Files.Count > 0;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ListPanelViewModel"/> class for design-time use.
+    /// </summary>
     public ListPanelViewModel() : this(null, null) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ListPanelViewModel"/> class.
+    /// </summary>
+    /// <param name="expressionEngine">The expression evaluation engine.</param>
+    /// <param name="logger">The logger instance.</param>
     public ListPanelViewModel(IExpressionEngine? expressionEngine, ILogger<ListPanelViewModel>? logger)
     {
         _expressionEngine = expressionEngine;
@@ -41,6 +55,10 @@ public partial class ListPanelViewModel : ViewModelBase
         Files.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFiles));
     }
 
+    /// <summary>
+    /// Adds files from the specified paths to the panel.
+    /// </summary>
+    /// <param name="filePaths">The file paths to add.</param>
     public void AddFiles(IEnumerable<string> filePaths)
     {
         foreach (var path in filePaths)
@@ -99,15 +117,19 @@ public partial class ListPanelViewModel : ViewModelBase
 /// </summary>
 public partial class ListFileItemViewModel : ViewModelBase
 {
+    /// <summary>Gets or sets the file name.</summary>
     [ObservableProperty]
     public partial string FileName { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the full file path.</summary>
     [ObservableProperty]
     public partial string FilePath { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the parent folder name.</summary>
     [ObservableProperty]
     public partial string FolderName { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the evaluated output text after pattern application.</summary>
     [ObservableProperty]
     public partial string Output { get; set; } = string.Empty;
 }

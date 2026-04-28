@@ -72,13 +72,13 @@ internal sealed class MatchCommand : AsyncCommand<MatchSettings>
 
                 foreach (var file in files)
                 {
-                    var result = await _analysisService.AnalyzeAsync(file);
+                    var result = await _analysisService.AnalyzeAsync(file).ConfigureAwait(false);
                     analysisResults.Add(result);
                     task.Increment(1);
                 }
 
                 return analysisResults;
-            });
+            }).ConfigureAwait(false);
 
         if (settings.Format.Equals("json", StringComparison.OrdinalIgnoreCase))
         {

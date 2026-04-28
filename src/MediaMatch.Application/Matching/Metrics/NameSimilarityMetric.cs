@@ -2,10 +2,15 @@ using MediaMatch.Core.Matching;
 
 namespace MediaMatch.Application.Matching.Metrics;
 
+/// <summary>
+/// Computes similarity between two names using normalized longest common subsequence scoring.
+/// </summary>
 public sealed class NameSimilarityMetric : ISimilarityMetric
 {
+    /// <inheritdoc/>
     public string Name => "NameSimilarity";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         var sa = a?.ToString();

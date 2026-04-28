@@ -27,6 +27,13 @@ public sealed class MetadataProviderChain
     private readonly bool _preferLocalMetadata;
     private readonly ILogger<MetadataProviderChain> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MetadataProviderChain"/> class.
+    /// </summary>
+    /// <param name="movieProviders">The available movie metadata providers.</param>
+    /// <param name="episodeProviders">The available episode metadata providers.</param>
+    /// <param name="appSettings">Optional application settings controlling provider ordering.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public MetadataProviderChain(
         IEnumerable<IMovieProvider> movieProviders,
         IEnumerable<IEpisodeProvider> episodeProviders,
@@ -74,17 +81,17 @@ public sealed class MetadataProviderChain
                 IReadOnlyList<Movie> movies;
 
                 if (provider is ILocalMetadataProvider local)
-                    movies = await local.SearchByFileAsync(filePath, ct);
+                    movies = await local.SearchByFileAsync(filePath, ct).ConfigureAwait(false);
                 else
                     movies = await provider.SearchAsync(
-                        Path.GetFileNameWithoutExtension(filePath), null, ct);
+                        Path.GetFileNameWithoutExtension(filePath), null, ct).ConfigureAwait(false);
 
                 if (movies.Count == 0) continue;
 
                 var movie = movies[0];
                 var movieInfo = provider is ILocalMetadataProvider localInfo
-                    ? await localInfo.GetMovieInfoByFileAsync(filePath, ct) ?? await provider.GetMovieInfoAsync(movie, ct)
-                    : await provider.GetMovieInfoAsync(movie, ct);
+                    ? await localInfo.GetMovieInfoByFileAsync(filePath, ct).ConfigureAwait(false) ?? await provider.GetMovieInfoAsync(movie, ct).ConfigureAwait(false)
+                    : await provider.GetMovieInfoAsync(movie, ct).ConfigureAwait(false);
                 var confidence = ComputeConfidence(baseConfidence, provider.Name);
 
                 var result = new MatchResult(
@@ -133,9 +140,9 @@ public sealed class MetadataProviderChain
 
                 if (provider is ILocalMetadataProvider local)
                 {
-                    localEpisode = await local.SearchEpisodeByFileAsync(filePath, ct);
+                    localEpisode = await local.SearchEpisodeByFileAsync(filePath, ct).ConfigureAwait(false);
                     if (localEpisode is not null)
-                        localSeriesInfo = await local.GetSeriesInfoByFileAsync(filePath, ct);
+                        localSeriesInfo = await local.GetSeriesInfoByFileAsync(filePath, ct).ConfigureAwait(false);
                 }
 
                 if (localEpisode is not null)
@@ -164,11 +171,11 @@ public sealed class MetadataProviderChain
 
                 // Standard search for online providers
                 var searchQuery = Path.GetFileNameWithoutExtension(filePath);
-                var searchResults = await provider.SearchAsync(searchQuery, ct);
+                var searchResults = await provider.SearchAsync(searchQuery, ct).ConfigureAwait(false);
                 if (searchResults.Count == 0) continue;
 
                 var series = searchResults[0];
-                var seriesInfo = await provider.GetSeriesInfoAsync(series, ct);
+                var seriesInfo = await provider.GetSeriesInfoAsync(series, ct).ConfigureAwait(false);
 
                 var onlineResult = new MatchResult(
                     mediaType,

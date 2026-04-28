@@ -27,23 +27,33 @@ public partial class HistoryViewModel : ViewModelBase
 
     private readonly IUndoService _undoService;
 
+    /// <summary>Gets the collection of history sessions.</summary>
     public ObservableCollection<HistorySessionViewModel> Sessions { get; } = [];
 
+    /// <summary>Gets or sets the currently selected history session.</summary>
     [ObservableProperty]
     public partial HistorySessionViewModel? SelectedSession { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether the history is empty.</summary>
     [ObservableProperty]
     public partial bool IsEmpty { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether any history entries exist.</summary>
     [ObservableProperty]
     public partial bool HasHistory { get; set; }
 
+    /// <summary>Gets or sets the status message displayed on the History page.</summary>
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = "Loading history…";
 
+    /// <summary>Gets the undo entries for the currently selected session.</summary>
     public IReadOnlyList<UndoEntry> SelectedSessionEntries =>
         SelectedSession?.Entries ?? Array.Empty<UndoEntry>();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HistoryViewModel"/> class.
+    /// </summary>
+    /// <param name="undoService">The undo service used to load and revert history.</param>
     public HistoryViewModel(IUndoService undoService)
     {
         ArgumentNullException.ThrowIfNull(undoService);

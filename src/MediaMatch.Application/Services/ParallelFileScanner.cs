@@ -21,6 +21,12 @@ public sealed class ParallelFileScanner : IParallelFileScanner
     private readonly INetworkPathDetector _networkDetector;
     private readonly ILogger<ParallelFileScanner> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ParallelFileScanner"/> class.
+    /// </summary>
+    /// <param name="settings">Performance settings controlling scan concurrency and depth.</param>
+    /// <param name="networkDetector">Detector used to identify network paths for concurrency reduction.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public ParallelFileScanner(
         PerformanceSettings settings,
         INetworkPathDetector networkDetector,
@@ -31,6 +37,7 @@ public sealed class ParallelFileScanner : IParallelFileScanner
         _logger = logger ?? NullLogger<ParallelFileScanner>.Instance;
     }
 
+    /// <inheritdoc />
     public ChannelReader<string> ScanAsync(
         string rootPath,
         IReadOnlySet<string>? allowedExtensions = null,
@@ -50,6 +57,7 @@ public sealed class ParallelFileScanner : IParallelFileScanner
         return channel.Reader;
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ScanToListAsync(
         string rootPath,
         IReadOnlySet<string>? allowedExtensions = null,
@@ -59,7 +67,7 @@ public sealed class ParallelFileScanner : IParallelFileScanner
         var reader = ScanAsync(rootPath, allowedExtensions, progress, ct);
         var results = new List<string>();
 
-        await foreach (var file in reader.ReadAllAsync(ct))
+        await foreach (var file in reader.ReadAllAsync(ct).ConfigureAwait(false))
         {
             results.Add(file);
         }
@@ -120,9 +128,9 @@ public sealed class ParallelFileScanner : IParallelFileScanner
                         file,
                         sw.ElapsedMilliseconds));
 
-                    await writer.WriteAsync(file, token);
+                    await writer.WriteAsync(file, token).ConfigureAwait(false);
                     Interlocked.Increment(ref filesProcessed);
-                });
+                }).ConfigureAwait(false);
 
             activity?.SetTag("mediamatch.scan.files_found", filesFound);
             _logger.LogInformation(

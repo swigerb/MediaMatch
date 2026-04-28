@@ -12,6 +12,11 @@ public interface IParallelFileScanner
     /// Scans the specified directory for files matching the given extensions.
     /// Returns a channel reader that streams discovered file paths.
     /// </summary>
+    /// <param name="rootPath">The root directory to scan.</param>
+    /// <param name="allowedExtensions">An optional set of file extensions to include.</param>
+    /// <param name="progress">An optional progress reporter.</param>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>A channel reader that streams discovered file paths.</returns>
     ChannelReader<string> ScanAsync(
         string rootPath,
         IReadOnlySet<string>? allowedExtensions = null,
@@ -21,6 +26,11 @@ public interface IParallelFileScanner
     /// <summary>
     /// Scans and collects all results into a list. Convenience wrapper over <see cref="ScanAsync"/>.
     /// </summary>
+    /// <param name="rootPath">The root directory to scan.</param>
+    /// <param name="allowedExtensions">An optional set of file extensions to include.</param>
+    /// <param name="progress">An optional progress reporter.</param>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>A read-only list of discovered file paths.</returns>
     Task<IReadOnlyList<string>> ScanToListAsync(
         string rootPath,
         IReadOnlySet<string>? allowedExtensions = null,

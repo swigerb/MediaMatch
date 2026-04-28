@@ -15,6 +15,12 @@ public sealed class BatchOperationService : IBatchOperationService
     private readonly ILogger<BatchOperationService> _logger;
     private readonly int _maxConcurrency;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BatchOperationService"/> class.
+    /// </summary>
+    /// <param name="organizationService">The file organization service used to process individual renames.</param>
+    /// <param name="logger">Optional logger instance.</param>
+    /// <param name="maxConcurrency">Maximum number of concurrent rename operations. Defaults to 4.</param>
     public BatchOperationService(
         IFileOrganizationService organizationService,
         ILogger<BatchOperationService>? logger = null,
@@ -26,6 +32,7 @@ public sealed class BatchOperationService : IBatchOperationService
         _maxConcurrency = Math.Max(1, maxConcurrency);
     }
 
+    /// <inheritdoc/>
     public async Task<BatchJob> ExecuteAsync(
         IReadOnlyList<string> filePaths,
         string renamePattern,
@@ -74,7 +81,7 @@ public sealed class BatchOperationService : IBatchOperationService
                     try
                     {
                         var results = await _organizationService.OrganizeAsync(
-                            [path], renamePattern, ct);
+                            [path], renamePattern, ct).ConfigureAwait(false);
 
                         var result = results.FirstOrDefault();
                         if (result is not null && result.Success)
@@ -99,7 +106,7 @@ public sealed class BatchOperationService : IBatchOperationService
                     }
                 });
 
-                await Task.WhenAll(tasks);
+                await Task.WhenAll(tasks).ConfigureAwait(false);
 
                 job.CompletedCount = completed;
                 job.FailedCount = failed;

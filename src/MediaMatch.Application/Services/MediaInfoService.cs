@@ -16,11 +16,16 @@ public sealed class MediaInfoService : IMediaInfoService
 {
     private readonly ILogger<MediaInfoService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaInfoService"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger instance.</param>
     public MediaInfoService(ILogger<MediaInfoService>? logger = null)
     {
         _logger = logger ?? NullLogger<MediaInfoService>.Instance;
     }
 
+    /// <inheritdoc/>
     public async Task<MediaInfoResult?> GetMediaInfoAsync(string filePath, CancellationToken ct = default)
     {
         if (!File.Exists(filePath))
@@ -29,13 +34,14 @@ public sealed class MediaInfoService : IMediaInfoService
             return null;
         }
 
-        var json = await RunFfprobeAsync(filePath, ct);
+        var json = await RunFfprobeAsync(filePath, ct).ConfigureAwait(false);
         if (json is null)
             return null;
 
         return ParseFfprobeJson(filePath, json);
     }
 
+    /// <inheritdoc/>
     public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
         try
@@ -53,7 +59,7 @@ public sealed class MediaInfoService : IMediaInfoService
             using var process = Process.Start(psi);
             if (process is null) return false;
 
-            await process.WaitForExitAsync(ct);
+            await process.WaitForExitAsync(ct).ConfigureAwait(false);
             return process.ExitCode == 0;
         }
         catch
@@ -79,8 +85,8 @@ public sealed class MediaInfoService : IMediaInfoService
             using var process = new Process { StartInfo = psi };
             process.Start();
 
-            var output = await process.StandardOutput.ReadToEndAsync(ct);
-            await process.WaitForExitAsync(ct);
+            var output = await process.StandardOutput.ReadToEndAsync(ct).ConfigureAwait(false);
+            await process.WaitForExitAsync(ct).ConfigureAwait(false);
 
             if (process.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
             {

@@ -6,5 +6,7 @@ namespace MediaMatch.Core.Services;
 public interface INetworkPathDetector
 {
     /// <summary>Returns true if the path is a UNC path or a mapped network drive.</summary>
+    /// <param name="path">The file system path to check.</param>
+    /// <returns>A value indicating whether the path is on a network share.</returns>
     bool IsNetworkPath(string path);
 }

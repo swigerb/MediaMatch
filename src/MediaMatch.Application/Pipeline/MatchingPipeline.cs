@@ -37,6 +37,13 @@ public sealed class MatchingPipeline : IMatchingPipeline
     /// <summary>Most recent opportunistic suggestions from the last ProcessAsync call.</summary>
     public IReadOnlyList<MatchSuggestion> LastSuggestions { get; private set; } = Array.Empty<MatchSuggestion>();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MatchingPipeline"/> class.
+    /// </summary>
+    /// <param name="episodeProviders">The episode metadata providers to query.</param>
+    /// <param name="movieProviders">The movie metadata providers to query.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
+    /// <param name="appSettings">Optional application settings controlling pipeline behavior.</param>
     public MatchingPipeline(
         IEnumerable<IEpisodeProvider> episodeProviders,
         IEnumerable<IMovieProvider> movieProviders,
@@ -56,6 +63,15 @@ public sealed class MatchingPipeline : IMatchingPipeline
         _opportunisticMatcher = new OpportunisticMatcher(_episodeProviders, _movieProviders, logger: null);
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MatchingPipeline"/> class with explicit dependencies for testing.
+    /// </summary>
+    /// <param name="detector">The media type detector.</param>
+    /// <param name="releaseParser">The release info parser.</param>
+    /// <param name="episodeMatcher">The episode matching engine.</param>
+    /// <param name="episodeProviders">The episode metadata providers to query.</param>
+    /// <param name="movieProviders">The movie metadata providers to query.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public MatchingPipeline(
         MediaDetector detector,
         ReleaseInfoParser releaseParser,
@@ -74,6 +90,7 @@ public sealed class MatchingPipeline : IMatchingPipeline
         _opportunisticMatcher = new OpportunisticMatcher(_episodeProviders, _movieProviders, logger: null);
     }
 
+    /// <inheritdoc/>
     public async Task<MatchResult> ProcessAsync(string filePath, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -91,9 +108,9 @@ public sealed class MatchingPipeline : IMatchingPipeline
         var result = detection.MediaType switch
         {
             MediaType.TvSeries or MediaType.Anime =>
-                await MatchEpisodeAsync(filePath, detection, ct),
+                await MatchEpisodeAsync(filePath, detection, ct).ConfigureAwait(false),
             MediaType.Movie =>
-                await MatchMovieAsync(filePath, detection, ct),
+                await MatchMovieAsync(filePath, detection, ct).ConfigureAwait(false),
             _ =>
                 MatchResult.NoMatch(detection.MediaType)
         };
@@ -106,7 +123,7 @@ public sealed class MatchingPipeline : IMatchingPipeline
         {
             _logger.LogInformation("Strict matching below threshold ({Confidence:F2}), trying opportunistic mode",
                 result.Confidence);
-            LastSuggestions = await _opportunisticMatcher.SuggestAsync(filePath, detection, ct);
+            LastSuggestions = await _opportunisticMatcher.SuggestAsync(filePath, detection, ct).ConfigureAwait(false);
             activity?.SetTag("mediamatch.opportunistic_suggestions", LastSuggestions.Count);
         }
         else
@@ -117,6 +134,7 @@ public sealed class MatchingPipeline : IMatchingPipeline
         return result;
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<MatchResult>> ProcessBatchAsync(
         IReadOnlyList<string> filePaths,
         CancellationToken ct = default)
@@ -127,7 +145,7 @@ public sealed class MatchingPipeline : IMatchingPipeline
         for (int i = 0; i < filePaths.Count; i++)
         {
             ct.ThrowIfCancellationRequested();
-            results[i] = await ProcessAsync(filePaths[i], ct);
+            results[i] = await ProcessAsync(filePaths[i], ct).ConfigureAwait(false);
         }
 
         return results;
@@ -150,12 +168,12 @@ public sealed class MatchingPipeline : IMatchingPipeline
 
             try
             {
-                var searchResults = await provider.SearchAsync(searchQuery, ct);
+                var searchResults = await provider.SearchAsync(searchQuery, ct).ConfigureAwait(false);
                 if (searchResults.Count == 0)
                     continue;
 
                 var series = searchResults[0];
-                var episodes = await provider.GetEpisodesAsync(series, ct: ct);
+                var episodes = await provider.GetEpisodesAsync(series, ct: ct).ConfigureAwait(false);
 
                 // Use the existing EpisodeMatcher to find the best match
                 var matches = _episodeMatcher.MatchFiles([filePath], episodes);
@@ -163,7 +181,7 @@ public sealed class MatchingPipeline : IMatchingPipeline
                 if (matches.Count > 0)
                 {
                     var match = matches[0];
-                    var seriesInfo = await provider.GetSeriesInfoAsync(series, ct);
+                    var seriesInfo = await provider.GetSeriesInfoAsync(series, ct).ConfigureAwait(false);
                     var confidence = match.Score * detection.Confidence;
 
                     var result = new MatchResult(
@@ -209,12 +227,12 @@ public sealed class MatchingPipeline : IMatchingPipeline
 
             try
             {
-                var movies = await provider.SearchAsync(searchQuery, releaseInfo.Year, ct);
+                var movies = await provider.SearchAsync(searchQuery, releaseInfo.Year, ct).ConfigureAwait(false);
                 if (movies.Count == 0)
                     continue;
 
                 var movie = movies[0];
-                var movieInfo = await provider.GetMovieInfoAsync(movie, ct);
+                var movieInfo = await provider.GetMovieInfoAsync(movie, ct).ConfigureAwait(false);
                 var confidence = ComputeMovieConfidence(detection, movie);
 
                 var result = new MatchResult(

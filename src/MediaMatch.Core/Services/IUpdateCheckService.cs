@@ -17,10 +17,13 @@ public interface IUpdateCheckService
     /// <summary>
     /// Checks for updates asynchronously. Returns true if an update is available.
     /// </summary>
+    /// <param name="ct">A cancellation token.</param>
+    /// <returns>A value indicating whether an update is available.</returns>
     Task<bool> CheckForUpdatesAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Downloads and applies the available update, then restarts the application.
     /// </summary>
+    /// <param name="ct">A cancellation token.</param>
     Task DownloadAndApplyAsync(CancellationToken ct = default);
 }

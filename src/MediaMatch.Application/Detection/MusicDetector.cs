@@ -19,6 +19,10 @@ public sealed partial class MusicDetector
 
     private readonly ILogger<MusicDetector> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MusicDetector"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger instance for diagnostic output.</param>
     public MusicDetector(ILogger<MusicDetector>? logger = null)
     {
         _logger = logger ?? NullLogger<MusicDetector>.Instance;

@@ -97,7 +97,7 @@ try
             .WithExample("subtitle", "--path", "movie.mkv", "--lang", "en");
     });
 
-    return await app.RunAsync(args);
+    return await app.RunAsync(args).ConfigureAwait(false);
 }
 catch (Exception ex)
 {
@@ -107,5 +107,5 @@ catch (Exception ex)
 }
 finally
 {
-    await Log.CloseAndFlushAsync();
+    await Log.CloseAndFlushAsync().ConfigureAwait(false);
 }

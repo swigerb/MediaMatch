@@ -25,6 +25,12 @@ public sealed class OpportunisticMatcher
     private readonly EpisodeMatcher _episodeMatcher;
     private readonly ILogger<OpportunisticMatcher> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpportunisticMatcher"/> class.
+    /// </summary>
+    /// <param name="episodeProviders">The episode metadata providers to query.</param>
+    /// <param name="movieProviders">The movie metadata providers to query.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public OpportunisticMatcher(
         IEnumerable<IEpisodeProvider> episodeProviders,
         IEnumerable<IMovieProvider> movieProviders,
@@ -55,9 +61,9 @@ public sealed class OpportunisticMatcher
         var suggestions = detection.MediaType switch
         {
             MediaType.TvSeries or MediaType.Anime =>
-                await SuggestEpisodesAsync(filePath, detection, ct),
+                await SuggestEpisodesAsync(filePath, detection, ct).ConfigureAwait(false),
             MediaType.Movie =>
-                await SuggestMoviesAsync(filePath, detection, ct),
+                await SuggestMoviesAsync(filePath, detection, ct).ConfigureAwait(false),
             _ => Array.Empty<MatchSuggestion>()
         };
 
@@ -82,11 +88,11 @@ public sealed class OpportunisticMatcher
 
             try
             {
-                var searchResults = await provider.SearchAsync(searchQuery, ct);
+                var searchResults = await provider.SearchAsync(searchQuery, ct).ConfigureAwait(false);
 
                 foreach (var series in searchResults.Take(3))
                 {
-                    var episodes = await provider.GetEpisodesAsync(series, ct: ct);
+                    var episodes = await provider.GetEpisodesAsync(series, ct: ct).ConfigureAwait(false);
                     var matches = _episodeMatcher.MatchFiles([filePath], episodes);
 
                     if (matches.Count > 0)
@@ -99,7 +105,7 @@ public sealed class OpportunisticMatcher
                             SeriesInfo? seriesInfo = null;
                             try
                             {
-                                seriesInfo = await provider.GetSeriesInfoAsync(series, ct);
+                                seriesInfo = await provider.GetSeriesInfoAsync(series, ct).ConfigureAwait(false);
                             }
                             catch
                             {
@@ -150,7 +156,7 @@ public sealed class OpportunisticMatcher
 
             try
             {
-                var movies = await provider.SearchAsync(searchQuery, releaseInfo.Year, ct);
+                var movies = await provider.SearchAsync(searchQuery, releaseInfo.Year, ct).ConfigureAwait(false);
 
                 foreach (var movie in movies.Take(5))
                 {
@@ -161,7 +167,7 @@ public sealed class OpportunisticMatcher
                         MovieInfo? movieInfo = null;
                         try
                         {
-                            movieInfo = await provider.GetMovieInfoAsync(movie, ct);
+                            movieInfo = await provider.GetMovieInfoAsync(movie, ct).ConfigureAwait(false);
                         }
                         catch
                         {

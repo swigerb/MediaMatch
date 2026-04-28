@@ -4,13 +4,18 @@ using MediaMatch.Core.Models;
 
 namespace MediaMatch.Application.Matching.Metrics;
 
+/// <summary>
+/// Computes similarity between two season/episode identifiers, returning 1.0 for exact match and 0.5 for partial match.
+/// </summary>
 public sealed partial class SeasonEpisodeMetric : ISimilarityMetric
 {
     [GeneratedRegex(@"S(\d+)E(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
     private static partial Regex SeasonEpisodePattern();
 
+    /// <inheritdoc/>
     public string Name => "SeasonEpisode";
 
+    /// <inheritdoc/>
     public float GetSimilarity(object? a, object? b)
     {
         if (!TryExtract(a, out var sa, out var ea) || !TryExtract(b, out var sb, out var eb))
