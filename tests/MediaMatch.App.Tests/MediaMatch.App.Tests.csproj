@@ -34,6 +34,12 @@
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\HistorySessionViewModel.cs" Link="LinkedSources\HistorySessionViewModel.cs" />
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\PresetEditorViewModel.cs" Link="LinkedSources\PresetEditorViewModel.cs" />
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\MediaInfoInspectorViewModel.cs" Link="LinkedSources\MediaInfoInspectorViewModel.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\ExpressionEditorViewModel.cs" Link="LinkedSources\ExpressionEditorViewModel.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\TokenInfo.cs" Link="LinkedSources\TokenInfo.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\FilterPanelViewModel.cs" Link="LinkedSources\FilterPanelViewModel.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\EpisodesPanelViewModel.cs" Link="LinkedSources\EpisodesPanelViewModel.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\SubtitlePanelViewModel.cs" Link="LinkedSources\SubtitlePanelViewModel.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\ListPanelViewModel.cs" Link="LinkedSources\ListPanelViewModel.cs" />
   </ItemGroup>
 
 </Project>

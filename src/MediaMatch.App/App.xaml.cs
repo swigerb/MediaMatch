@@ -216,5 +216,6 @@ public partial class App : Microsoft.UI.Xaml.Application
     {
         Log.Fatal(e.Exception, "Unhandled exception");
         Log.CloseAndFlush();
+        e.Handled = true;
     }
 }

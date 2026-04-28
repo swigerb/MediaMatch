@@ -3,6 +3,7 @@ using MediaMatch.App.Services;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Serilog;
 
 namespace MediaMatch.App;
 
@@ -28,7 +29,14 @@ public sealed partial class MainWindow : Window
         navigationService.SetFrame(NavFrame);
 
         // Navigate to Home on startup
-        NavFrame.Navigate(typeof(HomePage));
+        try
+        {
+            NavFrame.Navigate(typeof(HomePage));
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to navigate to HomePage on startup");
+        }
 
         // Start splash fade-out timer
         _splashTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.8) };
@@ -58,26 +66,34 @@ public sealed partial class MainWindow : Window
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
-        if (args.IsSettingsSelected)
+        try
         {
-            NavFrame.Navigate(typeof(SettingsPage));
-        }
-        else if (args.SelectedItem is NavigationViewItem item)
-        {
-            switch (item.Tag)
+            if (args.IsSettingsSelected)
             {
-                case "home":
-                    NavFrame.Navigate(typeof(HomePage));
-                    break;
-                case "history":
-                    NavFrame.Navigate(typeof(HistoryPage));
-                    break;
-                case "about":
-                    NavFrame.Navigate(typeof(AboutPage));
-                    break;
-                default:
-                    throw new InvalidOperationException($"Unknown navigation item tag: {item.Tag}");
+                NavFrame.Navigate(typeof(SettingsPage));
             }
+            else if (args.SelectedItem is NavigationViewItem item)
+            {
+                switch (item.Tag)
+                {
+                    case "home":
+                        NavFrame.Navigate(typeof(HomePage));
+                        break;
+                    case "history":
+                        NavFrame.Navigate(typeof(HistoryPage));
+                        break;
+                    case "about":
+                        NavFrame.Navigate(typeof(AboutPage));
+                        break;
+                    default:
+                        Log.Warning("Unknown navigation item tag: {Tag}", item.Tag);
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Navigation failed");
         }
     }
 

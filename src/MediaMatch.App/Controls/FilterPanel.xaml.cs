@@ -1,6 +1,7 @@
 using MediaMatch.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Serilog;
 
 namespace MediaMatch.App.Controls;
 
@@ -12,7 +13,14 @@ public sealed partial class FilterPanel : UserControl
     {
         InitializeComponent();
         ViewModel = new FilterPanelViewModel();
-        Bindings.Update();
+        try
+        {
+            Bindings.Update();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "FilterPanel binding initialization failed");
+        }
     }
 
     public void SetViewModel(FilterPanelViewModel vm)

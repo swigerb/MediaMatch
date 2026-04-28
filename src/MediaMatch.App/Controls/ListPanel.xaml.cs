@@ -1,5 +1,6 @@
 using MediaMatch.App.ViewModels;
 using Microsoft.UI.Xaml.Controls;
+using Serilog;
 
 namespace MediaMatch.App.Controls;
 
@@ -11,7 +12,14 @@ public sealed partial class ListPanel : UserControl
     {
         InitializeComponent();
         ViewModel = new ListPanelViewModel();
-        Bindings.Update();
+        try
+        {
+            Bindings.Update();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "ListPanel binding initialization failed");
+        }
     }
 
     public void SetViewModel(ListPanelViewModel vm)
