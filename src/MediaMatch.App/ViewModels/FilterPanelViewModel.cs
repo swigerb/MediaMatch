@@ -102,7 +102,7 @@ public partial class FilterPanelViewModel : ViewModelBase
             {
                 MediaInfoEntries.Add(new MediaInfoEntry("File", Path.GetFileName(filePath)));
                 MediaInfoEntries.Add(new MediaInfoEntry("MediaType", result.MediaType.ToString()));
-                MediaInfoEntries.Add(new MediaInfoEntry("Quality", result.Quality?.ToString() ?? "Unknown"));
+                MediaInfoEntries.Add(new MediaInfoEntry("Quality", result.VideoQuality ?? "Unknown"));
                 MediaInfoEntries.Add(new MediaInfoEntry("Year", result.Year?.ToString() ?? "N/A"));
                 MediaInfoEntries.Add(new MediaInfoEntry("ReleaseGroup", result.ReleaseGroup ?? "N/A"));
             }

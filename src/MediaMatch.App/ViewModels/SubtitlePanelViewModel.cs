@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediaMatch.Core.Models;
-using MediaMatch.Core.Services;
+using MediaMatch.Core.Providers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -13,7 +13,7 @@ namespace MediaMatch.App.ViewModels;
 /// </summary>
 public partial class SubtitlePanelViewModel : ViewModelBase
 {
-    private readonly ISubtitleDownloadService? _subtitleService;
+    private readonly ISubtitleProvider? _subtitleProvider;
     private readonly ILogger<SubtitlePanelViewModel> _logger;
 
     /// <summary>Gets the collection of subtitle search results.</summary>
@@ -53,11 +53,11 @@ public partial class SubtitlePanelViewModel : ViewModelBase
     /// <summary>
     /// Initializes a new instance of the <see cref="SubtitlePanelViewModel"/> class.
     /// </summary>
-    /// <param name="subtitleService">The subtitle download service.</param>
+    /// <param name="subtitleProvider">The subtitle provider for search and download.</param>
     /// <param name="logger">The logger instance.</param>
-    public SubtitlePanelViewModel(ISubtitleDownloadService? subtitleService, ILogger<SubtitlePanelViewModel>? logger)
+    public SubtitlePanelViewModel(ISubtitleProvider? subtitleProvider, ILogger<SubtitlePanelViewModel>? logger)
     {
-        _subtitleService = subtitleService;
+        _subtitleProvider = subtitleProvider;
         _logger = logger ?? NullLogger<SubtitlePanelViewModel>.Instance;
 
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
@@ -68,7 +68,7 @@ public partial class SubtitlePanelViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(SearchQuery)) return;
 
-        if (_subtitleService is null)
+        if (_subtitleProvider is null)
         {
             NeedsLogin = true;
             StatusMessage = "OpenSubtitles account required. Please configure your API key in Settings.";
@@ -77,16 +77,17 @@ public partial class SubtitlePanelViewModel : ViewModelBase
 
         IsSearching = true;
         Results.Clear();
+        var language = SelectedLanguageIndex > 0 ? LanguageOptions[SelectedLanguageIndex].ToLowerInvariant() : "all";
         StatusMessage = $"Searching for \"{SearchQuery}\"...";
 
         try
         {
-            var subtitles = await _subtitleService.SearchAsync(SearchQuery);
+            var subtitles = await _subtitleProvider.SearchAsync(SearchQuery, language);
             foreach (var sub in subtitles)
             {
                 Results.Add(new SubtitleResultViewModel
                 {
-                    Title = sub.FileName,
+                    Title = sub.Name,
                     Language = sub.Language,
                     SubtitleCount = 1,
                     Descriptor = sub
@@ -109,7 +110,7 @@ public partial class SubtitlePanelViewModel : ViewModelBase
     [RelayCommand]
     private async Task DownloadSelectedAsync()
     {
-        if (_subtitleService is null) return;
+        if (_subtitleProvider is null) return;
 
         var selected = Results.Where(r => r.IsSelected).ToList();
         if (selected.Count == 0)
@@ -123,7 +124,12 @@ public partial class SubtitlePanelViewModel : ViewModelBase
         {
             foreach (var sub in selected)
             {
-                await _subtitleService.DownloadAsync(sub.Descriptor, sub.Descriptor.FileName);
+                using var stream = await _subtitleProvider.DownloadAsync(sub.Descriptor);
+                var filePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    $"{sub.Descriptor.Name}.{sub.Descriptor.Format.ToString().ToLowerInvariant()}");
+                await using var fileStream = File.Create(filePath);
+                await stream.CopyToAsync(fileStream);
             }
             StatusMessage = $"Downloaded {selected.Count} subtitle(s).";
         }

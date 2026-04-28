@@ -119,7 +119,7 @@ public partial class EpisodesPanelViewModel : ViewModelBase
             var first = results[0];
             BreadcrumbText = $"Search Results > {first.Name}";
 
-            var episodes = await _episodeProvider.GetEpisodesAsync(first.Id);
+            var episodes = await _episodeProvider.GetEpisodesAsync(first);
             foreach (var ep in episodes)
             {
                 Episodes.Add(ep);

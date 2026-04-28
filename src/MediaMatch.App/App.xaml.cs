@@ -6,6 +6,7 @@ using MediaMatch.Application.Pipeline;
 using MediaMatch.Application.Services;
 using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Expressions;
+using MediaMatch.Core.Providers;
 using MediaMatch.Core.Services;
 using MediaMatch.Infrastructure;
 using MediaMatch.Infrastructure.Observability;
@@ -175,8 +176,12 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddTransient<PresetEditorViewModel>();
 
         // Mode panel ViewModels
-        services.AddTransient<EpisodesPanelViewModel>();
-        services.AddTransient<SubtitlePanelViewModel>();
+        services.AddTransient<EpisodesPanelViewModel>(sp => new EpisodesPanelViewModel(
+            sp.GetService<IEpisodeProvider>(),
+            sp.GetRequiredService<ILogger<EpisodesPanelViewModel>>()));
+        services.AddTransient<SubtitlePanelViewModel>(sp => new SubtitlePanelViewModel(
+            sp.GetService<ISubtitleProvider>(),
+            sp.GetRequiredService<ILogger<SubtitlePanelViewModel>>()));
         services.AddTransient<SfvPanelViewModel>(sp => new SfvPanelViewModel(
             sp.GetRequiredService<IChecksumService>(),
             sp.GetRequiredService<ILogger<SfvPanelViewModel>>()));
