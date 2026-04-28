@@ -49,6 +49,13 @@
                         <FontIcon Glyph="&#xE80F;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Content="History" Tag="history"
+                    AutomationProperties.Name="History page"
+                    AccessKey="I">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE81C;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Content="About" Tag="about"
                     AutomationProperties.Name="About page"
                     AccessKey="B">

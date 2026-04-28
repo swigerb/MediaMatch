@@ -5,9 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);MEDIAMATH_TESTS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.9.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
@@ -22,6 +24,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MediaMatch.Core\MediaMatch.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Link ViewModel source files for unit testing (App project can't be referenced due to WinUI TFM) -->
+  <ItemGroup>
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\ViewModelBase.cs" Link="LinkedSources\ViewModelBase.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\HistoryViewModel.cs" Link="LinkedSources\HistoryViewModel.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\HistorySessionViewModel.cs" Link="LinkedSources\HistorySessionViewModel.cs" />
   </ItemGroup>
 
 </Project>

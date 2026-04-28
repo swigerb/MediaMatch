@@ -13,6 +13,7 @@ public sealed class NavigationService : INavigationService
     private static readonly Dictionary<string, Type> PageMap = new()
     {
         ["home"] = typeof(HomePage),
+        ["history"] = typeof(HistoryPage),
         ["settings"] = typeof(SettingsPage),
         ["about"] = typeof(AboutPage),
     };

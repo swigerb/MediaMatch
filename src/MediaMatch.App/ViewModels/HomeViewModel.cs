@@ -14,17 +14,25 @@ using Windows.Storage.Pickers;
 namespace MediaMatch.App.ViewModels;
 
 /// <summary>
-/// ViewModel for the Home page — manages file list, folder selection, batch rename, and undo.
+/// ViewModel for the Home page — manages dual-pane file matching, rename, and undo.
 /// </summary>
 public partial class HomeViewModel : ViewModelBase
 {
     private readonly IBatchOperationService? _batchService;
     private readonly IUndoService? _undoService;
+    private readonly IMatchingPipeline? _matchingPipeline;
     private readonly ILogger<HomeViewModel> _logger;
     private CancellationTokenSource? _batchCts;
     private NotificationService? _notificationService;
 
-    public ObservableCollection<FileItemViewModel> Files { get; } = [];
+    /// <summary>Left pane: original files loaded by the user.</summary>
+    public ObservableCollection<FileItemViewModel> OriginalFiles { get; } = [];
+
+    /// <summary>Right pane: matched/renamed file previews.</summary>
+    public ObservableCollection<FileItemViewModel> MatchedFiles { get; } = [];
+
+    /// <summary>Legacy single collection for backward compatibility with tests.</summary>
+    public ObservableCollection<FileItemViewModel> Files => OriginalFiles;
 
     public BatchProgressViewModel BatchProgress { get; } = new();
 
@@ -38,17 +46,27 @@ public partial class HomeViewModel : ViewModelBase
     public partial bool IsScanning { get; set; }
 
     [ObservableProperty]
-    public partial string StatusMessage { get; set; } = "No files loaded. Add a folder to get started.";
+    public partial string StatusMessage { get; set; } = "No files loaded. Drop files or click Load.";
 
     [ObservableProperty]
     public partial bool CanUndo { get; set; }
 
-    public int FileCount => Files.Count;
-    public int SelectedCount => Files.Count(f => f.IsSelected);
-    public bool HasFiles => Files.Count > 0;
-    public bool HasNoFiles => Files.Count == 0;
+    [ObservableProperty]
+    public partial int SelectedModeIndex { get; set; }
+
+    [ObservableProperty]
+    public partial int SelectedRenameActionIndex { get; set; }
+
+    public int FileCount => OriginalFiles.Count;
+    public int MatchedCount => MatchedFiles.Count;
+    public bool HasFiles => OriginalFiles.Count > 0;
+    public bool HasNoFiles => OriginalFiles.Count == 0;
+    public bool HasMatchedFiles => MatchedFiles.Count > 0;
+    public bool HasNoMatchedFiles => MatchedFiles.Count == 0;
     public bool ShowEmptyState => HasNoFiles && !IsScanning;
-    public string FileCountDisplay => $"Showing {Files.Count} file(s)";
+    public string FileCountDisplay => $"{OriginalFiles.Count} file(s) | {MatchedFiles.Count} matched";
+
+    public string[] RenameActionOptions { get; } = ["Move", "Copy", "Hard Link", "Symlink", "Test"];
 
     /// <summary>
     /// Wires the notification service for operation feedback.
@@ -61,26 +79,35 @@ public partial class HomeViewModel : ViewModelBase
     /// <summary>
     /// Design-time / test constructor (no services).
     /// </summary>
-    public HomeViewModel() : this(null, null, null) { }
+    public HomeViewModel() : this(null, null, null, null) { }
 
     public HomeViewModel(
         IBatchOperationService? batchService,
         IUndoService? undoService,
+        IMatchingPipeline? matchingPipeline,
         ILogger<HomeViewModel>? logger)
     {
         _batchService = batchService;
         _undoService = undoService;
+        _matchingPipeline = matchingPipeline;
         _logger = logger ?? NullLogger<HomeViewModel>.Instance;
 
-        Files.CollectionChanged += (_, _) =>
+        OriginalFiles.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(FileCount));
-            OnPropertyChanged(nameof(SelectedCount));
             OnPropertyChanged(nameof(HasFiles));
             OnPropertyChanged(nameof(HasNoFiles));
             OnPropertyChanged(nameof(ShowEmptyState));
             OnPropertyChanged(nameof(FileCountDisplay));
             UpdateStatusMessage();
+        };
+
+        MatchedFiles.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(MatchedCount));
+            OnPropertyChanged(nameof(HasMatchedFiles));
+            OnPropertyChanged(nameof(HasNoMatchedFiles));
+            OnPropertyChanged(nameof(FileCountDisplay));
         };
 
         _ = RefreshCanUndoAsync();
@@ -130,28 +157,96 @@ public partial class HomeViewModel : ViewModelBase
     [RelayCommand]
     private void RemoveSelected()
     {
-        var selected = Files.Where(f => f.IsSelected).ToList();
+        var selected = OriginalFiles.Where(f => f.IsSelected).ToList();
         foreach (var file in selected)
         {
-            Files.Remove(file);
+            OriginalFiles.Remove(file);
         }
+
+        // Remove corresponding matched entries
+        var selectedPaths = selected.Select(f => f.FilePath).ToHashSet();
+        var matchedToRemove = MatchedFiles.Where(f => selectedPaths.Contains(f.FilePath)).ToList();
+        foreach (var file in matchedToRemove)
+        {
+            MatchedFiles.Remove(file);
+        }
+
         UpdateStatusMessage();
     }
 
     [RelayCommand]
     private void SelectAll()
     {
-        foreach (var file in Files)
+        foreach (var file in OriginalFiles)
         {
             file.IsSelected = true;
         }
-        OnPropertyChanged(nameof(SelectedCount));
     }
 
     [RelayCommand]
-    private async Task ApplyRenamesAsync()
+    private async Task MatchAsync()
     {
-        if (Files.Count == 0) return;
+        if (OriginalFiles.Count == 0) return;
+
+        if (_matchingPipeline is null)
+        {
+            StatusMessage = "Matching pipeline not available.";
+            return;
+        }
+
+        IsProcessing = true;
+        StatusMessage = "Matching files against metadata providers...";
+        MatchedFiles.Clear();
+
+        try
+        {
+            var filePaths = OriginalFiles.Select(f => f.FilePath).ToList();
+            var results = await _matchingPipeline.ProcessBatchAsync(filePaths);
+
+            for (var i = 0; i < results.Count; i++)
+            {
+                var result = results[i];
+                var original = i < OriginalFiles.Count ? OriginalFiles[i] : null;
+
+                var newName = result.IsMatch
+                    ? BuildNewFileName(result, original?.OriginalFileName ?? string.Empty)
+                    : original?.OriginalFileName ?? string.Empty;
+
+                var matchedItem = new FileItemViewModel
+                {
+                    OriginalFileName = original?.OriginalFileName ?? string.Empty,
+                    NewFileName = newName,
+                    FilePath = original?.FilePath ?? string.Empty,
+                    FileExtension = original?.FileExtension ?? string.Empty,
+                    MatchConfidence = result.Confidence,
+                    MediaType = result.MediaType.ToString(),
+                    ProviderSource = result.ProviderSource,
+                    IsMatched = result.IsMatch
+                };
+
+                App.MainWindow.DispatcherQueue.TryEnqueue(() => MatchedFiles.Add(matchedItem));
+            }
+
+            var matchCount = results.Count(r => r.IsMatch);
+            StatusMessage = $"Matched {matchCount}/{results.Count} file(s).";
+            _notificationService?.ShowSuccess($"Matched {matchCount} of {results.Count} file(s).");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Matching failed");
+            StatusMessage = $"Match error: {ex.Message}";
+            _notificationService?.ShowError($"Match error: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RenameAsync()
+    {
+        if (MatchedFiles.Count == 0) return;
 
         if (_batchService is null)
         {
@@ -163,7 +258,7 @@ public partial class HomeViewModel : ViewModelBase
         BatchProgress.IsRunning = true;
         _batchCts = new CancellationTokenSource();
 
-        var filePaths = Files.Select(f => f.FilePath).ToList();
+        var filePaths = OriginalFiles.Select(f => f.FilePath).ToList();
         var progress = new Progress<BatchProgress>(p =>
         {
             App.MainWindow.DispatcherQueue.TryEnqueue(() =>
@@ -175,10 +270,8 @@ public partial class HomeViewModel : ViewModelBase
 
         try
         {
-            // Default pattern — will use settings in future
             var job = await _batchService.ExecuteAsync(filePaths, "{n}", progress, _batchCts.Token);
 
-            // Record successful renames for undo
             if (_undoService is not null)
             {
                 var undoEntries = job.Files
@@ -204,7 +297,6 @@ public partial class HomeViewModel : ViewModelBase
                 _ => "Renames completed."
             };
 
-            // Notification feedback
             if (job.Status == BatchStatus.Completed && job.FailedCount == 0)
                 _notificationService?.ShowSuccess($"Batch complete — {job.CompletedCount} file(s) renamed.");
             else if (job.Status == BatchStatus.Completed && job.FailedCount > 0)
@@ -227,6 +319,10 @@ public partial class HomeViewModel : ViewModelBase
             await RefreshCanUndoAsync();
         }
     }
+
+    /// <summary>Alias for backward compatibility with existing tests and XAML.</summary>
+    [RelayCommand]
+    private Task ApplyRenamesAsync() => RenameAsync();
 
     [RelayCommand]
     private void CancelBatch()
@@ -269,7 +365,8 @@ public partial class HomeViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(SelectedFolder)) return;
 
-        Files.Clear();
+        OriginalFiles.Clear();
+        MatchedFiles.Clear();
         IsProcessing = true;
         IsScanning = true;
         StatusMessage = "Refreshing...";
@@ -289,6 +386,76 @@ public partial class HomeViewModel : ViewModelBase
             IsScanning = false;
             UpdateStatusMessage();
         }
+    }
+
+    [RelayCommand]
+    private void SortOriginalFiles()
+    {
+        var sorted = OriginalFiles.OrderBy(f => f.OriginalFileName).ToList();
+        OriginalFiles.Clear();
+        foreach (var file in sorted)
+        {
+            OriginalFiles.Add(file);
+        }
+    }
+
+    [RelayCommand]
+    private void SortMatchedFiles()
+    {
+        var sorted = MatchedFiles.OrderBy(f => f.NewFileName).ToList();
+        MatchedFiles.Clear();
+        foreach (var file in sorted)
+        {
+            MatchedFiles.Add(file);
+        }
+    }
+
+    [RelayCommand]
+    private void ClearMatches()
+    {
+        MatchedFiles.Clear();
+        StatusMessage = "Matches cleared.";
+    }
+
+    [RelayCommand]
+    private async Task FetchDataAsync()
+    {
+        // Re-match to refresh metadata from providers
+        await MatchAsync();
+    }
+
+    [RelayCommand]
+    private void PasteFiles()
+    {
+        // Placeholder for clipboard paste — will be wired in Phase 2
+        _notificationService?.ShowInfo("Clipboard paste coming soon.");
+    }
+
+    /// <summary>
+    /// Adds files to the original files pane programmatically (for drag-and-drop).
+    /// </summary>
+    public void AddFiles(IEnumerable<string> filePaths)
+    {
+        foreach (var path in filePaths)
+        {
+            var fileInfo = new FileInfo(path);
+            if (!fileInfo.Exists) continue;
+
+            var item = new FileItemViewModel
+            {
+                OriginalFileName = fileInfo.Name,
+                NewFileName = fileInfo.Name,
+                FilePath = fileInfo.FullName,
+                FileExtension = fileInfo.Extension.TrimStart('.').ToLowerInvariant(),
+                OriginalFolder = fileInfo.DirectoryName ?? string.Empty,
+                MediaType = GetMediaType(fileInfo.Extension),
+                MatchConfidence = 0
+            };
+
+            OriginalFiles.Add(item);
+        }
+
+        UpdateStatusMessage();
     }
 
     private async Task ScanFolderAsync(string folderPath)
@@ -314,11 +481,13 @@ public partial class HomeViewModel : ViewModelBase
                     OriginalFileName = file.Name,
                     NewFileName = file.Name,
                     FilePath = file.FullName,
+                    FileExtension = file.Extension.TrimStart('.').ToLowerInvariant(),
+                    OriginalFolder = file.DirectoryName ?? string.Empty,
                     MediaType = GetMediaType(file.Extension),
                     MatchConfidence = 0
                 };
 
-                App.MainWindow.DispatcherQueue.TryEnqueue(() => Files.Add(item));
+                App.MainWindow.DispatcherQueue.TryEnqueue(() => OriginalFiles.Add(item));
             }
         });
     }
@@ -332,15 +501,38 @@ public partial class HomeViewModel : ViewModelBase
         };
     }
 
+    private static string BuildNewFileName(MatchResult result, string originalFileName)
+    {
+        // Build a display name from match result metadata
+        var ext = Path.GetExtension(originalFileName);
+
+        if (result.Movie is not null)
+        {
+            var year = result.MovieInfo?.Year > 0 ? $" ({result.MovieInfo.Year})" : string.Empty;
+            return $"{result.Movie.Name}{year}{ext}";
+        }
+
+        if (result.Episode is not null)
+        {
+            var series = result.Episode.SeriesName;
+            var s = result.Episode.Season;
+            var e = result.Episode.EpisodeNumber;
+            var title = result.Episode.Title;
+            return $"{series} - S{s:D2}E{e:D2} - {title}{ext}";
+        }
+
+        return originalFileName;
+    }
+
     private void UpdateStatusMessage()
     {
-        if (Files.Count == 0)
+        if (OriginalFiles.Count == 0)
         {
-            StatusMessage = "No files loaded. Add a folder to get started.";
+            StatusMessage = "No files loaded. Drop files or click Load.";
         }
         else
         {
-            StatusMessage = $"{Files.Count} file(s) loaded";
+            StatusMessage = $"{OriginalFiles.Count} file(s) loaded";
         }
     }
 
@@ -361,7 +553,6 @@ public partial class HomeViewModel : ViewModelBase
 
     /// <summary>
     /// Shows the conflict resolution dialog when a target file already exists.
-    /// Returns the user's chosen resolution.
     /// </summary>
     public async Task<ConflictResolution> ShowConflictDialogAsync(string sourcePath, string targetPath)
     {
@@ -379,7 +570,6 @@ public partial class HomeViewModel : ViewModelBase
 
     /// <summary>
     /// Shows the match selection dialog when opportunistic matching returns candidates.
-    /// Returns the selected match, or null if the user skipped.
     /// </summary>
     public async Task<MatchSuggestion?> ShowMatchSelectionDialogAsync(
         string fileName,

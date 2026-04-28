@@ -1,8 +1,10 @@
 using MediaMatch.App.Dialogs;
 using MediaMatch.App.Services;
 using MediaMatch.App.ViewModels;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
 namespace MediaMatch.App.Pages;
@@ -20,6 +22,40 @@ public sealed partial class HomePage : Page
         var notificationService = App.GetService<NotificationService>();
         notificationService.SetInfoBar(NotificationBar);
         ViewModel.SetNotificationService(notificationService);
+    }
+
+    private void Page_DragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = DataPackageOperation.Copy;
+        e.DragUIOverride.Caption = "Add files";
+        e.DragUIOverride.IsCaptionVisible = true;
+    }
+
+    private async void Page_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems)) return;
+
+        var items = await e.DataView.GetStorageItemsAsync();
+        var paths = items
+            .Select(item => item.Path)
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToList();
+
+        if (paths.Count > 0)
+        {
+            ViewModel.AddFiles(paths);
+        }
+    }
+
+    private void ModeSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        // Show/hide panels based on selected mode
+        RenamePanel.Visibility = sender.SelectedItem == RenameMode ? Visibility.Visible : Visibility.Collapsed;
+        EpisodesPanel.Visibility = sender.SelectedItem == EpisodesMode ? Visibility.Visible : Visibility.Collapsed;
+        SubtitlesPanel.Visibility = sender.SelectedItem == SubtitlesMode ? Visibility.Visible : Visibility.Collapsed;
+        SfvPanel.Visibility = sender.SelectedItem == SfvMode ? Visibility.Visible : Visibility.Collapsed;
+        FilterPanel.Visibility = sender.SelectedItem == FilterMode ? Visibility.Visible : Visibility.Collapsed;
+        ListPanel.Visibility = sender.SelectedItem == ListMode ? Visibility.Visible : Visibility.Collapsed;
     }
 
     protected override void OnKeyboardAcceleratorInvoked(KeyboardAcceleratorInvokedEventArgs args)

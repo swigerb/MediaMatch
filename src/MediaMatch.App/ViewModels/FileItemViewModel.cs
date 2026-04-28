@@ -25,6 +25,21 @@ public partial class FileItemViewModel : ViewModelBase
     [ObservableProperty]
     public partial string FilePath { get; set; } = string.Empty;
 
+    [ObservableProperty]
+    public partial string FileExtension { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string OriginalFolder { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string NewFolder { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string ProviderSource { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool IsMatched { get; set; }
+
     /// <summary>
     /// Screen reader name: filename + status for accessibility.
     /// </summary>

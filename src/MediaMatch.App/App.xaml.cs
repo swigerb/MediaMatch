@@ -159,9 +159,12 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<HomeViewModel>(sp => new HomeViewModel(
             sp.GetRequiredService<IBatchOperationService>(),
             sp.GetRequiredService<IUndoService>(),
+            sp.GetRequiredService<IMatchingPipeline>(),
             sp.GetRequiredService<ILogger<HomeViewModel>>()));
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();
+        services.AddTransient<HistoryViewModel>();
+        services.AddTransient<ExpressionEditorViewModel>();
 
         // Thumbnail service
         services.AddSingleton<ThumbnailService>();
