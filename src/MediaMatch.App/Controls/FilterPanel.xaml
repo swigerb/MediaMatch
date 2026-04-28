@@ -126,6 +126,7 @@
         <Grid Grid.Row="1" Padding="12,6" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -139,8 +140,18 @@
                 </StackPanel>
             </Button>
 
-            <TextBlock
+            <Button
                 Grid.Column="1"
+                Command="{x:Bind ViewModel.LoadFilesCommand}"
+                AutomationProperties.Name="Load files">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE838;" FontSize="14" />
+                    <TextBlock Text="Load" />
+                </StackPanel>
+            </Button>
+
+            <TextBlock
+                Grid.Column="2"
                 Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
                 Style="{ThemeResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"

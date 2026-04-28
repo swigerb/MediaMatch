@@ -67,12 +67,17 @@
             Padding="12,0" />
 
         <!-- Episode list -->
-        <Grid Grid.Row="2">
+        <Border Grid.Row="2"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Margin="12,0">
+        <Grid>
             <ListView
                 ItemsSource="{x:Bind ViewModel.Episodes}"
                 Visibility="{x:Bind ViewModel.HasEpisodes, Mode=OneWay}"
                 SelectionMode="Extended"
-                Padding="12,0"
+                Padding="0,0"
                 AutomationProperties.Name="Episodes list">
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -110,6 +115,7 @@
                 VerticalAlignment="Center"
                 Width="40" Height="40" />
         </Grid>
+        </Border>
 
         <!-- Status bar -->
         <Border Grid.Row="3" Padding="12,6" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">

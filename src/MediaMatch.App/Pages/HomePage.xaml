@@ -132,7 +132,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- LEFT PANE: Original Files -->
+            <!-- LEFT PANE: Source Files -->
             <Grid Grid.Column="0" RowSpacing="4">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -143,13 +143,16 @@
                 <!-- Header -->
                 <TextBlock
                     Grid.Row="0"
-                    Text="Original Files"
+                    Text="Source Files"
                     Style="{StaticResource BodyStrongTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Padding="8,4" />
 
                 <!-- File list or empty state -->
-                <Grid Grid.Row="1">
+                <Border Grid.Row="1"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4">
                     <!-- Empty state -->
                     <StackPanel
                         HorizontalAlignment="Center"
@@ -210,14 +213,14 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-                </Grid>
+                </Border>
 
                 <!-- Left pane toolbar -->
                 <CommandBar
                     Grid.Row="2"
                     DefaultLabelPosition="Collapsed"
                     IsOpen="False"
-                    AutomationProperties.Name="Original files toolbar">
+                    AutomationProperties.Name="Source files toolbar">
                     <AppBarButton Icon="Sort" ToolTipService.ToolTip="Sort"
                                   Command="{x:Bind ViewModel.SortOriginalFilesCommand}"
                                   AutomationProperties.Name="Sort files" />
@@ -276,7 +279,7 @@
                 </Button>
             </StackPanel>
 
-            <!-- RIGHT PANE: New Names -->
+            <!-- RIGHT PANE: Matched Names -->
             <Grid Grid.Column="2" RowSpacing="4">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -287,13 +290,17 @@
                 <!-- Header -->
                 <TextBlock
                     Grid.Row="0"
-                    Text="New Names"
+                    Text="Matched Names"
                     Style="{StaticResource BodyStrongTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Padding="8,4" />
 
                 <!-- Matched files list or placeholder -->
-                <Grid Grid.Row="1">
+                <Border Grid.Row="1"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                <Grid>
                     <TextBlock
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -332,13 +339,14 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
+                </Border>
 
                 <!-- Right pane toolbar -->
                 <CommandBar
                     Grid.Row="2"
                     DefaultLabelPosition="Collapsed"
                     IsOpen="False"
-                    AutomationProperties.Name="New names toolbar">
+                    AutomationProperties.Name="Matched names toolbar">
                     <AppBarButton Icon="Sort" ToolTipService.ToolTip="Sort"
                                   Command="{x:Bind ViewModel.SortMatchedFilesCommand}"
                                   AutomationProperties.Name="Sort matched files" />

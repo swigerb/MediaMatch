@@ -7,7 +7,7 @@
     xmlns:local="using:MediaMatch.App.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    AutomationProperties.Name="About MediaMatch">
+    AutomationProperties.Name="About Media Match">
 
     <ScrollViewer>
         <StackPanel
@@ -15,16 +15,23 @@
             Padding="24,16,24,24"
             Spacing="24">
 
-            <!-- Header -->
-            <StackPanel Spacing="4">
+            <!-- Header with logo -->
+            <StackPanel Spacing="12" HorizontalAlignment="Center">
+                <Image
+                    Source="ms-appx:///Assets/MediaMatch_Logo.png"
+                    Width="80"
+                    Height="80"
+                    AutomationProperties.Name="Media Match logo" />
                 <TextBlock
                     Style="{StaticResource TitleTextBlockStyle}"
                     Text="{x:Bind ViewModel.AppName}"
+                    HorizontalAlignment="Center"
                     AutomationProperties.HeadingLevel="Level1" />
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource SubtitleTextBlockStyle}"
-                    Text="{x:Bind ViewModel.Version}" />
+                    Text="{x:Bind ViewModel.Version}"
+                    HorizontalAlignment="Center" />
             </StackPanel>
 
             <!-- Description -->

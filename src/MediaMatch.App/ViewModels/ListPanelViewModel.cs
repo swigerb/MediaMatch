@@ -4,6 +4,9 @@ using CommunityToolkit.Mvvm.Input;
 using MediaMatch.Core.Expressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+#if WINDOWS
+using Windows.Storage.Pickers;
+#endif
 
 namespace MediaMatch.App.ViewModels;
 
@@ -110,6 +113,24 @@ public partial class ListPanelViewModel : ViewModelBase
         Files.Clear();
         StatusMessage = string.Empty;
     }
+
+#if WINDOWS
+    [RelayCommand]
+    private async Task LoadFilesAsync()
+    {
+        var picker = new FileOpenPicker();
+        picker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+        picker.FileTypeFilter.Add("*");
+
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        var files = await picker.PickMultipleFilesAsync();
+        if (files is null || files.Count == 0) return;
+
+        AddFiles(files.Select(f => f.Path));
+    }
+#endif
 }
 
 /// <summary>

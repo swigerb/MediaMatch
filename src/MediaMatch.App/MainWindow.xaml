@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:MediaMatch.App"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="MediaMatch"
+    Title="Media Match"
     mc:Ignorable="d">
     <Window.SystemBackdrop>
         <MicaBackdrop />
@@ -21,13 +21,13 @@
 
         <TitleBar
             x:Name="AppTitleBar"
-            Title="MediaMatch"
+            Title="Media Match"
             BackRequested="TitleBar_BackRequested"
             IsBackButtonVisible="{x:Bind NavFrame.CanGoBack, Mode=OneWay}"
             IsPaneToggleButtonVisible="True"
             PaneToggleRequested="TitleBar_PaneToggleRequested">
             <TitleBar.IconSource>
-                <ImageIconSource ImageSource="Assets/MediaMatch_Logo.png" />
+                <FontIconSource Glyph="&#xE8AB;" />
             </TitleBar.IconSource>
         </TitleBar>
 
@@ -86,7 +86,7 @@
         <Grid x:Name="SplashOverlay"
               Grid.RowSpan="3"
               Canvas.ZIndex="100"
-              Background="#1A1A2E">
+              Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
             <Grid.Resources>
                 <Storyboard x:Name="SplashFadeOut">
                     <DoubleAnimation
@@ -94,30 +94,33 @@
                         Storyboard.TargetProperty="Opacity"
                         From="1.0"
                         To="0.0"
-                        Duration="0:0:0.5" />
+                        Duration="0:0:0.4">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut" />
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
                 </Storyboard>
             </Grid.Resources>
             <StackPanel
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Spacing="16">
+                Spacing="12">
                 <Image
                     Source="Assets/MediaMatch_Logo.png"
-                    Width="180"
-                    Height="180"
+                    Width="96"
+                    Height="96"
                     HorizontalAlignment="Center" />
                 <TextBlock
-                    Text="MediaMatch"
-                    FontSize="28"
+                    Text="Media Match"
+                    FontSize="18"
                     FontWeight="SemiBold"
-                    Foreground="White"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                     HorizontalAlignment="Center" />
                 <ProgressRing
                     IsActive="True"
-                    Width="32"
-                    Height="32"
-                    HorizontalAlignment="Center"
-                    Foreground="White" />
+                    Width="24"
+                    Height="24"
+                    HorizontalAlignment="Center" />
             </StackPanel>
         </Grid>
     </Grid>

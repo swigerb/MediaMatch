@@ -16,11 +16,17 @@
         </Grid.RowDefinitions>
 
         <!-- File list -->
-        <ListView
+        <Border
             Grid.Row="0"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            Margin="12,8,12,0">
+        <Grid>
+        <ListView
             ItemsSource="{x:Bind ViewModel.Files}"
             SelectionMode="None"
-            Padding="12,8"
+            Padding="0,4"
             AutomationProperties.Name="Checksum files list">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="vm:SfvFileItemViewModel">
@@ -65,6 +71,22 @@
             </ListView.ItemTemplate>
         </ListView>
 
+        <!-- Empty state -->
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Spacing="8"
+            Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay}">
+            <FontIcon Glyph="&#xE73E;" FontSize="36" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+            <TextBlock
+                Text="Drop files here or click Load to verify checksums."
+                Style="{ThemeResource BodyTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                HorizontalAlignment="Center" />
+        </StackPanel>
+        </Grid>
+        </Border>
+
         <!-- Bottom toolbar -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Padding="12,4">
             <Button
@@ -83,6 +105,15 @@
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <FontIcon Glyph="&#xE74D;" FontSize="14" />
                     <TextBlock Text="Clear" />
+                </StackPanel>
+            </Button>
+
+            <Button
+                Command="{x:Bind ViewModel.LoadFilesCommand}"
+                AutomationProperties.Name="Load files">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE838;" FontSize="14" />
+                    <TextBlock Text="Load" />
                 </StackPanel>
             </Button>
 

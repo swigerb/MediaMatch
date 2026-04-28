@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using MediaMatch.Core.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Windows.Storage.Pickers;
 
 namespace MediaMatch.App.ViewModels;
 
@@ -56,8 +57,16 @@ public partial class SfvPanelViewModel : ViewModelBase
         _checksumService = checksumService;
         _logger = logger ?? NullLogger<SfvPanelViewModel>.Instance;
 
-        Files.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFiles));
+        Files.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasFiles));
+            OnPropertyChanged(nameof(ShowEmptyState));
+        };
     }
+
+    /// <summary>Gets the visibility of the empty state message.</summary>
+    public Microsoft.UI.Xaml.Visibility ShowEmptyState =>
+        Files.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
     /// <summary>
     /// Adds files from the specified paths to the verification list.
@@ -77,6 +86,22 @@ public partial class SfvPanelViewModel : ViewModelBase
                 State = SfvState.Pending
             });
         }
+    }
+
+    [RelayCommand]
+    private async Task LoadFilesAsync()
+    {
+        var picker = new FileOpenPicker();
+        picker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+        picker.FileTypeFilter.Add("*");
+
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        var files = await picker.PickMultipleFilesAsync();
+        if (files is null || files.Count == 0) return;
+
+        AddFiles(files.Select(f => f.Path));
     }
 
     [RelayCommand]

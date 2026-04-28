@@ -51,12 +51,17 @@
             Margin="12,0" />
 
         <!-- Results list -->
-        <Grid Grid.Row="2">
+        <Border Grid.Row="2"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Margin="12,0">
+        <Grid>
             <ListView
                 ItemsSource="{x:Bind ViewModel.Results}"
                 Visibility="{x:Bind ViewModel.HasResults, Mode=OneWay}"
                 SelectionMode="None"
-                Padding="12,0"
+                Padding="0,0"
                 AutomationProperties.Name="Subtitle results">
                 <ListView.HeaderTemplate>
                     <DataTemplate>
@@ -99,6 +104,7 @@
                 VerticalAlignment="Center"
                 Width="40" Height="40" />
         </Grid>
+        </Border>
 
         <!-- Action buttons -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" Padding="12,4">
