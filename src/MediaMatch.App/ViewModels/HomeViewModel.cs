@@ -352,7 +352,8 @@ public partial class HomeViewModel : ViewModelBase
     {
         try
         {
-            var dialog = new ExpressionEditorDialog { XamlRoot = App.MainWindow.Content.XamlRoot };
+            var expressionEngine = App.GetService<Core.Expressions.IExpressionEngine>();
+            var dialog = new ExpressionEditorDialog(expressionEngine) { XamlRoot = App.MainWindow.Content.XamlRoot };
             await dialog.ShowAsync();
         }
         catch (Exception ex)

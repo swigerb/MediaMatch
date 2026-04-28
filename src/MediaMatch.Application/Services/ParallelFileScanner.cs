@@ -67,9 +67,16 @@ public sealed class ParallelFileScanner : IParallelFileScanner
         var reader = ScanAsync(rootPath, allowedExtensions, progress, ct);
         var results = new List<string>();
 
-        await foreach (var file in reader.ReadAllAsync(ct).ConfigureAwait(false))
+        try
         {
-            results.Add(file);
+            await foreach (var file in reader.ReadAllAsync(ct).ConfigureAwait(false))
+            {
+                results.Add(file);
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // Graceful cancellation — return whatever was collected so far
         }
 
         return results;
