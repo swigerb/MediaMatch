@@ -24,11 +24,27 @@ jobs:
       - name: Restore
         run: dotnet restore MediaMatch.slnx
       
-      - name: Build
-        run: dotnet build MediaMatch.slnx --no-restore --configuration Release
+      - name: Build (excluding WinUI App — XamlCompiler requires VS)
+        run: |
+          dotnet build src/MediaMatch.Core --no-restore -c Release
+          dotnet build src/MediaMatch.Application --no-restore -c Release
+          dotnet build src/MediaMatch.Infrastructure --no-restore -c Release
+          dotnet build src/MediaMatch.CLI --no-restore -c Release
+          dotnet build tests/MediaMatch.Core.Tests --no-restore -c Release
+          dotnet build tests/MediaMatch.Application.Tests --no-restore -c Release
+          dotnet build tests/MediaMatch.Infrastructure.Tests --no-restore -c Release
+          dotnet build tests/MediaMatch.CLI.Tests --no-restore -c Release
+          dotnet build tests/MediaMatch.App.Tests --no-restore -c Release
+          dotnet build tests/MediaMatch.EndToEnd.Tests --no-restore -c Release
       
       - name: Test
-        run: dotnet test MediaMatch.slnx --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
+        run: |
+          dotnet test tests/MediaMatch.Core.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
+          dotnet test tests/MediaMatch.Application.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
+          dotnet test tests/MediaMatch.Infrastructure.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
+          dotnet test tests/MediaMatch.CLI.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
+          dotnet test tests/MediaMatch.App.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
+          dotnet test tests/MediaMatch.EndToEnd.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
