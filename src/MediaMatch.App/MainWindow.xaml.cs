@@ -8,6 +8,8 @@ namespace MediaMatch.App;
 
 public sealed partial class MainWindow : Window
 {
+    private readonly DispatcherTimer _splashTimer;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -17,12 +19,31 @@ public sealed partial class MainWindow : Window
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         AppWindow.SetIcon("Assets/AppIcon.ico");
 
+        // Set version text
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        VersionText.Text = $"v{version?.Major}.{version?.Minor}.{version?.Build}";
+
         // Wire navigation service to the frame
         var navigationService = App.GetService<NavigationService>();
         navigationService.SetFrame(NavFrame);
 
         // Navigate to Home on startup
         NavFrame.Navigate(typeof(HomePage));
+
+        // Start splash fade-out timer
+        _splashTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.8) };
+        _splashTimer.Tick += SplashTimer_Tick;
+        _splashTimer.Start();
+    }
+
+    private void SplashTimer_Tick(object? sender, object e)
+    {
+        _splashTimer.Stop();
+        SplashFadeOut.Completed += (_, _) =>
+        {
+            SplashOverlay.Visibility = Visibility.Collapsed;
+        };
+        SplashFadeOut.Begin();
     }
 
     private void TitleBar_PaneToggleRequested(TitleBar sender, object args)

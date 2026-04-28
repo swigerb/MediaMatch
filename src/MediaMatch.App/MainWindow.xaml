@@ -16,6 +16,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="28" />
         </Grid.RowDefinitions>
 
         <TitleBar
@@ -66,5 +67,58 @@
             </NavigationView.MenuItems>
             <Frame x:Name="NavFrame" AutomationProperties.Name="Page content" />
         </NavigationView>
+
+        <!-- Status Bar -->
+        <Grid Grid.Row="2"
+              BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+              BorderThickness="0,1,0,0"
+              Padding="8,0">
+            <TextBlock
+                x:Name="VersionText"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Padding="4" />
+        </Grid>
+
+        <!-- Splash Screen Overlay -->
+        <Grid x:Name="SplashOverlay"
+              Grid.RowSpan="3"
+              Canvas.ZIndex="100"
+              Background="#1A1A2E">
+            <Grid.Resources>
+                <Storyboard x:Name="SplashFadeOut">
+                    <DoubleAnimation
+                        Storyboard.TargetName="SplashOverlay"
+                        Storyboard.TargetProperty="Opacity"
+                        From="1.0"
+                        To="0.0"
+                        Duration="0:0:0.5" />
+                </Storyboard>
+            </Grid.Resources>
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="16">
+                <Image
+                    Source="Assets/MediaMatch_Logo.png"
+                    Width="180"
+                    Height="180"
+                    HorizontalAlignment="Center" />
+                <TextBlock
+                    Text="MediaMatch"
+                    FontSize="28"
+                    FontWeight="SemiBold"
+                    Foreground="White"
+                    HorizontalAlignment="Center" />
+                <ProgressRing
+                    IsActive="True"
+                    Width="32"
+                    Height="32"
+                    HorizontalAlignment="Center"
+                    Foreground="White" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>
