@@ -16,29 +16,45 @@ public partial class SubtitlePanelViewModel : ViewModelBase
     private readonly ISubtitleDownloadService? _subtitleService;
     private readonly ILogger<SubtitlePanelViewModel> _logger;
 
+    /// <summary>Gets the collection of subtitle search results.</summary>
     public ObservableCollection<SubtitleResultViewModel> Results { get; } = [];
 
+    /// <summary>Gets or sets the subtitle search query text.</summary>
     [ObservableProperty]
     public partial string SearchQuery { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the selected language filter index.</summary>
     [ObservableProperty]
     public partial int SelectedLanguageIndex { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether a search is in progress.</summary>
     [ObservableProperty]
     public partial bool IsSearching { get; set; }
 
+    /// <summary>Gets or sets the status message displayed in the panel.</summary>
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether the user needs to configure API credentials.</summary>
     [ObservableProperty]
     public partial bool NeedsLogin { get; set; }
 
+    /// <summary>Gets the available language filter labels.</summary>
     public string[] LanguageOptions { get; } = ["All Languages", "English", "Japanese", "German", "French", "Spanish", "Portuguese", "Korean", "Chinese"];
 
+    /// <summary>Gets a value indicating whether any search results exist.</summary>
     public bool HasResults => Results.Count > 0;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubtitlePanelViewModel"/> class for design-time use.
+    /// </summary>
     public SubtitlePanelViewModel() : this(null, null) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubtitlePanelViewModel"/> class.
+    /// </summary>
+    /// <param name="subtitleService">The subtitle download service.</param>
+    /// <param name="logger">The logger instance.</param>
     public SubtitlePanelViewModel(ISubtitleDownloadService? subtitleService, ILogger<SubtitlePanelViewModel>? logger)
     {
         _subtitleService = subtitleService;
@@ -124,17 +140,22 @@ public partial class SubtitlePanelViewModel : ViewModelBase
 /// </summary>
 public partial class SubtitleResultViewModel : ViewModelBase
 {
+    /// <summary>Gets or sets the subtitle title or file name.</summary>
     [ObservableProperty]
     public partial string Title { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the subtitle language.</summary>
     [ObservableProperty]
     public partial string Language { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the number of subtitle entries in this result.</summary>
     [ObservableProperty]
     public partial int SubtitleCount { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether this result is selected for download.</summary>
     [ObservableProperty]
     public partial bool IsSelected { get; set; }
 
+    /// <summary>Gets or sets the underlying subtitle descriptor from the provider.</summary>
     public SubtitleDescriptor Descriptor { get; set; } = null!;
 }

@@ -7,42 +7,53 @@ using Spectre.Console.Cli;
 
 namespace MediaMatch.CLI.Commands;
 
+/// <summary>
+/// Command settings for the <c>rename</c> CLI command.
+/// </summary>
 internal sealed class RenameSettings : CommandSettings
 {
+    /// <summary>Gets or sets the directory or file to rename.</summary>
     [CommandOption("--path <PATH>")]
     [Description("Directory or file to rename")]
     public required string Path { get; set; }
 
+    /// <summary>Gets or sets the rename template pattern.</summary>
     [CommandOption("--pattern <PATTERN>")]
     [Description("Rename template (FileBot-compatible), e.g. \"{n} - {s00e00} - {t}\"")]
     [DefaultValue("{n} - {s00e00} - {t}")]
     public string Pattern { get; set; } = "{n} - {s00e00} - {t}";
 
+    /// <summary>Gets or sets a value indicating whether to preview only without renaming.</summary>
     [CommandOption("--dry-run")]
     [Description("Preview only — no files will be renamed")]
     [DefaultValue(false)]
     public bool DryRun { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether to scan subdirectories recursively.</summary>
     [CommandOption("--recursive")]
     [Description("Scan subdirectories recursively")]
     [DefaultValue(false)]
     public bool Recursive { get; set; }
 
+    /// <summary>Gets or sets the output format (table or json).</summary>
     [CommandOption("--format <FORMAT>")]
     [Description("Output format: table or json")]
     [DefaultValue("table")]
     public string Format { get; set; } = "table";
 
+    /// <summary>Gets or sets the file action type (move, copy, clone, hardlink, test).</summary>
     [CommandOption("--action <ACTION>")]
     [Description("File action: move (default), copy, clone, hardlink, test")]
     [DefaultValue("move")]
     public string Action { get; set; } = "move";
 
+    /// <summary>Gets or sets the media detection mode (auto or music).</summary>
     [CommandOption("--mode <MODE>")]
     [Description("Media mode: auto (default), music")]
     [DefaultValue("auto")]
     public string Mode { get; set; } = "auto";
 
+    /// <summary>Gets or sets the comma-separated post-process actions to run.</summary>
     [CommandOption("--apply <ACTIONS>")]
     [Description("Comma-separated post-process actions to run (e.g., plex-refresh,thumbnail)")]
     public string? Apply { get; set; }
@@ -63,11 +74,19 @@ internal sealed class RenameSettings : CommandSettings
     }
 }
 
+/// <summary>
+/// CLI command that renames media files using metadata lookup.
+/// </summary>
 internal sealed class RenameCommand : AsyncCommand<RenameSettings>
 {
     private readonly IRenamePreviewService _previewService;
     private readonly IFileOrganizationService _organizationService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RenameCommand"/> class.
+    /// </summary>
+    /// <param name="previewService">The rename preview service.</param>
+    /// <param name="organizationService">The file organization service.</param>
     public RenameCommand(
         IRenamePreviewService previewService,
         IFileOrganizationService organizationService)

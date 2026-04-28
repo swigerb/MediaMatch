@@ -10,43 +10,63 @@ namespace MediaMatch.App.ViewModels;
 /// </summary>
 public partial class PresetEditorViewModel : ViewModelBase
 {
+    /// <summary>Gets or sets the preset display name.</summary>
     [ObservableProperty]
     public partial string Name { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the preset input folder path.</summary>
     [ObservableProperty]
     public partial string InputFolder { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the file include filter pattern.</summary>
     [ObservableProperty]
     public partial string IncludeFilter { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the rename pattern template.</summary>
     [ObservableProperty]
     public partial string RenamePattern { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the output folder path for renamed files.</summary>
     [ObservableProperty]
     public partial string OutputFolder { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the keyboard shortcut assigned to this preset.</summary>
     [ObservableProperty]
     public partial string KeyboardShortcut { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the selected data source index.</summary>
     [ObservableProperty]
     public partial int SelectedDatasourceIndex { get; set; }
 
+    /// <summary>Gets or sets the selected language index.</summary>
     [ObservableProperty]
     public partial int SelectedLanguageIndex { get; set; }
 
+    /// <summary>Gets or sets the selected episode ordering index.</summary>
     [ObservableProperty]
     public partial int SelectedEpisodeOrderIndex { get; set; }
 
+    /// <summary>Gets or sets the selected match mode index.</summary>
     [ObservableProperty]
     public partial int SelectedMatchModeIndex { get; set; }
 
+    /// <summary>Gets or sets the selected rename action index.</summary>
     [ObservableProperty]
     public partial int SelectedRenameActionIndex { get; set; }
 
+    /// <summary>Gets the available data source labels.</summary>
     public static string[] DatasourceOptions { get; } = ["Auto", "TMDb", "TVDb", "AniDB", "MusicBrainz"];
+
+    /// <summary>Gets the available language labels.</summary>
     public static string[] LanguageOptions { get; } = ["English", "Japanese", "German", "French", "Spanish", "Korean", "Chinese", "Portuguese", "Italian", "Russian"];
+
+    /// <summary>Gets the available episode ordering labels.</summary>
     public static string[] EpisodeOrderOptions { get; } = ["Airdate", "DVD", "Absolute"];
+
+    /// <summary>Gets the available match mode labels.</summary>
     public static string[] MatchModeOptions { get; } = ["Opportunistic", "Strict"];
+
+    /// <summary>Gets the available rename action labels.</summary>
     public static string[] RenameActionOptions { get; } = ["Move", "Copy", "Hard Link", "Symlink", "Test"];
 
     private static readonly string[] DatasourceValues = ["auto", "tmdb", "tvdb", "anidb", "musicbrainz"];

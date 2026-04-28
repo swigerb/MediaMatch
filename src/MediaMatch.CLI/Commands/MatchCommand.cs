@@ -6,22 +6,29 @@ using Spectre.Console.Cli;
 
 namespace MediaMatch.CLI.Commands;
 
+/// <summary>
+/// Command settings for the <c>match</c> CLI command.
+/// </summary>
 internal sealed class MatchSettings : CommandSettings
 {
+    /// <summary>Gets or sets the directory or file to scan for media.</summary>
     [CommandOption("--path <PATH>")]
     [Description("Directory or file to scan for media")]
     public required string Path { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether to scan subdirectories recursively.</summary>
     [CommandOption("--recursive")]
     [Description("Scan subdirectories recursively")]
     [DefaultValue(false)]
     public bool Recursive { get; set; }
 
+    /// <summary>Gets or sets the output format (table or json).</summary>
     [CommandOption("--format <FORMAT>")]
     [Description("Output format: table or json")]
     [DefaultValue("table")]
     public string Format { get; set; } = "table";
 
+    /// <summary>Gets or sets the media detection mode (auto or music).</summary>
     [CommandOption("--mode <MODE>")]
     [Description("Media mode: auto (default), music")]
     [DefaultValue("auto")]
@@ -40,10 +47,17 @@ internal sealed class MatchSettings : CommandSettings
     }
 }
 
+/// <summary>
+/// CLI command that detects media type for files in a directory.
+/// </summary>
 internal sealed class MatchCommand : AsyncCommand<MatchSettings>
 {
     private readonly IMediaAnalysisService _analysisService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MatchCommand"/> class.
+    /// </summary>
+    /// <param name="analysisService">The media analysis service.</param>
     public MatchCommand(IMediaAnalysisService analysisService)
     {
         _analysisService = analysisService;

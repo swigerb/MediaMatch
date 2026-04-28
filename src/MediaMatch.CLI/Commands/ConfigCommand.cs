@@ -6,24 +6,36 @@ using Spectre.Console.Cli;
 
 namespace MediaMatch.CLI.Commands;
 
+/// <summary>
+/// Command settings for the <c>config set</c> CLI command.
+/// </summary>
 internal sealed class ConfigSetSettings : CommandSettings
 {
+    /// <summary>Gets or sets the configuration key to set.</summary>
     [CommandArgument(0, "<KEY>")]
     [Description("Configuration key (e.g. tmdb_api_key, tvdb_api_key, rename_pattern)")]
     public required string Key { get; set; }
 
+    /// <summary>Gets or sets the value to assign to the key.</summary>
     [CommandArgument(1, "<VALUE>")]
     [Description("Value to set")]
     public required string Value { get; set; }
 }
 
+/// <summary>
+/// Command settings for the <c>config get</c> CLI command.
+/// </summary>
 internal sealed class ConfigGetSettings : CommandSettings
 {
+    /// <summary>Gets or sets the configuration key to read.</summary>
     [CommandArgument(0, "<KEY>")]
     [Description("Configuration key to read")]
     public required string Key { get; set; }
 }
 
+/// <summary>
+/// CLI command that sets a configuration value.
+/// </summary>
 internal sealed class ConfigSetCommand : Command<ConfigSetSettings>
 {
     protected override int Execute(CommandContext context, ConfigSetSettings settings, CancellationToken cancellation)
@@ -37,6 +49,9 @@ internal sealed class ConfigSetCommand : Command<ConfigSetSettings>
     }
 }
 
+/// <summary>
+/// CLI command that reads a configuration value.
+/// </summary>
 internal sealed class ConfigGetCommand : Command<ConfigGetSettings>
 {
     protected override int Execute(CommandContext context, ConfigGetSettings settings, CancellationToken cancellation)
@@ -57,8 +72,14 @@ internal sealed class ConfigGetCommand : Command<ConfigGetSettings>
     }
 }
 
+/// <summary>
+/// Command settings for the <c>config list</c> CLI command.
+/// </summary>
 internal sealed class ConfigListSettings : CommandSettings { }
 
+/// <summary>
+/// CLI command that lists all configuration values.
+/// </summary>
 internal sealed class ConfigListCommand : Command<ConfigListSettings>
 {
     protected override int Execute(CommandContext context, ConfigListSettings settings, CancellationToken cancellation)
@@ -102,10 +123,15 @@ internal sealed class ConfigListCommand : Command<ConfigListSettings>
 /// </summary>
 internal static class ConfigStore
 {
+    /// <summary>Gets the full path to the configuration file.</summary>
     public static string ConfigPath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "MediaMatch", "config.json");
 
+    /// <summary>
+    /// Loads the configuration dictionary from disk.
+    /// </summary>
+    /// <returns>A case-insensitive dictionary of configuration key-value pairs.</returns>
     public static Dictionary<string, string> Load()
     {
         if (!File.Exists(ConfigPath))
@@ -134,6 +160,10 @@ internal static class ConfigStore
         return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Persists the configuration dictionary to disk.
+    /// </summary>
+    /// <param name="config">The configuration key-value pairs to save.</param>
     public static void Save(Dictionary<string, string> config)
     {
         var dir = Path.GetDirectoryName(ConfigPath)!;

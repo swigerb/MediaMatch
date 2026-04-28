@@ -14,6 +14,12 @@ internal static class MediaFileScanner
             ".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma", ".aac", ".opus",
         };
 
+    /// <summary>
+    /// Scans the specified path for media files using known extensions.
+    /// </summary>
+    /// <param name="path">A file path or directory to scan.</param>
+    /// <param name="recursive">When <c>true</c>, scan subdirectories recursively.</param>
+    /// <returns>A sorted list of media file paths.</returns>
     public static IReadOnlyList<string> Scan(string path, bool recursive)
     {
         if (File.Exists(path))

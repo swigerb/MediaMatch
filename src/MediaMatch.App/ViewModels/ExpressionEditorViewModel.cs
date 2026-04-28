@@ -14,28 +14,40 @@ public partial class ExpressionEditorViewModel : ViewModelBase
     private readonly IExpressionEngine _expressionEngine;
     private readonly IMediaBindings _sampleBindings = new SampleMediaBindings();
 
+    /// <summary>Gets or sets the expression text being edited.</summary>
     [ObservableProperty]
     public partial string Expression { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether the current expression is valid.</summary>
     [ObservableProperty]
     public partial bool IsValid { get; set; }
 
+    /// <summary>Gets or sets the validation message for the current expression.</summary>
     [ObservableProperty]
     public partial string ValidationMessage { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the live preview output of the current expression.</summary>
     [ObservableProperty]
     public partial string Preview { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the currently selected example expression template.</summary>
     [ObservableProperty]
     public partial ExpressionExample? SelectedExample { get; set; }
 
+    /// <summary>Gets or sets the cursor position in the expression text box.</summary>
     [ObservableProperty]
     public partial int CursorPosition { get; set; }
 
+    /// <summary>Gets the list of available tokens for insertion.</summary>
     public ObservableCollection<TokenInfo> AvailableTokens { get; } = new(BuildTokenList());
 
+    /// <summary>Gets the list of predefined example expression templates.</summary>
     public ObservableCollection<ExpressionExample> ExampleExpressions { get; } = new(BuildExampleList());
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExpressionEditorViewModel"/> class.
+    /// </summary>
+    /// <param name="expressionEngine">The expression evaluation engine.</param>
     public ExpressionEditorViewModel(IExpressionEngine expressionEngine)
     {
         _expressionEngine = expressionEngine;
@@ -200,4 +212,6 @@ public partial class ExpressionEditorViewModel : ViewModelBase
 /// <summary>
 /// A named example expression template.
 /// </summary>
+/// <param name="Name">The example display name.</param>
+/// <param name="Expression">The expression template string.</param>
 public sealed record ExpressionExample(string Name, string Expression);

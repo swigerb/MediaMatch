@@ -16,26 +16,41 @@ public partial class SfvPanelViewModel : ViewModelBase
     private readonly ILogger<SfvPanelViewModel> _logger;
     private CancellationTokenSource? _cts;
 
+    /// <summary>Gets the collection of files for checksum verification.</summary>
     public ObservableCollection<SfvFileItemViewModel> Files { get; } = [];
 
+    /// <summary>Gets or sets the selected hash algorithm index.</summary>
     [ObservableProperty]
     public partial int SelectedAlgorithmIndex { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether verification is in progress.</summary>
     [ObservableProperty]
     public partial bool IsVerifying { get; set; }
 
+    /// <summary>Gets or sets the overall verification progress percentage (0–100).</summary>
     [ObservableProperty]
     public partial double TotalProgress { get; set; }
 
+    /// <summary>Gets or sets the total progress text (e.g., "3 / 10").</summary>
     [ObservableProperty]
     public partial string TotalProgressText { get; set; } = string.Empty;
 
+    /// <summary>Gets the available hash algorithm labels.</summary>
     public string[] AlgorithmOptions { get; } = ["SFV", "MD5", "SHA1", "SHA2", "SHA3"];
 
+    /// <summary>Gets a value indicating whether any files are loaded.</summary>
     public bool HasFiles => Files.Count > 0;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SfvPanelViewModel"/> class for design-time use.
+    /// </summary>
     public SfvPanelViewModel() : this(null, null) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SfvPanelViewModel"/> class.
+    /// </summary>
+    /// <param name="checksumService">The checksum computation service.</param>
+    /// <param name="logger">The logger instance.</param>
     public SfvPanelViewModel(IChecksumService? checksumService, ILogger<SfvPanelViewModel>? logger)
     {
         _checksumService = checksumService;
@@ -44,6 +59,10 @@ public partial class SfvPanelViewModel : ViewModelBase
         Files.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFiles));
     }
 
+    /// <summary>
+    /// Adds files from the specified paths to the verification list.
+    /// </summary>
+    /// <param name="filePaths">The file paths to add.</param>
     public void AddFiles(IEnumerable<string> filePaths)
     {
         foreach (var path in filePaths)
@@ -138,21 +157,27 @@ public partial class SfvPanelViewModel : ViewModelBase
 /// </summary>
 public partial class SfvFileItemViewModel : ViewModelBase
 {
+    /// <summary>Gets or sets the file name.</summary>
     [ObservableProperty]
     public partial string FileName { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the full file path.</summary>
     [ObservableProperty]
     public partial string FilePath { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the verification state of this file.</summary>
     [ObservableProperty]
     public partial SfvState State { get; set; } = SfvState.Pending;
 
+    /// <summary>Gets or sets the computed hash value.</summary>
     [ObservableProperty]
     public partial string HashValue { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the per-file verification progress percentage (0–100).</summary>
     [ObservableProperty]
     public partial double Progress { get; set; }
 
+    /// <summary>Gets a display icon representing the current verification state.</summary>
     public string StateIcon => State switch
     {
         SfvState.Verified => "✓",
@@ -162,10 +187,20 @@ public partial class SfvFileItemViewModel : ViewModelBase
     };
 }
 
+/// <summary>
+/// Represents the verification state of a file in the SFV panel.
+/// </summary>
 public enum SfvState
 {
+    /// <summary>Verification has not started.</summary>
     Pending,
+
+    /// <summary>Verification is currently running.</summary>
     InProgress,
+
+    /// <summary>Verification completed successfully.</summary>
     Verified,
+
+    /// <summary>Verification failed.</summary>
     Failed
 }

@@ -5,12 +5,17 @@ using Spectre.Console.Cli;
 
 namespace MediaMatch.CLI.Commands;
 
+/// <summary>
+/// Command settings for the <c>subtitle</c> CLI command.
+/// </summary>
 internal sealed class SubtitleSettings : CommandSettings
 {
+    /// <summary>Gets or sets the media file to search subtitles for.</summary>
     [CommandOption("--path <PATH>")]
     [Description("Media file to search subtitles for")]
     public required string Path { get; set; }
 
+    /// <summary>Gets or sets the subtitle language code.</summary>
     [CommandOption("--lang <LANG>")]
     [Description("Subtitle language code (default: en)")]
     [DefaultValue("en")]
@@ -29,10 +34,17 @@ internal sealed class SubtitleSettings : CommandSettings
     }
 }
 
+/// <summary>
+/// CLI command that searches for subtitles for a media file.
+/// </summary>
 internal sealed class SubtitleCommand : AsyncCommand<SubtitleSettings>
 {
     private readonly IEnumerable<ISubtitleProvider> _providers;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubtitleCommand"/> class.
+    /// </summary>
+    /// <param name="providers">The registered subtitle providers.</param>
     public SubtitleCommand(IEnumerable<ISubtitleProvider> providers)
     {
         _providers = providers;

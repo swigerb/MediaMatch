@@ -18,34 +18,59 @@ public partial class MediaInfoInspectorViewModel : ViewModelBase
     private readonly ILogger<MediaInfoInspectorViewModel> _logger;
     private MediaInfoResult? _result;
 
+    /// <summary>Gets or sets the path of the file being inspected.</summary>
     [ObservableProperty]
     public partial string FilePath { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets a value indicating whether media info is being loaded.</summary>
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether ffprobe is available on the system.</summary>
     [ObservableProperty]
     public partial bool IsFfprobeAvailable { get; set; } = true;
 
+    /// <summary>Gets or sets the error message to display when loading fails.</summary>
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
 
+    /// <summary>Gets the general container properties for the loaded file.</summary>
     public ObservableCollection<PropertyItem> GeneralProperties { get; } = [];
 
+    /// <summary>Gets the video stream groups for the loaded file.</summary>
     public ObservableCollection<StreamGroup> VideoStreams { get; } = [];
 
+    /// <summary>Gets the audio stream groups for the loaded file.</summary>
     public ObservableCollection<StreamGroup> AudioStreams { get; } = [];
 
+    /// <summary>Gets the text/subtitle stream groups for the loaded file.</summary>
     public ObservableCollection<StreamGroup> TextStreams { get; } = [];
 
+    /// <summary>Gets a value indicating whether general properties are available.</summary>
     public bool HasGeneralProperties => GeneralProperties.Count > 0;
+
+    /// <summary>Gets a value indicating whether video streams are available.</summary>
     public bool HasVideoStreams => VideoStreams.Count > 0;
+
+    /// <summary>Gets a value indicating whether audio streams are available.</summary>
     public bool HasAudioStreams => AudioStreams.Count > 0;
+
+    /// <summary>Gets a value indicating whether text streams are available.</summary>
     public bool HasTextStreams => TextStreams.Count > 0;
+
+    /// <summary>Gets a value indicating whether a media info result has been loaded.</summary>
     public bool HasResult => _result is not null;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaInfoInspectorViewModel"/> class for design-time use.
+    /// </summary>
     public MediaInfoInspectorViewModel() : this(null!, null) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaInfoInspectorViewModel"/> class.
+    /// </summary>
+    /// <param name="mediaInfoService">The media info extraction service.</param>
+    /// <param name="logger">The logger instance.</param>
     public MediaInfoInspectorViewModel(IMediaInfoService mediaInfoService, ILogger<MediaInfoInspectorViewModel>? logger)
     {
         _mediaInfoService = mediaInfoService;
@@ -162,17 +187,27 @@ public partial class MediaInfoInspectorViewModel : ViewModelBase
 /// <summary>
 /// A single key-value property for display in the property grid.
 /// </summary>
+/// <param name="key">The property name.</param>
+/// <param name="value">The property value.</param>
 public sealed class PropertyItem(string key, string value)
 {
+    /// <summary>Gets the property name.</summary>
     public string Key { get; } = key;
+
+    /// <summary>Gets the property value.</summary>
     public string Value { get; } = value;
 }
 
 /// <summary>
 /// A named group of properties representing one stream.
 /// </summary>
+/// <param name="name">The stream display name.</param>
+/// <param name="properties">The stream properties.</param>
 public sealed class StreamGroup(string name, IReadOnlyList<PropertyItem> properties)
 {
+    /// <summary>Gets the stream display name.</summary>
     public string Name { get; } = name;
+
+    /// <summary>Gets the stream properties.</summary>
     public IReadOnlyList<PropertyItem> Properties { get; } = properties;
 }
