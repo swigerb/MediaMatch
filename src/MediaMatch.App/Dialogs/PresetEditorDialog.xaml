@@ -71,7 +71,7 @@
                 <TextBox
                     Text="{x:Bind ViewModel.RenamePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     FontFamily="Cascadia Code, Consolas, Courier New"
-                    PlaceholderText="{SeriesName}/Season {Season}/{SeriesName} - S{Season:D2}E{Episode:D2} - {Title}{extension}"
+                    PlaceholderText="{}{SeriesName}/Season {Season}/{SeriesName} - S{Season:D2}E{Episode:D2} - {Title}{extension}"
                     AutomationProperties.Name="Rename expression pattern" />
             </StackPanel>
 

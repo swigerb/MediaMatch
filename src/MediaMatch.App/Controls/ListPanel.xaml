@@ -19,7 +19,7 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Padding="12,8">
             <TextBox
                 Text="{x:Bind ViewModel.Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                PlaceholderText="{fn}"
+                PlaceholderText="{}{fn}"
                 AutomationProperties.Name="Pattern expression"
                 MinWidth="260" />
 
