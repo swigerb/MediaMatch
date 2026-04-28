@@ -73,13 +73,31 @@
               BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
               BorderThickness="0,1,0,0"
               Padding="8,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <TextBlock
                 x:Name="VersionText"
+                Grid.Column="0"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 FontSize="12"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 Padding="4" />
+            <Button
+                Grid.Column="2"
+                Click="LogViewer_Click"
+                ToolTipService.ToolTip="Logs &amp; Diagnostics"
+                Background="Transparent"
+                BorderThickness="0"
+                Padding="6,2"
+                VerticalAlignment="Center"
+                AutomationProperties.Name="Open log viewer">
+                <FontIcon Glyph="&#xEA37;" FontSize="14"
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Button>
         </Grid>
 
         <!-- Splash Screen Overlay -->

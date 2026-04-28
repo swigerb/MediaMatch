@@ -1,3 +1,4 @@
+using MediaMatch.App.Dialogs;
 using MediaMatch.App.Pages;
 using MediaMatch.App.Services;
 using Microsoft.UI.Windowing;
@@ -105,5 +106,18 @@ public sealed partial class MainWindow : Window
     public void NavigateToSettings(bool firstRun = false)
     {
         NavFrame.Navigate(typeof(SettingsPage), firstRun ? "first-run" : null);
+    }
+
+    private async void LogViewer_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var dialog = new LogViewerDialog { XamlRoot = Content.XamlRoot };
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to open log viewer");
+        }
     }
 }

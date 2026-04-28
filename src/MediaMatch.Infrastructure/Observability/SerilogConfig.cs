@@ -47,6 +47,9 @@ public static class SerilogConfig
             config.WriteTo.Console(outputTemplate: ConsoleTemplate);
         }
 
+        // Always wire the in-memory sink for UI log viewer
+        config.WriteTo.Sink(InMemoryLogSink.Instance);
+
         return config;
     }
 
