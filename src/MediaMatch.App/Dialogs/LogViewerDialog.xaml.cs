@@ -151,7 +151,7 @@ public sealed class LogEntryViewModel
     public string Level { get; init; } = string.Empty;
     public string Message { get; init; } = string.Empty;
     public LogEventLevel RawLevel { get; init; }
-    public SolidColorBrush LevelBrush { get; init; } = new(Colors.Gray);
+    public SolidColorBrush LevelBrush { get; init; } = new(Color.FromArgb(255, 128, 128, 128));
 
     public static LogEntryViewModel FromLogEvent(LogEvent evt) => new()
     {
@@ -176,7 +176,7 @@ public sealed class LogEntryViewModel
             LogEventLevel.Warning     => new SolidColorBrush(Color.FromArgb(255, 255, 185, 0)),
             LogEventLevel.Error       => new SolidColorBrush(Color.FromArgb(255, 231, 72, 86)),
             LogEventLevel.Fatal       => new SolidColorBrush(Color.FromArgb(255, 196, 43, 28)),
-            _                         => new SolidColorBrush(Colors.Gray)
+            _                         => new SolidColorBrush(Color.FromArgb(255, 128, 128, 128))
         }
     };
 }
