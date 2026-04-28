@@ -146,6 +146,14 @@
                         PlaceholderText="Enter your OpenSubtitles API key"
                         AutomationProperties.Name="OpenSubtitles API Key"
                         AutomationProperties.HelpText="Enter your OpenSubtitles API key for subtitle downloads" />
+                    <Button
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        TabIndex="8"
+                        VerticalAlignment="Bottom"
+                        Command="{x:Bind ViewModel.ClearOpenSubtitlesApiKeyCommand}"
+                        Content="Clear"
+                        AutomationProperties.Name="Clear OpenSubtitles API Key" />
                 </Grid>
             </StackPanel>
 
@@ -157,7 +165,7 @@
                     AutomationProperties.HeadingLevel="Level2" />
 
                 <TextBox
-                    TabIndex="8"
+                    TabIndex="9"
                     Header="Movie Pattern"
                     PlaceholderText="{}{Name} ({Year})/{Name} ({Year}){extension}"
                     Text="{x:Bind ViewModel.MovieRenamePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -165,7 +173,7 @@
                     AutomationProperties.HelpText="Template for renaming movie files. Use {Name}, {Year}, {extension} placeholders." />
 
                 <TextBox
-                    TabIndex="9"
+                    TabIndex="10"
                     Header="Series Pattern"
                     PlaceholderText="{}{SeriesName}/Season {Season}/..."
                     Text="{x:Bind ViewModel.SeriesRenamePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -173,7 +181,7 @@
                     AutomationProperties.HelpText="Template for renaming TV series files. Use {SeriesName}, {Season}, {Episode}, {Title} placeholders." />
 
                 <TextBox
-                    TabIndex="10"
+                    TabIndex="11"
                     Header="Anime Pattern"
                     PlaceholderText="{}{SeriesName}/Season {Season}/..."
                     Text="{x:Bind ViewModel.AnimeRenamePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -210,7 +218,7 @@
                     <TextBox
                         Grid.Row="0"
                         Grid.Column="0"
-                        TabIndex="11"
+                        TabIndex="12"
                         Header="Movies Output Folder"
                         IsReadOnly="True"
                         PlaceholderText="Select a folder..."
@@ -219,7 +227,7 @@
                     <Button
                         Grid.Row="0"
                         Grid.Column="1"
-                        TabIndex="12"
+                        TabIndex="13"
                         VerticalAlignment="Bottom"
                         Command="{x:Bind ViewModel.BrowseMovieOutputFolderCommand}"
                         Content="Browse..."
@@ -228,7 +236,7 @@
                     <TextBox
                         Grid.Row="1"
                         Grid.Column="0"
-                        TabIndex="13"
+                        TabIndex="14"
                         Header="Series Output Folder"
                         IsReadOnly="True"
                         PlaceholderText="Select a folder..."
@@ -237,7 +245,7 @@
                     <Button
                         Grid.Row="1"
                         Grid.Column="1"
-                        TabIndex="14"
+                        TabIndex="15"
                         VerticalAlignment="Bottom"
                         Command="{x:Bind ViewModel.BrowseSeriesOutputFolderCommand}"
                         Content="Browse..."
@@ -251,17 +259,32 @@
                 Orientation="Horizontal"
                 Spacing="8">
                 <Button
-                    TabIndex="15"
+                    TabIndex="16"
                     Command="{x:Bind ViewModel.SaveSettingsCommand}"
                     Content="Save Settings"
                     Style="{StaticResource AccentButtonStyle}"
                     AutomationProperties.Name="Save all settings" />
                 <Button
-                    TabIndex="16"
+                    TabIndex="17"
                     Command="{x:Bind ViewModel.ClearCacheCommand}"
                     Content="Clear Cache"
                     AutomationProperties.Name="Clear metadata cache" />
+                <Button
+                    TabIndex="18"
+                    Command="{x:Bind ViewModel.CheckForUpdatesCommand}"
+                    Content="&#xE117; Check for Updates"
+                    AutomationProperties.Name="Check for application updates" />
             </StackPanel>
+
+            <!-- Update Available Banner -->
+            <InfoBar
+                IsClosable="True"
+                IsOpen="{x:Bind ViewModel.IsUpdateAvailable, Mode=OneWay}"
+                Message="{x:Bind ViewModel.UpdateMessage, Mode=OneWay}"
+                Severity="Success"
+                Title="Update Available"
+                Visibility="{x:Bind ViewModel.IsUpdateAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                AutomationProperties.Name="Update available notification" />
 
             <!-- Status -->
             <TextBlock

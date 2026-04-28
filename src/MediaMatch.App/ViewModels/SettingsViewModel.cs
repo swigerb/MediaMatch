@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediaMatch.Core.Configuration;
+using MediaMatch.Core.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.UI.Xaml;
 using Windows.Storage.Pickers;
 
@@ -8,12 +10,14 @@ namespace MediaMatch.App.ViewModels;
 
 /// <summary>
 /// ViewModel for the Settings page — manages API keys, rename patterns, output paths,
-/// theme mode, and font scale settings.
+/// theme mode, font scale settings, cache clearing, and update checks.
 /// Persists settings via <see cref="ISettingsRepository"/>.
 /// </summary>
 public partial class SettingsViewModel : ViewModelBase
 {
     private readonly ISettingsRepository _settingsRepository;
+    private readonly IMemoryCache? _memoryCache;
+    private readonly IUpdateCheckService? _updateCheckService;
 
     /// <summary>Gets or sets the TMDb API key.</summary>
     [ObservableProperty]
@@ -67,6 +71,14 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool ShowWelcomeBanner { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether an update is available.</summary>
+    [ObservableProperty]
+    public partial bool IsUpdateAvailable { get; set; }
+
+    /// <summary>Gets or sets the update message to display.</summary>
+    [ObservableProperty]
+    public partial string UpdateMessage { get; set; } = string.Empty;
+
     /// <summary>Selected theme mode index: 0=System, 1=Light, 2=Dark.</summary>
     [ObservableProperty]
     public partial int SelectedThemeIndex { get; set; }
@@ -119,9 +131,16 @@ public partial class SettingsViewModel : ViewModelBase
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
     /// <param name="settingsRepository">The settings persistence service.</param>
-    public SettingsViewModel(ISettingsRepository settingsRepository)
+    /// <param name="memoryCache">The in-memory cache to clear.</param>
+    /// <param name="updateCheckService">The update check service.</param>
+    public SettingsViewModel(
+        ISettingsRepository settingsRepository,
+        IMemoryCache? memoryCache = null,
+        IUpdateCheckService? updateCheckService = null)
     {
         _settingsRepository = settingsRepository;
+        _memoryCache = memoryCache;
+        _updateCheckService = updateCheckService;
         UpdateRenamePreview();
     }
 
@@ -224,11 +243,56 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void ClearOpenSubtitlesApiKey()
+    {
+        OpenSubtitlesApiKey = string.Empty;
+    }
+
+    [RelayCommand]
     private async Task ClearCacheAsync()
     {
         StatusMessage = "Clearing cache...";
-        await Task.Delay(100); // Placeholder for actual cache-clearing
+
+        if (_memoryCache is MemoryCache mc)
+        {
+            mc.Compact(1.0); // Evict 100% of entries
+        }
+
+        await Task.CompletedTask;
         StatusMessage = "Cache cleared.";
+    }
+
+    [RelayCommand]
+    private async Task CheckForUpdatesAsync()
+    {
+        if (_updateCheckService is null)
+        {
+            StatusMessage = "Update service not available.";
+            return;
+        }
+
+        StatusMessage = "Checking for updates…";
+
+        try
+        {
+            var available = await _updateCheckService.CheckForUpdatesAsync();
+            IsUpdateAvailable = available;
+
+            if (available)
+            {
+                var version = _updateCheckService.LatestVersion ?? "unknown";
+                UpdateMessage = $"Version {version} is available. Download and restart to update.";
+                StatusMessage = $"Update v{version} available!";
+            }
+            else
+            {
+                StatusMessage = "You're up to date.";
+            }
+        }
+        catch (Exception)
+        {
+            StatusMessage = "Could not check for updates. Try again later.";
+        }
     }
 
     [RelayCommand]
