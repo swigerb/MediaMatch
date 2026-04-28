@@ -53,7 +53,7 @@ public sealed class PresetEditorViewModelTests
         vm.OutputFolder.Should().Be(@"D:\Media\TV");
         vm.SelectedShortcutIndex.Should().Be(1); // "Ctrl+1"
         vm.SelectedDatasourceIndex.Should().Be(2); // TVDb
-        vm.SelectedLanguageIndex.Should().Be(1);   // Japanese
+        vm.SelectedLanguageIndex.Should().Be(8);   // Japanese
         vm.SelectedEpisodeOrderIndex.Should().Be(2); // Absolute
         vm.SelectedMatchModeIndex.Should().Be(1);    // Strict
         vm.SelectedRenameActionIndex.Should().Be(3); // Symlink
@@ -71,7 +71,7 @@ public sealed class PresetEditorViewModelTests
             OutputFolder = @"D:\Anime",
             SelectedShortcutIndex = 2, // Ctrl+2
             SelectedDatasourceIndex = 3,  // AniDB
-            SelectedLanguageIndex = 1,    // Japanese
+            SelectedLanguageIndex = 8,    // Japanese
             SelectedEpisodeOrderIndex = 2, // Absolute
             SelectedMatchModeIndex = 0,    // Opportunistic
             SelectedRenameActionIndex = 1, // Copy

@@ -57,8 +57,59 @@ public partial class PresetEditorViewModel : ViewModelBase
     /// <summary>Gets the available data source labels.</summary>
     public string[] DatasourceOptions { get; } = ["Auto", "TMDb", "TVDb", "AniDB", "MusicBrainz"];
 
-    /// <summary>Gets the available language labels.</summary>
-    public string[] LanguageOptions { get; } = ["English", "Japanese", "German", "French", "Spanish", "Korean", "Chinese", "Portuguese", "Italian", "Russian"];
+    /// <summary>Gets the available language labels with flag emoji.</summary>
+    public string[] LanguageOptions { get; } =
+    [
+        "🇬🇧 English",
+        "🇩🇪 German",
+        "🇫🇷 French",
+        "🇪🇸 Spanish",
+        "🇧🇷 Brazilian Portuguese",
+        "🇷🇺 Russian",
+        "🇨🇳 Chinese",
+        "🇹🇼 Taiwanese Chinese",
+        "🇯🇵 Japanese",
+        "🇯🇵 Romanized Japanese",
+        "🇿🇦 Afrikaans",
+        "🇦🇱 Albanian",
+        "🇸🇦 Arabic",
+        "🇦🇲 Armenian",
+        "🇧🇬 Bulgarian",
+        "🇪🇸 Catalan",
+        "🇭🇷 Croatian",
+        "🇨🇿 Czech",
+        "🇩🇰 Danish",
+        "🇳🇱 Dutch",
+        "🇫🇮 Finnish",
+        "🇨🇦 Canadian French",
+        "🇬🇷 Greek",
+        "🇮🇱 Hebrew",
+        "🇮🇳 Hindi",
+        "🇭🇺 Hungarian",
+        "🇮🇸 Icelandic",
+        "🇮🇩 Indonesian",
+        "🇮🇹 Italian",
+        "🇰🇷 Korean",
+        "🇱🇻 Latvian",
+        "🇱🇹 Lithuanian",
+        "🇲🇰 Macedonian",
+        "🇲🇾 Malay",
+        "🇭🇰 Cantonese",
+        "🇳🇴 Norwegian",
+        "🇮🇷 Persian",
+        "🇵🇱 Polish",
+        "🇵🇹 Portuguese",
+        "🇷🇴 Romanian",
+        "🇷🇸 Serbian",
+        "🇸🇰 Slovak",
+        "🇸🇮 Slovenian",
+        "🇲🇽 Mexican Spanish",
+        "🇸🇪 Swedish",
+        "🇹🇭 Thai",
+        "🇹🇷 Turkish",
+        "🇺🇦 Ukrainian",
+        "🇻🇳 Vietnamese"
+    ];
 
     /// <summary>Gets the available episode ordering labels.</summary>
     public string[] EpisodeOrderOptions { get; } = ["Airdate", "DVD", "Absolute", "Date and Title"];
@@ -87,7 +138,14 @@ public partial class PresetEditorViewModel : ViewModelBase
     ];
 
     private static readonly string[] DatasourceValues = ["auto", "tmdb", "tvdb", "anidb", "musicbrainz"];
-    private static readonly string[] LanguageCodes = ["en", "ja", "de", "fr", "es", "ko", "zh", "pt", "it", "ru"];
+    private static readonly string[] LanguageCodes =
+    [
+        "en", "de", "fr", "es", "pt-BR", "ru", "zh", "zh-TW", "ja", "ja-Latn",
+        "af", "sq", "ar", "hy", "bg", "ca", "hr", "cs", "da", "nl",
+        "fi", "fr-CA", "el", "he", "hi", "hu", "is", "id", "it", "ko",
+        "lv", "lt", "mk", "ms", "yue", "no", "fa", "pl", "pt", "ro",
+        "sr", "sk", "sl", "es-MX", "sv", "th", "tr", "uk", "vi"
+    ];
     private static readonly string[] EpisodeOrderValues = ["airdate", "dvd", "absolute", "date_title"];
     private static readonly string[] MatchModeValues = ["opportunistic", "strict"];
     private static readonly RenameAction[] RenameActionValues = [RenameAction.Move, RenameAction.Copy, RenameAction.Reflink, RenameAction.Symlink, RenameAction.Hardlink];
