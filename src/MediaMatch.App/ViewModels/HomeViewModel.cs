@@ -269,6 +269,23 @@ public partial class HomeViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task AddFilesAsync()
+    {
+        var picker = new FileOpenPicker();
+        picker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+        picker.FileTypeFilter.Add("*");
+
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        var files = await picker.PickMultipleFilesAsync();
+        if (files is null || files.Count == 0) return;
+
+        AddFiles(files.Select(f => f.Path));
+        UpdateStatusMessage();
+    }
+
+    [RelayCommand]
     private void SelectAll()
     {
         foreach (var file in OriginalFiles)

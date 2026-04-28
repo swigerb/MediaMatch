@@ -18,28 +18,21 @@
         <!-- Top toolbar: Pattern, From, To, Apply -->
         <Grid Grid.Row="0" Padding="12,8" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock
-                Grid.Column="0"
-                Text="Pattern:"
-                VerticalAlignment="Center"
-                Style="{ThemeResource BodyStrongTextBlockStyle}" />
-
             <TextBox
-                Grid.Column="1"
+                Grid.Column="0"
+                Header="Pattern"
                 Text="{x:Bind ViewModel.Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 PlaceholderText="Sequence - {i.pad(2)}"
-                AutomationProperties.Name="Pattern expression"
-                VerticalAlignment="Center" />
+                AutomationProperties.Name="Pattern expression" />
 
             <NumberBox
-                Grid.Column="2"
+                Grid.Column="1"
                 Value="{x:Bind ViewModel.FromNumber, Mode=TwoWay}"
                 Header="From"
                 SpinButtonPlacementMode="Compact"
@@ -48,7 +41,7 @@
                 MinWidth="90" />
 
             <NumberBox
-                Grid.Column="3"
+                Grid.Column="2"
                 Value="{x:Bind ViewModel.ToNumber, Mode=TwoWay}"
                 Header="To"
                 SpinButtonPlacementMode="Compact"
@@ -57,7 +50,7 @@
                 MinWidth="90" />
 
             <Button
-                Grid.Column="4"
+                Grid.Column="3"
                 Command="{x:Bind ViewModel.ApplyPatternCommand}"
                 AutomationProperties.Name="Generate sequence"
                 Style="{ThemeResource AccentButtonStyle}"

@@ -202,8 +202,8 @@
                                 Padding="0"
                                 VerticalAlignment="Center"
                                 Command="{x:Bind ViewModel.AddFolderCommand}"
-                                Content="Load Folder"
-                                AutomationProperties.Name="Load folder" />
+                                Content="Load"
+                                AutomationProperties.Name="Load files or folder" />
                         </StackPanel>
                     </StackPanel>
 
@@ -265,15 +265,28 @@
                     <AppBarButton Icon="Delete" ToolTipService.ToolTip="Remove selected"
                                   Command="{x:Bind ViewModel.RemoveSelectedCommand}"
                                   AutomationProperties.Name="Remove selected" />
-                    <AppBarButton Icon="OpenLocal" Label="Load" ToolTipService.ToolTip="Load folder (Ctrl+O)"
-                                  Command="{x:Bind ViewModel.AddFolderCommand}"
-                                  AutomationProperties.Name="Load folder" />
+                    <AppBarButton Icon="OpenLocal" Label="Load" ToolTipService.ToolTip="Load files or folder (Ctrl+O)"
+                                  AutomationProperties.Name="Load files or folder">
+                        <AppBarButton.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Files..." Command="{x:Bind ViewModel.AddFilesCommand}"
+                                                AutomationProperties.Name="Load individual files">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8E5;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Folder..." Command="{x:Bind ViewModel.AddFolderCommand}"
+                                                AutomationProperties.Name="Load folder">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8B7;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
                     <AppBarButton Icon="Refresh" ToolTipService.ToolTip="Refresh (F5)"
                                   Command="{x:Bind ViewModel.RefreshCommand}"
                                   AutomationProperties.Name="Refresh" />
-                    <AppBarButton Icon="Paste" ToolTipService.ToolTip="Paste from clipboard"
-                                  Command="{x:Bind ViewModel.PasteFilesCommand}"
-                                  AutomationProperties.Name="Paste files" />
                     <AppBarSeparator />
                     <AppBarButton ToolTipService.ToolTip="MediaInfo Inspector"
                                   Click="MediaInfoInspector_Click"

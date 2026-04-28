@@ -124,13 +124,17 @@
                                 Padding="4,1"
                                 Background="{Binding LevelBrush}"
                                 VerticalAlignment="Top"
-                                HorizontalAlignment="Center">
+                                HorizontalAlignment="Center"
+                                Tapped="LevelBadge_Tapped"
+                                Tag="{Binding LevelFilterIndex}"
+                                ToolTipService.ToolTip="Click to filter by this level">
                                 <TextBlock
                                     Text="{Binding Level}"
                                     FontSize="10"
                                     FontWeight="SemiBold"
                                     Foreground="White"
-                                    HorizontalAlignment="Center" />
+                                    HorizontalAlignment="Center"
+                                    IsHitTestVisible="False" />
                             </Border>
                             <TextBlock
                                 Grid.Column="2"

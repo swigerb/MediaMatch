@@ -103,6 +103,14 @@ public sealed partial class LogViewerDialog : ContentDialog
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilter();
     private void LevelFilter_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilter();
 
+    private void LevelBadge_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: int index })
+        {
+            LevelFilter.SelectedIndex = index;
+        }
+    }
+
     private void ClearLogs_Click(object sender, RoutedEventArgs e)
     {
         InMemoryLogSink.Instance.Clear();
@@ -151,6 +159,7 @@ public sealed class LogEntryViewModel
     public string Level { get; init; } = string.Empty;
     public string Message { get; init; } = string.Empty;
     public LogEventLevel RawLevel { get; init; }
+    public int LevelFilterIndex { get; init; }
     public SolidColorBrush LevelBrush { get; init; } = new(Color.FromArgb(255, 128, 128, 128));
 
     public static LogEntryViewModel FromLogEvent(LogEvent evt) => new()
@@ -168,6 +177,16 @@ public sealed class LogEntryViewModel
         },
         Message = evt.RenderMessage(),
         RawLevel = evt.Level,
+        LevelFilterIndex = evt.Level switch
+        {
+            LogEventLevel.Verbose     => 1,
+            LogEventLevel.Debug       => 2,
+            LogEventLevel.Information => 3,
+            LogEventLevel.Warning     => 4,
+            LogEventLevel.Error       => 5,
+            LogEventLevel.Fatal       => 6,
+            _                         => 0
+        },
         LevelBrush = evt.Level switch
         {
             LogEventLevel.Verbose     => new SolidColorBrush(Color.FromArgb(255, 128, 128, 128)),
