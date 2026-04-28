@@ -23,7 +23,7 @@ public partial class ListPanelViewModel : ViewModelBase
 
     /// <summary>Gets or sets the rename pattern template.</summary>
     [ObservableProperty]
-    public partial string Pattern { get; set; } = "{fn}";
+    public partial string Pattern { get; set; } = "Sequence - {i.pad(2)}";
 
     /// <summary>Gets or sets the starting sequence number.</summary>
     [ObservableProperty]
@@ -31,7 +31,7 @@ public partial class ListPanelViewModel : ViewModelBase
 
     /// <summary>Gets or sets the ending sequence number.</summary>
     [ObservableProperty]
-    public partial int ToNumber { get; set; } = 100;
+    public partial int ToNumber { get; set; } = 20;
 
     /// <summary>Gets or sets the status message displayed in the panel.</summary>
     [ObservableProperty]

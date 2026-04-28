@@ -16,40 +16,58 @@
         </Grid.RowDefinitions>
 
         <!-- Top toolbar: Pattern, From, To, Apply -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Padding="12,8">
+        <Grid Grid.Row="0" Padding="12,8" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock
+                Grid.Column="0"
+                Text="Pattern:"
+                VerticalAlignment="Center"
+                Style="{ThemeResource BodyStrongTextBlockStyle}" />
+
             <TextBox
+                Grid.Column="1"
                 Text="{x:Bind ViewModel.Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                PlaceholderText="{}{fn}"
+                PlaceholderText="Sequence - {i.pad(2)}"
                 AutomationProperties.Name="Pattern expression"
-                MinWidth="260" />
+                VerticalAlignment="Center" />
 
             <NumberBox
+                Grid.Column="2"
                 Value="{x:Bind ViewModel.FromNumber, Mode=TwoWay}"
                 Header="From"
                 SpinButtonPlacementMode="Compact"
                 Minimum="0"
                 AutomationProperties.Name="From number"
-                MinWidth="100" />
+                MinWidth="90" />
 
             <NumberBox
+                Grid.Column="3"
                 Value="{x:Bind ViewModel.ToNumber, Mode=TwoWay}"
                 Header="To"
                 SpinButtonPlacementMode="Compact"
                 Minimum="0"
                 AutomationProperties.Name="To number"
-                MinWidth="100" />
+                MinWidth="90" />
 
             <Button
+                Grid.Column="4"
                 Command="{x:Bind ViewModel.ApplyPatternCommand}"
-                AutomationProperties.Name="Apply pattern"
+                AutomationProperties.Name="Generate sequence"
                 Style="{ThemeResource AccentButtonStyle}"
                 VerticalAlignment="Bottom">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <FontIcon Glyph="&#xE768;" FontSize="14" />
-                    <TextBlock Text="Apply" />
+                    <TextBlock Text="Sequence" />
                 </StackPanel>
             </Button>
-        </StackPanel>
+        </Grid>
 
         <!-- File output list -->
         <Border Grid.Row="1"
