@@ -12,6 +12,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -32,6 +33,7 @@
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\HistoryViewModel.cs" Link="LinkedSources\HistoryViewModel.cs" />
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\HistorySessionViewModel.cs" Link="LinkedSources\HistorySessionViewModel.cs" />
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\PresetEditorViewModel.cs" Link="LinkedSources\PresetEditorViewModel.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\MediaInfoInspectorViewModel.cs" Link="LinkedSources\MediaInfoInspectorViewModel.cs" />
   </ItemGroup>
 
 </Project>
