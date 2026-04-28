@@ -36,10 +36,10 @@ public sealed partial class SfvPanel : UserControl
     public static Visibility IsNotInProgress(SfvState state) =>
         state != SfvState.InProgress ? Visibility.Visible : Visibility.Collapsed;
 
-    // Algorithm radio button handlers
-    private void SetAlgorithm0(object sender, RoutedEventArgs e) => ViewModel.SelectedAlgorithmIndex = 0;
-    private void SetAlgorithm1(object sender, RoutedEventArgs e) => ViewModel.SelectedAlgorithmIndex = 1;
-    private void SetAlgorithm2(object sender, RoutedEventArgs e) => ViewModel.SelectedAlgorithmIndex = 2;
-    private void SetAlgorithm3(object sender, RoutedEventArgs e) => ViewModel.SelectedAlgorithmIndex = 3;
-    private void SetAlgorithm4(object sender, RoutedEventArgs e) => ViewModel.SelectedAlgorithmIndex = 4;
+    // Algorithm radio button handlers — null-guard ViewModel since Checked fires during InitializeComponent
+    private void SetAlgorithm0(object sender, RoutedEventArgs e) { if (ViewModel is not null) ViewModel.SelectedAlgorithmIndex = 0; }
+    private void SetAlgorithm1(object sender, RoutedEventArgs e) { if (ViewModel is not null) ViewModel.SelectedAlgorithmIndex = 1; }
+    private void SetAlgorithm2(object sender, RoutedEventArgs e) { if (ViewModel is not null) ViewModel.SelectedAlgorithmIndex = 2; }
+    private void SetAlgorithm3(object sender, RoutedEventArgs e) { if (ViewModel is not null) ViewModel.SelectedAlgorithmIndex = 3; }
+    private void SetAlgorithm4(object sender, RoutedEventArgs e) { if (ViewModel is not null) ViewModel.SelectedAlgorithmIndex = 4; }
 }
