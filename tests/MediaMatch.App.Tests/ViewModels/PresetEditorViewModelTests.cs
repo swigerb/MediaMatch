@@ -17,7 +17,7 @@ public sealed class PresetEditorViewModelTests
         vm.IncludeFilter.Should().BeEmpty();
         vm.RenamePattern.Should().BeEmpty();
         vm.OutputFolder.Should().BeEmpty();
-        vm.KeyboardShortcut.Should().BeEmpty();
+        vm.SelectedShortcutIndex.Should().Be(0); // "None"
         vm.SelectedDatasourceIndex.Should().Be(0);
         vm.SelectedLanguageIndex.Should().Be(0);
         vm.SelectedEpisodeOrderIndex.Should().Be(0);
@@ -51,7 +51,7 @@ public sealed class PresetEditorViewModelTests
         vm.IncludeFilter.Should().Be("*.mkv");
         vm.RenamePattern.Should().Be("{SeriesName}/S{Season:D2}E{Episode:D2}");
         vm.OutputFolder.Should().Be(@"D:\Media\TV");
-        vm.KeyboardShortcut.Should().Be("Ctrl+1");
+        vm.SelectedShortcutIndex.Should().Be(1); // "Ctrl+1"
         vm.SelectedDatasourceIndex.Should().Be(2); // TVDb
         vm.SelectedLanguageIndex.Should().Be(1);   // Japanese
         vm.SelectedEpisodeOrderIndex.Should().Be(2); // Absolute
@@ -69,7 +69,7 @@ public sealed class PresetEditorViewModelTests
             IncludeFilter = "*.mp4",
             RenamePattern = "{SeriesName} - {Episode}",
             OutputFolder = @"D:\Anime",
-            KeyboardShortcut = "Ctrl+2",
+            SelectedShortcutIndex = 2, // Ctrl+2
             SelectedDatasourceIndex = 3,  // AniDB
             SelectedLanguageIndex = 1,    // Japanese
             SelectedEpisodeOrderIndex = 2, // Absolute

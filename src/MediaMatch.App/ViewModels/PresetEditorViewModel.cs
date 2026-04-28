@@ -30,9 +30,9 @@ public partial class PresetEditorViewModel : ViewModelBase
     [ObservableProperty]
     public partial string OutputFolder { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the keyboard shortcut assigned to this preset.</summary>
+    /// <summary>Gets or sets the selected keyboard shortcut index.</summary>
     [ObservableProperty]
-    public partial string KeyboardShortcut { get; set; } = string.Empty;
+    public partial int SelectedShortcutIndex { get; set; }
 
     /// <summary>Gets or sets the selected data source index.</summary>
     [ObservableProperty]
@@ -69,6 +69,23 @@ public partial class PresetEditorViewModel : ViewModelBase
     /// <summary>Gets the available rename action labels.</summary>
     public string[] RenameActionOptions { get; } = ["Rename", "Copy", "Keeplink", "Symlink", "Hardlink"];
 
+    /// <summary>Gets the available keyboard shortcut labels.</summary>
+    public string[] KeyboardShortcutOptions { get; } =
+    [
+        "None",
+        "Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+4", "Ctrl+5", "Ctrl+6", "Ctrl+7", "Ctrl+8", "Ctrl+9",
+        "Ctrl+NumPad 1", "Ctrl+NumPad 2", "Ctrl+NumPad 3", "Ctrl+NumPad 4", "Ctrl+NumPad 5",
+        "Ctrl+NumPad 6", "Ctrl+NumPad 7", "Ctrl+NumPad 8", "Ctrl+NumPad 9"
+    ];
+
+    private static readonly string[] ShortcutValues =
+    [
+        "",
+        "Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+4", "Ctrl+5", "Ctrl+6", "Ctrl+7", "Ctrl+8", "Ctrl+9",
+        "Ctrl+NumPad1", "Ctrl+NumPad2", "Ctrl+NumPad3", "Ctrl+NumPad4", "Ctrl+NumPad5",
+        "Ctrl+NumPad6", "Ctrl+NumPad7", "Ctrl+NumPad8", "Ctrl+NumPad9"
+    ];
+
     private static readonly string[] DatasourceValues = ["auto", "tmdb", "tvdb", "anidb", "musicbrainz"];
     private static readonly string[] LanguageCodes = ["en", "ja", "de", "fr", "es", "ko", "zh", "pt", "it", "ru"];
     private static readonly string[] EpisodeOrderValues = ["airdate", "dvd", "absolute", "date_title"];
@@ -85,13 +102,13 @@ public partial class PresetEditorViewModel : ViewModelBase
         IncludeFilter = preset.IncludeFilter;
         RenamePattern = preset.RenamePattern;
         OutputFolder = preset.OutputFolder;
-        KeyboardShortcut = preset.KeyboardShortcut;
 
-        SelectedDatasourceIndex = Math.Max(0, Array.IndexOf(DatasourceValues, preset.Datasource));
+        SelectedDatasourceIndex= Math.Max(0, Array.IndexOf(DatasourceValues, preset.Datasource));
         SelectedLanguageIndex = Math.Max(0, Array.IndexOf(LanguageCodes, preset.Language));
         SelectedEpisodeOrderIndex = Math.Max(0, Array.IndexOf(EpisodeOrderValues, preset.EpisodeOrder));
         SelectedMatchModeIndex = Math.Max(0, Array.IndexOf(MatchModeValues, preset.MatchMode));
         SelectedRenameActionIndex = Math.Max(0, Array.IndexOf(RenameActionValues, preset.RenameActionType));
+        SelectedShortcutIndex = Math.Max(0, Array.IndexOf(ShortcutValues, preset.KeyboardShortcut));
     }
 
     /// <summary>
@@ -104,7 +121,7 @@ public partial class PresetEditorViewModel : ViewModelBase
         IncludeFilter = IncludeFilter,
         RenamePattern = RenamePattern,
         OutputFolder = OutputFolder,
-        KeyboardShortcut = KeyboardShortcut,
+        KeyboardShortcut = ShortcutValues[SelectedShortcutIndex],
         Datasource = DatasourceValues[SelectedDatasourceIndex],
         Language = LanguageCodes[SelectedLanguageIndex],
         EpisodeOrder = EpisodeOrderValues[SelectedEpisodeOrderIndex],

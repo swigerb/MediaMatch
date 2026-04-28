@@ -162,10 +162,11 @@
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Text="Keyboard Shortcut" />
-                <TextBox
-                    Text="{x:Bind ViewModel.KeyboardShortcut, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    PlaceholderText="e.g., Ctrl+1"
-                    AutomationProperties.Name="Keyboard shortcut" />
+                <ComboBox
+                    ItemsSource="{x:Bind ViewModel.KeyboardShortcutOptions}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedShortcutIndex, Mode=TwoWay}"
+                    AutomationProperties.Name="Keyboard shortcut"
+                    MinWidth="200" />
             </StackPanel>
 
             <!-- Output Folder -->
