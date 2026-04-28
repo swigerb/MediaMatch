@@ -187,4 +187,52 @@ public class TmdbEpisodeProviderTests
 
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
+
+    [Fact]
+    public async Task SearchAsync_NoApiKey_ReturnsEmpty()
+    {
+        var config = new ApiConfiguration { TmdbApiKey = "" };
+        var handler = new Mock<HttpMessageHandler>();
+        handler.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}", Encoding.UTF8, "application/json") })
+            .Verifiable();
+        var httpClient = new HttpClient(handler.Object);
+        var mmHttp = new MediaMatchHttpClient(httpClient, NullLogger<MediaMatchHttpClient>.Instance, maxRetries: 0);
+        var provider = new TmdbEpisodeProvider(mmHttp, new MetadataCache(new MemoryCache(new MemoryCacheOptions())), config, NullLogger<TmdbEpisodeProvider>.Instance);
+
+        var results = await provider.SearchAsync("Breaking Bad");
+
+        results.Should().BeEmpty();
+        handler.Protected().Verify("SendAsync", Times.Never(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetEpisodesAsync_NoApiKey_ReturnsEmpty()
+    {
+        var config = new ApiConfiguration { TmdbApiKey = "" };
+        var handler = new Mock<HttpMessageHandler>();
+        var httpClient = new HttpClient(handler.Object);
+        var mmHttp = new MediaMatchHttpClient(httpClient, NullLogger<MediaMatchHttpClient>.Instance, maxRetries: 0);
+        var provider = new TmdbEpisodeProvider(mmHttp, new MetadataCache(new MemoryCache(new MemoryCacheOptions())), config, NullLogger<TmdbEpisodeProvider>.Instance);
+
+        var results = await provider.GetEpisodesAsync(new SearchResult("Test", 1));
+
+        results.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetSeriesInfoAsync_NoApiKey_ReturnsMinimalInfo()
+    {
+        var config = new ApiConfiguration { TmdbApiKey = "" };
+        var handler = new Mock<HttpMessageHandler>();
+        var httpClient = new HttpClient(handler.Object);
+        var mmHttp = new MediaMatchHttpClient(httpClient, NullLogger<MediaMatchHttpClient>.Instance, maxRetries: 0);
+        var provider = new TmdbEpisodeProvider(mmHttp, new MetadataCache(new MemoryCache(new MemoryCacheOptions())), config, NullLogger<TmdbEpisodeProvider>.Instance);
+
+        var info = await provider.GetSeriesInfoAsync(new SearchResult("Test Show", 42));
+
+        info.Name.Should().Be("Test Show");
+        info.Id.Should().Be("42");
+    }
 }

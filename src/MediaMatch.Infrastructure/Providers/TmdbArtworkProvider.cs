@@ -34,9 +34,18 @@ public sealed class TmdbArtworkProvider : IArtworkProvider
         _logger = logger;
     }
 
+    /// <summary>Returns true if a TMDb API key has been configured.</summary>
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(_config.TmdbApiKey);
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<Artwork>> GetArtworkAsync(int tvdbId, ArtworkType? type = null, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TMDb API key not configured, skipping TV artwork lookup");
+            return Array.Empty<Artwork>();
+        }
+
         // TMDb uses its own IDs. We use tvdbId as TMDb series ID here
         // (callers should pass TMDb IDs; the parameter name comes from the interface).
         var cacheKey = $"tmdb:artwork:tv:{tvdbId}:{type}";
@@ -54,6 +63,12 @@ public sealed class TmdbArtworkProvider : IArtworkProvider
     /// <inheritdoc />
     public async Task<IReadOnlyList<Artwork>> GetMovieArtworkAsync(int tmdbId, ArtworkType? type = null, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TMDb API key not configured, skipping movie artwork lookup");
+            return Array.Empty<Artwork>();
+        }
+
         var cacheKey = $"tmdb:artwork:movie:{tmdbId}:{type}";
         return await _cache.GetOrCreateAsync(cacheKey, async () =>
         {

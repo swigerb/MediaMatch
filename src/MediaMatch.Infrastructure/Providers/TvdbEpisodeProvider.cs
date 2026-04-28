@@ -38,9 +38,18 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
         _logger = logger;
     }
 
+    /// <summary>Returns true if a TVDb API key has been configured.</summary>
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(_config.TvdbApiKey);
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(string query, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TVDb API key not configured, skipping series search");
+            return Array.Empty<SearchResult>();
+        }
+
         var cacheKey = $"tvdb:search:{query}";
         return await _cache.GetOrCreateAsync<IReadOnlyList<SearchResult>>(cacheKey, async () =>
         {
@@ -68,6 +77,12 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
     /// <inheritdoc />
     public async Task<IReadOnlyList<Episode>> GetEpisodesAsync(SearchResult series, SortOrder sortOrder = SortOrder.Airdate, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TVDb API key not configured, skipping episodes lookup");
+            return Array.Empty<Episode>();
+        }
+
         var cacheKey = $"tvdb:episodes:{series.Id}:{sortOrder}";
         return await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
@@ -126,6 +141,15 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
     /// <inheritdoc />
     public async Task<SeriesInfo> GetSeriesInfoAsync(SearchResult series, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TVDb API key not configured, skipping series info lookup");
+            return new SeriesInfo(
+                Name: series.Name, Id: series.Id.ToString(CultureInfo.InvariantCulture),
+                Overview: null, Network: null, Status: null, Rating: null,
+                Runtime: null, Genres: []);
+        }
+
         var cacheKey = $"tvdb:info:{series.Id}";
         return await _cache.GetOrCreateAsync(cacheKey, async () =>
         {

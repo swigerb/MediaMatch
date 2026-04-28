@@ -16,18 +16,24 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
 
     private readonly MediaMatchHttpClient _http;
     private readonly ApiConfiguration _config;
+    private readonly ApiKeySettings _apiKeys;
     private readonly ILogger<OpenSubtitlesProvider> _logger;
 
     /// <inheritdoc />
     public string Name => "OpenSubtitles";
 
+    /// <summary>Returns true if an OpenSubtitles API key has been configured.</summary>
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(_apiKeys.OpenSubtitlesApiKey);
+
     public OpenSubtitlesProvider(
         MediaMatchHttpClient http,
         ApiConfiguration config,
+        ApiKeySettings apiKeys,
         ILogger<OpenSubtitlesProvider> logger)
     {
         _http = http;
         _config = config;
+        _apiKeys = apiKeys;
         _logger = logger;
     }
 
@@ -35,6 +41,12 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
     public async Task<IReadOnlyList<SubtitleDescriptor>> SearchAsync(
         string query, string language, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("OpenSubtitles API key not configured, skipping subtitle search");
+            return [];
+        }
+
         var encodedQuery = Uri.EscapeDataString(query);
         var url = $"{BaseUrl}/subtitles?query={encodedQuery}&languages={Uri.EscapeDataString(language)}";
 
@@ -45,6 +57,12 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
     public async Task<IReadOnlyList<SubtitleDescriptor>> SearchByHashAsync(
         string movieHash, long fileSize, string language, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("OpenSubtitles API key not configured, skipping hash search");
+            return [];
+        }
+
         var url = $"{BaseUrl}/subtitles?moviehash={Uri.EscapeDataString(movieHash)}&languages={Uri.EscapeDataString(language)}";
 
         return await SearchInternalAsync(url, ct);
@@ -53,6 +71,9 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
     /// <inheritdoc />
     public async Task<Stream> DownloadAsync(SubtitleDescriptor subtitle, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+            throw new InvalidOperationException("OpenSubtitles API key is required to download subtitles.");
+
         if (string.IsNullOrEmpty(subtitle.DownloadUrl))
             throw new InvalidOperationException("Subtitle has no download URL.");
 

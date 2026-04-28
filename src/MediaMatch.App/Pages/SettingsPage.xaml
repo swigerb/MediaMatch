@@ -30,7 +30,7 @@
             <InfoBar
                 IsClosable="True"
                 IsOpen="{x:Bind ViewModel.ShowWelcomeBanner, Mode=TwoWay}"
-                Message="Configure your API keys and output folders to get started. You can always come back to this page later."
+                Message="MediaMatch works out of the box with local metadata files. Add API keys below to unlock online providers (TMDb, TVDb, OpenSubtitles) for richer matching results."
                 Severity="Success"
                 Title="Welcome to MediaMatch!"
                 Visibility="{x:Bind ViewModel.ShowWelcomeBanner, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"

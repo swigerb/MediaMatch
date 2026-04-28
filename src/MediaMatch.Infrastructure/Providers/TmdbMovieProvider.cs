@@ -35,9 +35,18 @@ public sealed class TmdbMovieProvider : IMovieProvider
         _logger = logger;
     }
 
+    /// <summary>Returns true if a TMDb API key has been configured.</summary>
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(_config.TmdbApiKey);
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<Movie>> SearchAsync(string query, int? year = null, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TMDb API key not configured, skipping movie search");
+            return Array.Empty<Movie>();
+        }
+
         var cacheKey = $"tmdb:movie:search:{query}:{year}";
         return await _cache.GetOrCreateAsync<IReadOnlyList<Movie>>(cacheKey, async () =>
         {
@@ -65,6 +74,15 @@ public sealed class TmdbMovieProvider : IMovieProvider
     /// <inheritdoc />
     public async Task<MovieInfo> GetMovieInfoAsync(Movie movie, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TMDb API key not configured, skipping movie info lookup");
+            return new MovieInfo(
+                Name: movie.Name, Year: movie.Year, TmdbId: null, ImdbId: null,
+                Overview: null, Tagline: null, PosterUrl: null, Rating: null,
+                Runtime: null, Certification: null, Genres: [], Cast: [], Crew: []);
+        }
+
         if (movie.TmdbId is null)
             throw new ArgumentException("Movie must have a TmdbId to fetch details.", nameof(movie));
 

@@ -129,4 +129,42 @@ public class TmdbArtworkProviderTests
 
         artwork.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task GetArtworkAsync_NoApiKey_ReturnsEmpty()
+    {
+        var config = new ApiConfiguration { TmdbApiKey = "" };
+        var handler = new Mock<HttpMessageHandler>();
+        handler.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}", Encoding.UTF8, "application/json") })
+            .Verifiable();
+        var httpClient = new HttpClient(handler.Object);
+        var mmHttp = new MediaMatchHttpClient(httpClient, NullLogger<MediaMatchHttpClient>.Instance, maxRetries: 0);
+        var provider = new TmdbArtworkProvider(mmHttp, new MetadataCache(new MemoryCache(new MemoryCacheOptions())), config, NullLogger<TmdbArtworkProvider>.Instance);
+
+        var artwork = await provider.GetArtworkAsync(123);
+
+        artwork.Should().BeEmpty();
+        handler.Protected().Verify("SendAsync", Times.Never(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetMovieArtworkAsync_NoApiKey_ReturnsEmpty()
+    {
+        var config = new ApiConfiguration { TmdbApiKey = "" };
+        var handler = new Mock<HttpMessageHandler>();
+        handler.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}", Encoding.UTF8, "application/json") })
+            .Verifiable();
+        var httpClient = new HttpClient(handler.Object);
+        var mmHttp = new MediaMatchHttpClient(httpClient, NullLogger<MediaMatchHttpClient>.Instance, maxRetries: 0);
+        var provider = new TmdbArtworkProvider(mmHttp, new MetadataCache(new MemoryCache(new MemoryCacheOptions())), config, NullLogger<TmdbArtworkProvider>.Instance);
+
+        var artwork = await provider.GetMovieArtworkAsync(550);
+
+        artwork.Should().BeEmpty();
+        handler.Protected().Verify("SendAsync", Times.Never(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
 }

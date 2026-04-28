@@ -34,9 +34,18 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
         _logger = logger;
     }
 
+    /// <summary>Returns true if a TMDb API key has been configured.</summary>
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(_config.TmdbApiKey);
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(string query, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TMDb API key not configured, skipping series search");
+            return Array.Empty<SearchResult>();
+        }
+
         var cacheKey = $"tmdb:tv:search:{query}";
         return await _cache.GetOrCreateAsync<IReadOnlyList<SearchResult>>(cacheKey, async () =>
         {
@@ -60,6 +69,12 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
     /// <inheritdoc />
     public async Task<IReadOnlyList<Episode>> GetEpisodesAsync(SearchResult series, SortOrder sortOrder = SortOrder.Airdate, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TMDb API key not configured, skipping episodes lookup");
+            return Array.Empty<Episode>();
+        }
+
         var cacheKey = $"tmdb:tv:episodes:{series.Id}:{sortOrder}";
         return await _cache.GetOrCreateAsync<IReadOnlyList<Episode>>(cacheKey, async () =>
         {
@@ -112,6 +127,15 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
     /// <inheritdoc />
     public async Task<SeriesInfo> GetSeriesInfoAsync(SearchResult series, CancellationToken ct = default)
     {
+        if (!IsConfigured)
+        {
+            _logger.LogDebug("TMDb API key not configured, skipping series info lookup");
+            return new SeriesInfo(
+                Name: series.Name, Id: series.Id.ToString(CultureInfo.InvariantCulture),
+                Overview: null, Network: null, Status: null, Rating: null,
+                Runtime: null, Genres: []);
+        }
+
         var cacheKey = $"tmdb:tv:info:{series.Id}";
         return await _cache.GetOrCreateAsync(cacheKey, async () =>
         {

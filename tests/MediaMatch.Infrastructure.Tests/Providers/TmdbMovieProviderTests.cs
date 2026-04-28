@@ -210,4 +210,58 @@ public class TmdbMovieProviderTests
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>());
     }
+
+    [Fact]
+    public async Task SearchAsync_NoApiKey_ReturnsEmpty()
+    {
+        var config = new ApiConfiguration { TmdbApiKey = "" };
+        var handler = CreateVerifiableMockHandler(HttpStatusCode.OK, "{}");
+        var httpClient = new HttpClient(handler.Object);
+        var mmHttp = new MediaMatchHttpClient(httpClient, NullLogger<MediaMatchHttpClient>.Instance, maxRetries: 0);
+        var provider = new TmdbMovieProvider(mmHttp, new MetadataCache(new MemoryCache(new MemoryCacheOptions())), config, NullLogger<TmdbMovieProvider>.Instance);
+
+        var results = await provider.SearchAsync("Fight Club");
+
+        results.Should().BeEmpty();
+        handler.Protected().Verify("SendAsync", Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetMovieInfoAsync_NoApiKey_ReturnsMinimalInfo()
+    {
+        var config = new ApiConfiguration { TmdbApiKey = "" };
+        var handler = CreateVerifiableMockHandler(HttpStatusCode.OK, "{}");
+        var httpClient = new HttpClient(handler.Object);
+        var mmHttp = new MediaMatchHttpClient(httpClient, NullLogger<MediaMatchHttpClient>.Instance, maxRetries: 0);
+        var provider = new TmdbMovieProvider(mmHttp, new MetadataCache(new MemoryCache(new MemoryCacheOptions())), config, NullLogger<TmdbMovieProvider>.Instance);
+
+        var movie = new Movie(Name: "Test", Year: 2024, TmdbId: 123);
+        var info = await provider.GetMovieInfoAsync(movie);
+
+        info.Name.Should().Be("Test");
+        info.Year.Should().Be(2024);
+        info.TmdbId.Should().BeNull();
+        handler.Protected().Verify("SendAsync", Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public void IsConfigured_WithApiKey_ReturnsTrue()
+    {
+        var handler = CreateMockHandler(HttpStatusCode.OK, "{}");
+        var provider = CreateProvider(handler);
+        provider.IsConfigured.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsConfigured_WithoutApiKey_ReturnsFalse()
+    {
+        var config = new ApiConfiguration { TmdbApiKey = "" };
+        var handler = CreateMockHandler(HttpStatusCode.OK, "{}");
+        var httpClient = new HttpClient(handler);
+        var mmHttp = new MediaMatchHttpClient(httpClient, NullLogger<MediaMatchHttpClient>.Instance, maxRetries: 0);
+        var provider = new TmdbMovieProvider(mmHttp, new MetadataCache(new MemoryCache(new MemoryCacheOptions())), config, NullLogger<TmdbMovieProvider>.Instance);
+        provider.IsConfigured.Should().BeFalse();
+    }
 }

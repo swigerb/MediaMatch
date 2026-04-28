@@ -5,6 +5,7 @@ using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Services;
 using MediaMatch.Infrastructure;
 using MediaMatch.Infrastructure.Observability;
+using MediaMatch.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
@@ -52,6 +53,13 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         // Apply saved theme and font scale
         await ApplySavedAppearanceAsync();
+
+        // On first launch (no settings file), navigate to Settings with welcome banner
+        var settingsRepo = _serviceProvider.GetRequiredService<ISettingsRepository>();
+        if (!settingsRepo.SettingsFileExists())
+        {
+            MainWindow.NavigateToSettings(firstRun: true);
+        }
 
         // Listen for actual theme changes to keep title bar in sync
         if (MainWindow.Content is FrameworkElement rootElement)
@@ -134,6 +142,10 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         // Notification service
         services.AddSingleton<NotificationService>();
+
+        // Settings persistence
+        services.AddSingleton<ISettingsEncryption, SettingsEncryption>();
+        services.AddSingleton<ISettingsRepository, SettingsRepository>();
 
         // Update services
         services.AddSingleton<IUpdateCheckService, UpdateCheckService>();
