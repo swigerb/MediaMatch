@@ -61,19 +61,19 @@ public partial class PresetEditorViewModel : ViewModelBase
     public string[] LanguageOptions { get; } = ["English", "Japanese", "German", "French", "Spanish", "Korean", "Chinese", "Portuguese", "Italian", "Russian"];
 
     /// <summary>Gets the available episode ordering labels.</summary>
-    public string[] EpisodeOrderOptions { get; } = ["Airdate", "DVD", "Absolute"];
+    public string[] EpisodeOrderOptions { get; } = ["Airdate", "DVD", "Absolute", "Date and Title"];
 
     /// <summary>Gets the available match mode labels.</summary>
     public string[] MatchModeOptions { get; } = ["Opportunistic", "Strict"];
 
     /// <summary>Gets the available rename action labels.</summary>
-    public string[] RenameActionOptions { get; } = ["Move", "Copy", "Hard Link", "Symlink", "Test"];
+    public string[] RenameActionOptions { get; } = ["Rename", "Copy", "Keeplink", "Symlink", "Hardlink"];
 
     private static readonly string[] DatasourceValues = ["auto", "tmdb", "tvdb", "anidb", "musicbrainz"];
     private static readonly string[] LanguageCodes = ["en", "ja", "de", "fr", "es", "ko", "zh", "pt", "it", "ru"];
-    private static readonly string[] EpisodeOrderValues = ["airdate", "dvd", "absolute"];
+    private static readonly string[] EpisodeOrderValues = ["airdate", "dvd", "absolute", "date_title"];
     private static readonly string[] MatchModeValues = ["opportunistic", "strict"];
-    private static readonly RenameAction[] RenameActionValues = [RenameAction.Move, RenameAction.Copy, RenameAction.Hardlink, RenameAction.Symlink, RenameAction.Test];
+    private static readonly RenameAction[] RenameActionValues = [RenameAction.Move, RenameAction.Copy, RenameAction.Reflink, RenameAction.Symlink, RenameAction.Hardlink];
 
     /// <summary>
     /// Populates all ViewModel properties from an existing preset definition.
