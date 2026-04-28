@@ -31,6 +31,7 @@
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\ViewModelBase.cs" Link="LinkedSources\ViewModelBase.cs" />
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\HistoryViewModel.cs" Link="LinkedSources\HistoryViewModel.cs" />
     <Compile Include="..\..\src\MediaMatch.App\ViewModels\HistorySessionViewModel.cs" Link="LinkedSources\HistorySessionViewModel.cs" />
+    <Compile Include="..\..\src\MediaMatch.App\ViewModels\PresetEditorViewModel.cs" Link="LinkedSources\PresetEditorViewModel.cs" />
   </ItemGroup>
 
 </Project>

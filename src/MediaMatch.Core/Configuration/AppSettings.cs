@@ -1,3 +1,5 @@
+using MediaMatch.Core.Enums;
+
 namespace MediaMatch.Core.Configuration;
 
 /// <summary>
@@ -92,6 +94,30 @@ public sealed class PresetDefinitionSettings
 
     /// <summary>Optional post-rename actions.</summary>
     public List<string> PostActions { get; set; } = [];
+
+    /// <summary>Metadata datasource: auto, tmdb, tvdb, anidb, musicbrainz.</summary>
+    public string Datasource { get; set; } = "auto";
+
+    /// <summary>ISO language code for metadata lookups.</summary>
+    public string Language { get; set; } = "en";
+
+    /// <summary>Episode ordering: airdate, dvd, absolute.</summary>
+    public string EpisodeOrder { get; set; } = "airdate";
+
+    /// <summary>Match mode: opportunistic or strict.</summary>
+    public string MatchMode { get; set; } = "opportunistic";
+
+    /// <summary>Rename action to perform (Move, Copy, etc.).</summary>
+    public RenameAction RenameActionType { get; set; } = RenameAction.Move;
+
+    /// <summary>Source input folder path.</summary>
+    public string InputFolder { get; set; } = string.Empty;
+
+    /// <summary>Glob pattern to filter input files (e.g., "*.mkv, *.mp4").</summary>
+    public string IncludeFilter { get; set; } = string.Empty;
+
+    /// <summary>Keyboard shortcut (e.g., "Ctrl+1").</summary>
+    public string KeyboardShortcut { get; set; } = string.Empty;
 }
 
 /// <summary>
