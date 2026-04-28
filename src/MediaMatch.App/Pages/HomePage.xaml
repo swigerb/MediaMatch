@@ -55,25 +55,51 @@
             AutomationProperties.LiveSetting="Assertive"
             AutomationProperties.Name="Notification" />
 
-        <!-- Mode SelectorBar -->
-        <SelectorBar
-            x:Name="ModeSelectorBar"
-            Grid.Row="1"
-            SelectionChanged="ModeSelectorBar_SelectionChanged"
-            AutomationProperties.Name="Mode selector">
-            <SelectorBarItem x:Name="RenameMode" Text="Rename" IsSelected="True"
-                             AutomationProperties.Name="Rename mode" />
-            <SelectorBarItem x:Name="EpisodesMode" Text="Episodes"
-                             AutomationProperties.Name="Episodes mode" />
-            <SelectorBarItem x:Name="SubtitlesMode" Text="Subtitles"
-                             AutomationProperties.Name="Subtitles mode" />
-            <SelectorBarItem x:Name="SfvMode" Text="SFV"
-                             AutomationProperties.Name="SFV verification mode" />
-            <SelectorBarItem x:Name="FilterMode" Text="Filter"
-                             AutomationProperties.Name="Filter mode" />
-            <SelectorBarItem x:Name="ListMode" Text="List"
-                             AutomationProperties.Name="List mode" />
-        </SelectorBar>
+        <!-- Mode SelectorBar + Presets -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <SelectorBar
+                x:Name="ModeSelectorBar"
+                Grid.Column="0"
+                SelectionChanged="ModeSelectorBar_SelectionChanged"
+                AutomationProperties.Name="Mode selector">
+                <SelectorBarItem x:Name="RenameMode" Text="Rename" IsSelected="True"
+                                 AutomationProperties.Name="Rename mode" />
+                <SelectorBarItem x:Name="EpisodesMode" Text="Episodes"
+                                 AutomationProperties.Name="Episodes mode" />
+                <SelectorBarItem x:Name="SubtitlesMode" Text="Subtitles"
+                                 AutomationProperties.Name="Subtitles mode" />
+                <SelectorBarItem x:Name="SfvMode" Text="SFV"
+                                 AutomationProperties.Name="SFV verification mode" />
+                <SelectorBarItem x:Name="FilterMode" Text="Filter"
+                                 AutomationProperties.Name="Filter mode" />
+                <SelectorBarItem x:Name="ListMode" Text="List"
+                                 AutomationProperties.Name="List mode" />
+            </SelectorBar>
+
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Spacing="4"
+                VerticalAlignment="Center">
+                <DropDownButton
+                    x:Name="PresetsDropDown"
+                    AutomationProperties.Name="Presets"
+                    ToolTipService.ToolTip="Apply a saved preset">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE762;" FontSize="14" />
+                        <TextBlock Text="Presets" />
+                    </StackPanel>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout x:Name="PresetsFlyout" />
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+            </StackPanel>
+        </Grid>
 
         <!-- Batch Progress Bar -->
         <StackPanel
@@ -207,6 +233,14 @@
                     <AppBarButton Icon="Paste" ToolTipService.ToolTip="Paste from clipboard"
                                   Command="{x:Bind ViewModel.PasteFilesCommand}"
                                   AutomationProperties.Name="Paste files" />
+                    <AppBarSeparator />
+                    <AppBarButton ToolTipService.ToolTip="MediaInfo Inspector"
+                                  Click="MediaInfoInspector_Click"
+                                  AutomationProperties.Name="MediaInfo Inspector">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE946;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                 </CommandBar>
             </Grid>
 

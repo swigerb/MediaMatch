@@ -164,7 +164,8 @@ public partial class App : Microsoft.UI.Xaml.Application
             sp.GetRequiredService<IBatchOperationService>(),
             sp.GetRequiredService<IUndoService>(),
             sp.GetRequiredService<IMatchingPipeline>(),
-            sp.GetRequiredService<ILogger<HomeViewModel>>()));
+            sp.GetRequiredService<ILogger<HomeViewModel>>(),
+            sp.GetRequiredService<ISettingsRepository>()));
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();
         services.AddTransient<HistoryViewModel>();
@@ -183,6 +184,9 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddTransient<ListPanelViewModel>(sp => new ListPanelViewModel(
             sp.GetRequiredService<IExpressionEngine>(),
             sp.GetRequiredService<ILogger<ListPanelViewModel>>()));
+        services.AddTransient<MediaInfoInspectorViewModel>(sp => new MediaInfoInspectorViewModel(
+            sp.GetRequiredService<IMediaInfoService>(),
+            sp.GetRequiredService<ILogger<MediaInfoInspectorViewModel>>()));
 
         // Thumbnail service
         services.AddSingleton<ThumbnailService>();

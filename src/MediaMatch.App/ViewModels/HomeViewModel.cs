@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediaMatch.App.Dialogs;
 using MediaMatch.App.Services;
+using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Enums;
 using MediaMatch.Core.Models;
 using MediaMatch.Core.Services;
@@ -21,6 +22,7 @@ public partial class HomeViewModel : ViewModelBase
     private readonly IBatchOperationService? _batchService;
     private readonly IUndoService? _undoService;
     private readonly IMatchingPipeline? _matchingPipeline;
+    private readonly ISettingsRepository? _settingsRepository;
     private readonly ILogger<HomeViewModel> _logger;
     private CancellationTokenSource? _batchCts;
     private NotificationService? _notificationService;
@@ -57,6 +59,12 @@ public partial class HomeViewModel : ViewModelBase
     [ObservableProperty]
     public partial int SelectedRenameActionIndex { get; set; }
 
+    /// <summary>Saved presets loaded from settings.</summary>
+    public ObservableCollection<PresetDefinitionSettings> Presets { get; } = [];
+
+    [ObservableProperty]
+    public partial PresetDefinitionSettings? SelectedPreset { get; set; }
+
     public int FileCount => OriginalFiles.Count;
     public int MatchedCount => MatchedFiles.Count;
     public bool HasFiles => OriginalFiles.Count > 0;
@@ -79,17 +87,19 @@ public partial class HomeViewModel : ViewModelBase
     /// <summary>
     /// Design-time / test constructor (no services).
     /// </summary>
-    public HomeViewModel() : this(null, null, null, null) { }
+    public HomeViewModel() : this(null, null, null, null, null) { }
 
     public HomeViewModel(
         IBatchOperationService? batchService,
         IUndoService? undoService,
         IMatchingPipeline? matchingPipeline,
-        ILogger<HomeViewModel>? logger)
+        ILogger<HomeViewModel>? logger,
+        ISettingsRepository? settingsRepository = null)
     {
         _batchService = batchService;
         _undoService = undoService;
         _matchingPipeline = matchingPipeline;
+        _settingsRepository = settingsRepository;
         _logger = logger ?? NullLogger<HomeViewModel>.Instance;
 
         OriginalFiles.CollectionChanged += (_, _) =>
@@ -111,6 +121,7 @@ public partial class HomeViewModel : ViewModelBase
         };
 
         _ = RefreshCanUndoAsync();
+        _ = LoadPresetsAsync();
     }
 
     partial void OnIsScanningChanged(bool value)
@@ -585,5 +596,84 @@ public partial class HomeViewModel : ViewModelBase
 
         var result = await dialog.ShowAsync();
         return result == ContentDialogResult.Primary ? vm.SelectedMatch : null;
+    }
+
+    // ── Preset support ──────────────────────────────────────────────
+
+    private static readonly string[] DatasourceValues = ["auto", "tmdb", "tvdb", "anidb", "musicbrainz"];
+    private static readonly string[] MatchModeValues = ["opportunistic", "strict"];
+    private static readonly RenameAction[] RenameActionValues =
+        [RenameAction.Move, RenameAction.Copy, RenameAction.Hardlink, RenameAction.Symlink, RenameAction.Test];
+
+    /// <summary>Loads presets from persisted settings into the Presets collection.</summary>
+    public async Task LoadPresetsAsync()
+    {
+        if (_settingsRepository is null) return;
+
+        try
+        {
+            var settings = await _settingsRepository.LoadAsync();
+            Presets.Clear();
+            foreach (var p in settings.Presets)
+                Presets.Add(p);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load presets");
+        }
+    }
+
+    /// <summary>Applies the selected preset's settings to the current session.</summary>
+    partial void OnSelectedPresetChanged(PresetDefinitionSettings? value)
+    {
+        if (value is null) return;
+        ApplyPreset(value);
+    }
+
+    /// <summary>Maps a preset definition to the current session options.</summary>
+    public void ApplyPreset(PresetDefinitionSettings preset)
+    {
+        _logger.LogInformation("Applying preset '{Name}'", preset.Name);
+
+        // Match mode → SelectedModeIndex (0 = opportunistic, 1 = strict)
+        var modeIdx = Array.IndexOf(MatchModeValues, preset.MatchMode);
+        if (modeIdx >= 0) SelectedModeIndex = modeIdx;
+
+        // Rename action → SelectedRenameActionIndex
+        var actionIdx = Array.IndexOf(RenameActionValues, preset.RenameActionType);
+        if (actionIdx >= 0) SelectedRenameActionIndex = actionIdx;
+
+        // If the preset specifies an input folder, load it
+        if (!string.IsNullOrWhiteSpace(preset.InputFolder) && Directory.Exists(preset.InputFolder))
+        {
+            SelectedFolder = preset.InputFolder;
+            AddFiles(Directory.GetFiles(preset.InputFolder, "*.*", SearchOption.AllDirectories).ToList());
+        }
+
+        _notificationService?.ShowSuccess($"Preset \"{preset.Name}\" applied");
+    }
+
+    /// <summary>Opens the preset editor dialog to manage presets.</summary>
+    [RelayCommand]
+    private async Task EditPresetsAsync()
+    {
+        if (_settingsRepository is null) return;
+
+        var settings = await _settingsRepository.LoadAsync();
+        var presets = settings.Presets.ToList();
+
+        var dialog = new PresetManagerDialog(presets)
+        {
+            XamlRoot = App.MainWindow.Content.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            settings.Presets = dialog.Presets;
+            await _settingsRepository.SaveAsync(settings);
+            await LoadPresetsAsync();
+            _notificationService?.ShowSuccess("Presets saved");
+        }
     }
 }

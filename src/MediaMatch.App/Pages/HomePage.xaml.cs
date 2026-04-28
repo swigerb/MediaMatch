@@ -22,6 +22,46 @@ public sealed partial class HomePage : Page
         var notificationService = App.GetService<NotificationService>();
         notificationService.SetInfoBar(NotificationBar);
         ViewModel.SetNotificationService(notificationService);
+
+        // Rebuild the presets flyout whenever the collection changes
+        ViewModel.Presets.CollectionChanged += (_, _) => RebuildPresetsFlyout();
+        RebuildPresetsFlyout();
+    }
+
+    private void RebuildPresetsFlyout()
+    {
+        PresetsFlyout.Items.Clear();
+
+        foreach (var preset in ViewModel.Presets)
+        {
+            var item = new MenuFlyoutItem
+            {
+                Text = preset.Name,
+                Tag = preset,
+                Icon = new FontIcon { Glyph = "\uE762" }
+            };
+            item.Click += (s, _) =>
+            {
+                if (s is MenuFlyoutItem { Tag: Core.Configuration.PresetDefinitionSettings p })
+                    ViewModel.ApplyPreset(p);
+            };
+            PresetsFlyout.Items.Add(item);
+        }
+
+        if (ViewModel.Presets.Count > 0)
+            PresetsFlyout.Items.Add(new MenuFlyoutSeparator());
+
+        var editItem = new MenuFlyoutItem
+        {
+            Text = "Edit Presets\u2026",
+            Icon = new FontIcon { Glyph = "\uE70F" }
+        };
+        editItem.Click += async (_, _) =>
+        {
+            if (ViewModel.EditPresetsCommand.CanExecute(null))
+                await ViewModel.EditPresetsCommand.ExecuteAsync(null);
+        };
+        PresetsFlyout.Items.Add(editItem);
     }
 
     private void Page_DragOver(object sender, DragEventArgs e)
@@ -105,6 +145,21 @@ public sealed partial class HomePage : Page
     private async Task ShowKeyboardShortcutsAsync()
     {
         var dialog = new KeyboardShortcutsDialog
+        {
+            XamlRoot = this.XamlRoot
+        };
+        await dialog.ShowAsync();
+    }
+
+    private async void MediaInfoInspector_Click(object sender, RoutedEventArgs e)
+    {
+        await ShowMediaInfoInspectorAsync(filePath: null);
+    }
+
+    private async Task ShowMediaInfoInspectorAsync(string? filePath)
+    {
+        var vm = App.GetService<MediaInfoInspectorViewModel>();
+        var dialog = new MediaInfoInspectorDialog(vm, filePath)
         {
             XamlRoot = this.XamlRoot
         };
