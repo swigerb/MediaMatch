@@ -12,6 +12,7 @@
     PrimaryButtonText="Apply"
     mc:Ignorable="d">
 
+    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="600">
     <StackPanel MinWidth="560" Spacing="16">
 
         <!-- Example expressions -->
@@ -86,6 +87,10 @@
                 <TextBlock Text="Available Tokens" />
             </Expander.Header>
             <Expander.Content>
+                <ScrollViewer
+                    MaxHeight="280"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.AvailableTokens}">
                     <ItemsRepeater.Layout>
                         <UniformGridLayout
@@ -119,8 +124,10 @@
                         </DataTemplate>
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>
+                </ScrollViewer>
             </Expander.Content>
         </Expander>
 
     </StackPanel>
+    </ScrollViewer>
 </ContentDialog>
