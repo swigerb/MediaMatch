@@ -97,12 +97,12 @@ public sealed class PresetEditorViewModelTests
     {
         var vm = new PresetEditorViewModel();
 
-        for (var i = 0; i < PresetEditorViewModel.DatasourceOptions.Length; i++)
+        for (var i = 0; i < vm.DatasourceOptions.Length; i++)
         {
             vm.SelectedDatasourceIndex = i;
             var preset = vm.ToPreset();
             preset.Datasource.Should().NotBeNullOrEmpty(
-                $"index {i} ({PresetEditorViewModel.DatasourceOptions[i]}) should map to a datasource string");
+                $"index {i} ({vm.DatasourceOptions[i]}) should map to a datasource string");
         }
     }
 

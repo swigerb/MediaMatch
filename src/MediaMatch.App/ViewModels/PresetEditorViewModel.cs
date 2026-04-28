@@ -55,19 +55,19 @@ public partial class PresetEditorViewModel : ViewModelBase
     public partial int SelectedRenameActionIndex { get; set; }
 
     /// <summary>Gets the available data source labels.</summary>
-    public static string[] DatasourceOptions { get; } = ["Auto", "TMDb", "TVDb", "AniDB", "MusicBrainz"];
+    public string[] DatasourceOptions { get; } = ["Auto", "TMDb", "TVDb", "AniDB", "MusicBrainz"];
 
     /// <summary>Gets the available language labels.</summary>
-    public static string[] LanguageOptions { get; } = ["English", "Japanese", "German", "French", "Spanish", "Korean", "Chinese", "Portuguese", "Italian", "Russian"];
+    public string[] LanguageOptions { get; } = ["English", "Japanese", "German", "French", "Spanish", "Korean", "Chinese", "Portuguese", "Italian", "Russian"];
 
     /// <summary>Gets the available episode ordering labels.</summary>
-    public static string[] EpisodeOrderOptions { get; } = ["Airdate", "DVD", "Absolute"];
+    public string[] EpisodeOrderOptions { get; } = ["Airdate", "DVD", "Absolute"];
 
     /// <summary>Gets the available match mode labels.</summary>
-    public static string[] MatchModeOptions { get; } = ["Opportunistic", "Strict"];
+    public string[] MatchModeOptions { get; } = ["Opportunistic", "Strict"];
 
     /// <summary>Gets the available rename action labels.</summary>
-    public static string[] RenameActionOptions { get; } = ["Move", "Copy", "Hard Link", "Symlink", "Test"];
+    public string[] RenameActionOptions { get; } = ["Move", "Copy", "Hard Link", "Symlink", "Test"];
 
     private static readonly string[] DatasourceValues = ["auto", "tmdb", "tvdb", "anidb", "musicbrainz"];
     private static readonly string[] LanguageCodes = ["en", "ja", "de", "fr", "es", "ko", "zh", "pt", "it", "ru"];
