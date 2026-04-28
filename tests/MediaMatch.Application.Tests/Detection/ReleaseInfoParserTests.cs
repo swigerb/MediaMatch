@@ -4,7 +4,7 @@ using MediaMatch.Core.Enums;
 
 namespace MediaMatch.Application.Tests.Detection;
 
-public class ReleaseInfoParserTests
+public sealed class ReleaseInfoParserTests
 {
     private readonly ReleaseInfoParser _parser = new();
 

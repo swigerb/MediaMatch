@@ -11,7 +11,7 @@ namespace MediaMatch.EndToEnd.Tests.Scanning;
 /// E2E: ParallelFileScanner with real temp directories — streaming results via Channel{T},
 /// NAS detection reduces concurrency, extension filtering works end-to-end.
 /// </summary>
-public class ParallelFileScannerE2ETests : IDisposable
+public sealed class ParallelFileScannerE2ETests : IDisposable
 {
     private readonly TempDirectoryFixture _tempDir = new();
 

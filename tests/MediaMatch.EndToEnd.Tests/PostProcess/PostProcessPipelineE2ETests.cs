@@ -10,7 +10,7 @@ namespace MediaMatch.EndToEnd.Tests.PostProcess;
 /// <summary>
 /// E2E: Post-process pipeline — configure actions → run → verify execution order → failure isolation.
 /// </summary>
-public class PostProcessPipelineE2ETests
+public sealed class PostProcessPipelineE2ETests
 {
     private static FileOrganizationResult MakeResult(string original, string renamed) =>
         new(original, renamed, 0.9f, Core.Enums.MediaType.Movie, [], true);

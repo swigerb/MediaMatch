@@ -16,7 +16,7 @@ namespace MediaMatch.EndToEnd.Tests.Pipeline;
 /// <summary>
 /// E2E: Full file matching pipeline — detect media type → match providers → generate rename preview.
 /// </summary>
-public class FileMatchingPipelineE2ETests : IDisposable
+public sealed class FileMatchingPipelineE2ETests : IDisposable
 {
     private readonly MediaMatchFixture _fixture = new();
 

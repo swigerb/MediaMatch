@@ -4,7 +4,7 @@ using MediaMatch.Core.Models;
 
 namespace MediaMatch.Application.Tests.Expressions;
 
-public class ScribanExpressionEngineTests
+public sealed class ScribanExpressionEngineTests
 {
     private readonly ScribanExpressionEngine _engine = new();
 

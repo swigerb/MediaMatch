@@ -11,7 +11,7 @@ namespace MediaMatch.EndToEnd.Tests.Batch;
 /// <summary>
 /// E2E: Batch operations — queue files → process → verify results → undo → verify restored.
 /// </summary>
-public class BatchOperationsE2ETests : IDisposable
+public sealed class BatchOperationsE2ETests : IDisposable
 {
     private readonly MediaMatchFixture _fixture = new();
 

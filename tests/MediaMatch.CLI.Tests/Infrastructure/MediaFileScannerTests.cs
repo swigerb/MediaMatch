@@ -3,7 +3,7 @@ using MediaMatch.CLI.Infrastructure;
 
 namespace MediaMatch.CLI.Tests.Infrastructure;
 
-public class MediaFileScannerTests
+public sealed class MediaFileScannerTests
 {
     [Fact]
     public void Scan_EmptyDirectory_ReturnsEmpty()

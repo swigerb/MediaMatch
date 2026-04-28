@@ -7,7 +7,7 @@ using Moq;
 
 namespace MediaMatch.Application.Tests.Services;
 
-public class FileOrganizationServiceTests
+public sealed class FileOrganizationServiceTests
 {
     private readonly Mock<IRenamePreviewService> _previewService = new();
     private readonly Mock<IFileSystem> _fileSystem = new();

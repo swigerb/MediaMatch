@@ -32,11 +32,7 @@ public sealed class HistoryViewModelTests
             .ReturnsAsync(entries);
 
         var vm = new App.ViewModels.HistoryViewModel(_undoServiceMock.Object);
-
-        // Act
         await vm.LoadHistoryCommand.ExecuteAsync(null);
-
-        // Assert
         vm.Sessions.Should().HaveCount(2);
         vm.Sessions[0].FileCount.Should().Be(3); // most recent session first
         vm.Sessions[1].FileCount.Should().Be(2);
@@ -47,17 +43,12 @@ public sealed class HistoryViewModelTests
     [Fact]
     public async Task LoadHistory_EmptyJournal_SetsIsEmpty()
     {
-        // Arrange
         _undoServiceMock
             .Setup(s => s.GetJournalAsync())
             .ReturnsAsync(new List<UndoEntry>());
 
         var vm = new App.ViewModels.HistoryViewModel(_undoServiceMock.Object);
-
-        // Act
         await vm.LoadHistoryCommand.ExecuteAsync(null);
-
-        // Assert
         vm.Sessions.Should().BeEmpty();
         vm.IsEmpty.Should().BeTrue();
         vm.HasHistory.Should().BeFalse();
@@ -67,7 +58,6 @@ public sealed class HistoryViewModelTests
     [Fact]
     public async Task RevertSelected_CallsUndoService()
     {
-        // Arrange
         var baseTime = DateTimeOffset.UtcNow;
         var entries = new List<UndoEntry>
         {
@@ -93,11 +83,7 @@ public sealed class HistoryViewModelTests
         await vm.LoadHistoryCommand.ExecuteAsync(null);
 
         vm.SelectedSession = vm.Sessions.First();
-
-        // Act
         await vm.RevertSelectedCommand.ExecuteAsync(null);
-
-        // Assert
         _undoServiceMock.Verify(s => s.UndoAsync(2, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -129,7 +115,6 @@ public sealed class HistoryViewModelTests
     [Fact]
     public void GroupIntoSessions_EntriesWithinGap_FormsSingleSession()
     {
-        // Arrange
         var baseTime = DateTimeOffset.UtcNow;
         var entries = new List<UndoEntry>
         {
@@ -137,11 +122,7 @@ public sealed class HistoryViewModelTests
             CreateEntry(baseTime.AddSeconds(-20), "b"),
             CreateEntry(baseTime.AddSeconds(-40), "c"),
         };
-
-        // Act
         var sessions = App.ViewModels.HistoryViewModel.GroupIntoSessions(entries);
-
-        // Assert
         sessions.Should().HaveCount(1);
         sessions[0].FileCount.Should().Be(3);
         sessions[0].Summary.Should().Be("3 files renamed");
@@ -150,7 +131,6 @@ public sealed class HistoryViewModelTests
     [Fact]
     public void GroupIntoSessions_EntriesBeyondGap_FormsSeparateSessions()
     {
-        // Arrange
         var baseTime = DateTimeOffset.UtcNow;
         var entries = new List<UndoEntry>
         {
@@ -158,11 +138,7 @@ public sealed class HistoryViewModelTests
             CreateEntry(baseTime.AddMinutes(-10), "b"),
             CreateEntry(baseTime.AddMinutes(-20), "c"),
         };
-
-        // Act
         var sessions = App.ViewModels.HistoryViewModel.GroupIntoSessions(entries);
-
-        // Assert
         sessions.Should().HaveCount(3);
         sessions.Should().AllSatisfy(s => s.FileCount.Should().Be(1));
     }

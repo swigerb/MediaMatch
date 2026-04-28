@@ -3,7 +3,7 @@ using MediaMatch.Core.Configuration;
 
 namespace MediaMatch.App.Tests.Configuration;
 
-public class AppSettingsTests
+public sealed class AppSettingsTests
 {
     [Fact]
     public void AppSettings_DefaultValues_AreCorrect()

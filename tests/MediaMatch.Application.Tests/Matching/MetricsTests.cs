@@ -5,7 +5,7 @@ using MediaMatch.Core.Models;
 
 namespace MediaMatch.Application.Tests.Matching;
 
-public class StringEqualsMetricTests
+public sealed class StringEqualsMetricTests
 {
     private readonly StringEqualsMetric _metric = new();
 
@@ -35,7 +35,7 @@ public class StringEqualsMetricTests
     }
 }
 
-public class SubstringMetricTests
+public sealed class SubstringMetricTests
 {
     private readonly SubstringMetric _metric = new();
 
@@ -65,7 +65,7 @@ public class SubstringMetricTests
     }
 }
 
-public class NameSimilarityMetricTests
+public sealed class NameSimilarityMetricTests
 {
     private readonly NameSimilarityMetric _metric = new();
 
@@ -100,7 +100,7 @@ public class NameSimilarityMetricTests
     }
 }
 
-public class SeasonEpisodeMetricTests
+public sealed class SeasonEpisodeMetricTests
 {
     private readonly SeasonEpisodeMetric _metric = new();
 
@@ -144,7 +144,7 @@ public class SeasonEpisodeMetricTests
     }
 }
 
-public class DateMetricTests
+public sealed class DateMetricTests
 {
     private readonly DateMetric _metric = new();
 
@@ -190,7 +190,7 @@ public class DateMetricTests
     }
 }
 
-public class MetricCascadeTests
+public sealed class MetricCascadeTests
 {
     [Fact]
     public void ReturnsFirstNonZero()
@@ -211,7 +211,7 @@ public class MetricCascadeTests
     }
 }
 
-public class MetricAvgTests
+public sealed class MetricAvgTests
 {
     [Fact]
     public void Averages_AllScores()
@@ -232,7 +232,7 @@ public class MetricAvgTests
     }
 }
 
-public class MetricMinTests
+public sealed class MetricMinTests
 {
     [Fact]
     public void ReturnsMinimumScore()

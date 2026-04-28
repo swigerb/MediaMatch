@@ -14,7 +14,7 @@ using Moq.Protected;
 
 namespace MediaMatch.Infrastructure.Tests.Providers;
 
-public class TmdbMovieProviderTests
+public sealed class TmdbMovieProviderTests
 {
     private static readonly ApiConfiguration DefaultConfig = new()
     {

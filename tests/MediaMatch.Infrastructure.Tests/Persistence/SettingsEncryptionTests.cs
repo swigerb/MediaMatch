@@ -5,7 +5,7 @@ using MediaMatch.Infrastructure.Persistence;
 namespace MediaMatch.Infrastructure.Tests.Persistence;
 
 [SupportedOSPlatform("windows")]
-public class SettingsEncryptionTests
+public sealed class SettingsEncryptionTests
 {
     private readonly SettingsEncryption _sut = new();
 
@@ -20,16 +20,12 @@ public class SettingsEncryptionTests
         decrypted.Should().Be(original);
     }
 
-    [Fact]
-    public void Encrypt_EmptyString_ReturnsEmpty()
+    [Theory]
+    [InlineData("")]
+    public void EncryptAndDecrypt_EmptyString_ReturnsEmpty(string value)
     {
-        _sut.Encrypt(string.Empty).Should().BeEmpty();
-    }
-
-    [Fact]
-    public void Decrypt_EmptyString_ReturnsEmpty()
-    {
-        _sut.Decrypt(string.Empty).Should().BeEmpty();
+        _sut.Encrypt(value).Should().BeEmpty();
+        _sut.Decrypt(value).Should().BeEmpty();
     }
 
     [Fact]
@@ -48,16 +44,12 @@ public class SettingsEncryptionTests
         _sut.IsEncrypted(encrypted).Should().BeTrue();
     }
 
-    [Fact]
-    public void IsEncrypted_PlainValue_ReturnsFalse()
+    [Theory]
+    [InlineData("just-plain-text")]
+    [InlineData("")]
+    public void IsEncrypted_NonEncryptedValue_ReturnsFalse(string value)
     {
-        _sut.IsEncrypted("just-plain-text").Should().BeFalse();
-    }
-
-    [Fact]
-    public void IsEncrypted_EmptyString_ReturnsFalse()
-    {
-        _sut.IsEncrypted(string.Empty).Should().BeFalse();
+        _sut.IsEncrypted(value).Should().BeFalse();
     }
 
     [Fact]

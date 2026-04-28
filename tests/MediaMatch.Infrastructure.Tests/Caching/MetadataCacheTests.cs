@@ -4,7 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace MediaMatch.Infrastructure.Tests.Caching;
 
-public class MetadataCacheTests : IDisposable
+public sealed class MetadataCacheTests : IDisposable
 {
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions());
     private readonly MetadataCache _sut;

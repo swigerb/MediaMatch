@@ -50,17 +50,12 @@ public sealed class MediaInfoInspectorViewModelTests
     [Fact]
     public async Task LoadFile_PopulatesAllProperties()
     {
-        // Arrange
         var result = CreateSampleResult();
         _mediaInfoServiceMock.Setup(s => s.IsAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mediaInfoServiceMock.Setup(s => s.GetMediaInfoAsync(@"C:\video\sample.mkv", It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
         var vm = new MediaInfoInspectorViewModel(_mediaInfoServiceMock.Object, null);
-
-        // Act
         await vm.LoadFileCommand.ExecuteAsync(@"C:\video\sample.mkv");
-
-        // Assert
         vm.FilePath.Should().Be(@"C:\video\sample.mkv");
         vm.IsLoading.Should().BeFalse();
         vm.ErrorMessage.Should().BeEmpty();
@@ -86,15 +81,10 @@ public sealed class MediaInfoInspectorViewModelTests
     [Fact]
     public async Task LoadFile_FfprobeUnavailable_SetsErrorMessage()
     {
-        // Arrange
         _mediaInfoServiceMock.Setup(s => s.IsAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         var vm = new MediaInfoInspectorViewModel(_mediaInfoServiceMock.Object, null);
-
-        // Act
         await vm.LoadFileCommand.ExecuteAsync(@"C:\video\sample.mkv");
-
-        // Assert
         vm.IsFfprobeAvailable.Should().BeFalse();
         vm.ErrorMessage.Should().Contain("ffprobe");
         vm.ErrorMessage.Should().Contain("ffmpeg.org");
@@ -105,16 +95,11 @@ public sealed class MediaInfoInspectorViewModelTests
     [Fact]
     public async Task LoadFile_NullResult_ShowsError()
     {
-        // Arrange
         _mediaInfoServiceMock.Setup(s => s.IsAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mediaInfoServiceMock.Setup(s => s.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((MediaInfoResult?)null);
 
         var vm = new MediaInfoInspectorViewModel(_mediaInfoServiceMock.Object, null);
-
-        // Act
         await vm.LoadFileCommand.ExecuteAsync(@"C:\video\notamedia.txt");
-
-        // Assert
         vm.ErrorMessage.Should().Contain("Could not read");
         vm.HasResult.Should().BeFalse();
     }
@@ -122,17 +107,12 @@ public sealed class MediaInfoInspectorViewModelTests
     [Fact]
     public async Task LoadFile_ServiceThrows_ShowsError()
     {
-        // Arrange
         _mediaInfoServiceMock.Setup(s => s.IsAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mediaInfoServiceMock.Setup(s => s.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
 
         var vm = new MediaInfoInspectorViewModel(_mediaInfoServiceMock.Object, null);
-
-        // Act
         await vm.LoadFileCommand.ExecuteAsync(@"C:\video\broken.mkv");
-
-        // Assert
         vm.ErrorMessage.Should().Contain("boom");
         vm.IsLoading.Should().BeFalse();
         vm.HasResult.Should().BeFalse();
@@ -141,7 +121,6 @@ public sealed class MediaInfoInspectorViewModelTests
     [Fact]
     public async Task CopyToClipboard_WithResult_CallsExportAsText()
     {
-        // Arrange
         var result = CreateSampleResult();
         _mediaInfoServiceMock.Setup(s => s.IsAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mediaInfoServiceMock.Setup(s => s.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
@@ -149,11 +128,7 @@ public sealed class MediaInfoInspectorViewModelTests
         string? copiedText = null;
         var vm = new TestableMediaInfoInspectorViewModel(_mediaInfoServiceMock.Object, t => copiedText = t);
         await vm.LoadFileCommand.ExecuteAsync(@"C:\video\sample.mkv");
-
-        // Act
         vm.CopyToClipboardCommand.Execute(null);
-
-        // Assert
         copiedText.Should().NotBeNullOrEmpty();
         copiedText.Should().Contain("File: C:\\video\\sample.mkv");
         copiedText.Should().Contain("Format: Matroska");
@@ -163,27 +138,17 @@ public sealed class MediaInfoInspectorViewModelTests
     [Fact]
     public void CopyToClipboard_WithoutResult_DoesNothing()
     {
-        // Arrange
         string? copiedText = null;
         var vm = new TestableMediaInfoInspectorViewModel(_mediaInfoServiceMock.Object, t => copiedText = t);
-
-        // Act
         vm.CopyToClipboardCommand.Execute(null);
-
-        // Assert
         copiedText.Should().BeNull();
     }
 
     [Fact]
     public async Task LoadFile_EmptyPath_DoesNothing()
     {
-        // Arrange
         var vm = new MediaInfoInspectorViewModel(_mediaInfoServiceMock.Object, null);
-
-        // Act
         await vm.LoadFileCommand.ExecuteAsync("");
-
-        // Assert
         vm.FilePath.Should().BeEmpty();
         _mediaInfoServiceMock.Verify(s => s.IsAvailableAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -191,7 +156,6 @@ public sealed class MediaInfoInspectorViewModelTests
     [Fact]
     public async Task LoadFile_SecondLoad_ClearsPreviousData()
     {
-        // Arrange
         var result1 = CreateSampleResult();
         var result2 = new MediaInfoResult
         {
@@ -208,8 +172,6 @@ public sealed class MediaInfoInspectorViewModelTests
             .ReturnsAsync(result2);
 
         var vm = new MediaInfoInspectorViewModel(_mediaInfoServiceMock.Object, null);
-
-        // Act
         await vm.LoadFileCommand.ExecuteAsync(@"C:\video\sample.mkv");
         vm.VideoStreams.Should().HaveCount(1);
 

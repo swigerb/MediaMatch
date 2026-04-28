@@ -4,7 +4,7 @@ using MediaMatch.Core.Enums;
 
 namespace MediaMatch.Application.Tests.Services;
 
-public class MediaAnalysisServiceTests
+public sealed class MediaAnalysisServiceTests
 {
     private readonly MediaAnalysisService _sut = new();
 

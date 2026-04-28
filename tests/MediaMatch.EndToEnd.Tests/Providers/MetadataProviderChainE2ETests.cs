@@ -13,7 +13,7 @@ namespace MediaMatch.EndToEnd.Tests.Providers;
 /// <summary>
 /// E2E: MetadataProviderChain priority ordering, confidence short-circuit, and fallback behaviour.
 /// </summary>
-public class MetadataProviderChainE2ETests
+public sealed class MetadataProviderChainE2ETests
 {
     private static Episode MakeEpisode(string series, int season, int ep, string title) =>
         new(series, season, ep, title);

@@ -8,59 +8,19 @@ public sealed class ChecksumServiceTests
 {
     private readonly IChecksumService _service = new ChecksumService();
 
-    [Fact]
-    public async Task ComputeAsync_Crc32_ReturnsExpectedHash()
-    {
-        // Arrange
-        var tempFile = Path.GetTempFileName();
-        try
-        {
-            await File.WriteAllTextAsync(tempFile, "Hello, World!");
-
-            // Act
-            var hash = await _service.ComputeAsync(tempFile, ChecksumAlgorithm.Crc32);
-
-            // Assert
-            hash.Should().NotBeNullOrEmpty();
-            hash.Should().HaveLength(8, "CRC32 is 4 bytes = 8 hex chars");
-        }
-        finally
-        {
-            File.Delete(tempFile);
-        }
-    }
-
-    [Fact]
-    public async Task ComputeAsync_Md5_ReturnsExpectedHash()
+    [Theory]
+    [InlineData(ChecksumAlgorithm.Crc32, 8)]
+    [InlineData(ChecksumAlgorithm.Md5, 32)]
+    [InlineData(ChecksumAlgorithm.Sha256, 64)]
+    public async Task ComputeAsync_Algorithm_ReturnsExpectedLength(ChecksumAlgorithm algorithm, int expectedLength)
     {
         var tempFile = Path.GetTempFileName();
         try
         {
             await File.WriteAllTextAsync(tempFile, "Hello, World!");
-
-            var hash = await _service.ComputeAsync(tempFile, ChecksumAlgorithm.Md5);
-
+            var hash = await _service.ComputeAsync(tempFile, algorithm);
             hash.Should().NotBeNullOrEmpty();
-            hash.Should().HaveLength(32, "MD5 is 16 bytes = 32 hex chars");
-        }
-        finally
-        {
-            File.Delete(tempFile);
-        }
-    }
-
-    [Fact]
-    public async Task ComputeAsync_Sha256_ReturnsExpectedHash()
-    {
-        var tempFile = Path.GetTempFileName();
-        try
-        {
-            await File.WriteAllTextAsync(tempFile, "Hello, World!");
-
-            var hash = await _service.ComputeAsync(tempFile, ChecksumAlgorithm.Sha256);
-
-            hash.Should().NotBeNullOrEmpty();
-            hash.Should().HaveLength(64, "SHA256 is 32 bytes = 64 hex chars");
+            hash.Should().HaveLength(expectedLength);
         }
         finally
         {

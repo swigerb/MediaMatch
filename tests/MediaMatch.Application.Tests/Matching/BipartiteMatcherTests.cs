@@ -5,7 +5,7 @@ using MediaMatch.Core.Matching;
 
 namespace MediaMatch.Application.Tests.Matching;
 
-public class BipartiteMatcherTests
+public sealed class BipartiteMatcherTests
 {
     [Fact]
     public void PerfectOneToOne_AllMatched()

@@ -7,7 +7,7 @@ namespace MediaMatch.EndToEnd.Tests.Expressions;
 /// <summary>
 /// E2E: Full template rendering with all binding tokens — verifies complete path generation.
 /// </summary>
-public class ExpressionEngineE2ETests
+public sealed class ExpressionEngineE2ETests
 {
     private readonly ScribanExpressionEngine _engine = new();
 

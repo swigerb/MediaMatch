@@ -9,7 +9,7 @@ using Moq.Protected;
 
 namespace MediaMatch.Infrastructure.Tests.Http;
 
-public class MediaMatchHttpClientTests
+public sealed class MediaMatchHttpClientTests
 {
     private record TestPayload(string Name, int Value);
 

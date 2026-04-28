@@ -4,7 +4,7 @@ using MediaMatch.Core.Models;
 
 namespace MediaMatch.Application.Tests.Matching;
 
-public class EpisodeMatcherTests
+public sealed class EpisodeMatcherTests
 {
     private readonly EpisodeMatcher _matcher = new();
 

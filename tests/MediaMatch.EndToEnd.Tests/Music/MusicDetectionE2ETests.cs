@@ -14,7 +14,7 @@ namespace MediaMatch.EndToEnd.Tests.Music;
 /// <summary>
 /// E2E: Music detection → tag extraction → mock MusicBrainz match → rename generation.
 /// </summary>
-public class MusicDetectionE2ETests
+public sealed class MusicDetectionE2ETests
 {
     private readonly ScribanExpressionEngine _engine = new();
 

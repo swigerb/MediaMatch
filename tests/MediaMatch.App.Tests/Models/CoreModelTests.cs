@@ -4,7 +4,7 @@ using MediaMatch.Core.Models;
 
 namespace MediaMatch.App.Tests.Models;
 
-public class CoreModelTests
+public sealed class CoreModelTests
 {
     [Fact]
     public void Movie_RecordEquality_WorksCorrectly()

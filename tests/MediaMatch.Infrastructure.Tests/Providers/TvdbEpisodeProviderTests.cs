@@ -13,7 +13,7 @@ using Moq.Protected;
 
 namespace MediaMatch.Infrastructure.Tests.Providers;
 
-public class TvdbEpisodeProviderTests
+public sealed class TvdbEpisodeProviderTests
 {
     private const string LoginResponse = """{"status":"success","data":{"token":"fake-token"}}""";
 

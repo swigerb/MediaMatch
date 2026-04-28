@@ -3,7 +3,7 @@ using MediaMatch.Core.Models;
 
 namespace MediaMatch.Core.Tests.Models;
 
-public class SimpleDateTests
+public sealed class SimpleDateTests
 {
     [Fact]
     public void FromDateOnly_ConvertsCorrectly()
@@ -28,24 +28,15 @@ public class SimpleDateTests
         result.Value.Day.Should().Be(15);
     }
 
-    [Fact]
-    public void TryParse_Empty_ReturnsNull()
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("not-a-date")]
+    [InlineData("abc123")]
+    [InlineData("2024-13-45")]
+    public void TryParse_InvalidInput_ReturnsNull(string input)
     {
-        SimpleDate.TryParse("").Should().BeNull();
-    }
-
-    [Fact]
-    public void TryParse_WhitespaceOnly_ReturnsNull()
-    {
-        SimpleDate.TryParse("   ").Should().BeNull();
-    }
-
-    [Fact]
-    public void TryParse_GarbageString_ReturnsNull()
-    {
-        SimpleDate.TryParse("not-a-date").Should().BeNull();
-        SimpleDate.TryParse("abc123").Should().BeNull();
-        SimpleDate.TryParse("2024-13-45").Should().BeNull();
+        SimpleDate.TryParse(input).Should().BeNull();
     }
 
     [Fact]

@@ -3,7 +3,7 @@ using MediaMatch.CLI.Commands;
 
 namespace MediaMatch.CLI.Tests.Commands;
 
-public class MatchCommandTests
+public sealed class MatchCommandTests
 {
     [Fact]
     public void Validate_EmptyPath_ReturnsError()

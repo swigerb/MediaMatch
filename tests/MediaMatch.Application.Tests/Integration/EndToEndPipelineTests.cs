@@ -16,7 +16,7 @@ namespace MediaMatch.Application.Tests.Integration;
 /// Integration tests that exercise the full pipeline: file path → detection → matching → rename preview.
 /// Real detection/matching/expression engines are used; only providers and file system are mocked.
 /// </summary>
-public class EndToEndPipelineTests
+public sealed class EndToEndPipelineTests
 {
     private readonly MediaDetector _detector = new();
     private readonly ReleaseInfoParser _releaseParser = new();
@@ -83,7 +83,6 @@ public class EndToEndPipelineTests
     [Fact]
     public async Task TvEpisode_FullPipeline_DetectsAndGeneratesPreview()
     {
-        // Arrange
         const string input = "Breaking.Bad.S01E02.720p.BluRay.mkv";
 
         SetupEpisodeProvider("Breaking Bad", 1, new List<Episode>
@@ -95,12 +94,8 @@ public class EndToEndPipelineTests
 
         var pipeline = CreatePipeline();
         var previewService = CreatePreviewService(pipeline);
-
-        // Act
         var results = await previewService.PreviewAsync(
             [input], "{n} - {s00e00} - {t}");
-
-        // Assert
         results.Should().HaveCount(1);
         var result = results[0];
         result.Success.Should().BeTrue();
@@ -116,19 +111,14 @@ public class EndToEndPipelineTests
     [Fact]
     public async Task Movie_FullPipeline_DetectsAndGeneratesPreview()
     {
-        // Arrange
         const string input = "Inception.2010.1080p.BluRay.mkv";
 
         SetupMovieProvider("Inception", 2010, 27205);
 
         var pipeline = CreatePipeline();
         var previewService = CreatePreviewService(pipeline);
-
-        // Act
         var results = await previewService.PreviewAsync(
             [input], "{n} ({y})");
-
-        // Assert
         results.Should().HaveCount(1);
         var result = results[0];
         result.Success.Should().BeTrue();
@@ -142,17 +132,12 @@ public class EndToEndPipelineTests
     [Fact]
     public async Task UnrecognizedFile_FullPipeline_ReturnsNoMatch()
     {
-        // Arrange
         const string input = "random_file.txt";
         SetupEmptyProviders();
 
         var pipeline = CreatePipeline();
         var previewService = CreatePreviewService(pipeline);
-
-        // Act
         var results = await previewService.PreviewAsync([input], "{n}");
-
-        // Assert
         results.Should().HaveCount(1);
         var result = results[0];
         result.Success.Should().BeFalse();
@@ -163,7 +148,6 @@ public class EndToEndPipelineTests
     [Fact]
     public async Task MultipleFiles_BatchPipeline_ProcessesAll()
     {
-        // Arrange
         SetupEpisodeProvider("Breaking Bad", 1, new List<Episode>
         {
             new("Breaking Bad", 1, 1, "Pilot"),
@@ -181,11 +165,7 @@ public class EndToEndPipelineTests
             "Breaking.Bad.S01E02.mkv",
             "Inception.2010.mkv",
         };
-
-        // Act
         var results = await previewService.PreviewAsync(files, "{n}");
-
-        // Assert
         results.Should().HaveCount(3);
         results.Should().OnlyContain(r => r.Success);
     }
@@ -203,8 +183,6 @@ public class EndToEndPipelineTests
 
         var pipeline = CreatePipeline();
         var previewService = CreatePreviewService(pipeline);
-
-        // Act
         var act = () => previewService.PreviewAsync([input], "{n}");
 
         // Assert — should not throw
@@ -217,14 +195,9 @@ public class EndToEndPipelineTests
     [Fact]
     public async Task EmptyFileList_Pipeline_ReturnsEmpty()
     {
-        // Arrange
         var pipeline = CreatePipeline();
         var previewService = CreatePreviewService(pipeline);
-
-        // Act
         var results = await previewService.PreviewAsync([], "{n}");
-
-        // Assert
         results.Should().BeEmpty();
     }
 
@@ -233,18 +206,13 @@ public class EndToEndPipelineTests
     [Fact]
     public async Task FileOrganization_TestMode_NoFileSystemCalls()
     {
-        // Arrange
         SetupMovieProvider("Inception", 2010, 27205);
 
         var pipeline = CreatePipeline();
         var previewService = CreatePreviewService(pipeline);
         var orgService = CreateOrganizationService(previewService);
-
-        // Act
         var results = await orgService.OrganizeAsync(
             ["Inception.2010.mkv"], "{n} ({y})", RenameAction.Test);
-
-        // Assert
         results.Should().HaveCount(1);
         _fileSystem.Verify(
             f => f.MoveFile(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -257,7 +225,6 @@ public class EndToEndPipelineTests
     [Fact]
     public async Task FileOrganization_MoveMode_CallsFileSystem()
     {
-        // Arrange
         SetupMovieProvider("Inception", 2010, 27205);
 
         var pipeline = CreatePipeline();
@@ -265,12 +232,8 @@ public class EndToEndPipelineTests
         var orgService = CreateOrganizationService(previewService);
 
         _fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(true);
-
-        // Act
         var results = await orgService.OrganizeAsync(
             ["Inception.2010.mkv"], "{n} ({y})", RenameAction.Move);
-
-        // Assert
         results.Should().HaveCount(1);
         results[0].Success.Should().BeTrue();
         _fileSystem.Verify(

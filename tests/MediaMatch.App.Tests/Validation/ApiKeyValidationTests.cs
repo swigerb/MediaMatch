@@ -2,7 +2,7 @@ using FluentAssertions;
 
 namespace MediaMatch.App.Tests.Validation;
 
-public class ApiKeyValidationTests
+public sealed class ApiKeyValidationTests
 {
     /// <summary>
     /// Local copy of validation logic from SettingsViewModel.
@@ -11,47 +11,22 @@ public class ApiKeyValidationTests
     private static bool IsValidApiKey(string? key) =>
         string.IsNullOrWhiteSpace(key) || key.Trim().All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_');
 
-    [Fact]
-    public void IsValidApiKey_Empty_ReturnsTrue()
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData("abc123DEF456")]
+    [InlineData("api-key_v2-test")]
+    public void IsValidApiKey_ValidInput_ReturnsTrue(string? key)
     {
-        IsValidApiKey("").Should().BeTrue();
+        IsValidApiKey(key).Should().BeTrue();
     }
 
-    [Fact]
-    public void IsValidApiKey_Null_ReturnsTrue()
+    [Theory]
+    [InlineData("key!@#$%")]
+    [InlineData("key with spaces")]
+    [InlineData("key\u2603\u2764")]
+    public void IsValidApiKey_InvalidInput_ReturnsFalse(string key)
     {
-        IsValidApiKey(null).Should().BeTrue();
-    }
-
-    [Fact]
-    public void IsValidApiKey_AlphanumericKey_ReturnsTrue()
-    {
-        IsValidApiKey("abc123DEF456").Should().BeTrue();
-    }
-
-    [Fact]
-    public void IsValidApiKey_WithHyphensAndUnderscores_ReturnsTrue()
-    {
-        IsValidApiKey("api-key_v2-test").Should().BeTrue();
-    }
-
-    [Fact]
-    public void IsValidApiKey_WithSpecialChars_ReturnsFalse()
-    {
-        IsValidApiKey("key!@#$%").Should().BeFalse();
-    }
-
-    [Fact]
-    public void IsValidApiKey_WithSpaces_ReturnsFalse()
-    {
-        IsValidApiKey("key with spaces").Should().BeFalse();
-    }
-
-    [Fact]
-    public void IsValidApiKey_UnicodeChars_ReturnsFalse()
-    {
-        // char.IsLetterOrDigit returns true for accented letters,
-        // so use non-letter/non-digit Unicode symbols instead
-        IsValidApiKey("key\u2603\u2764").Should().BeFalse();
+        IsValidApiKey(key).Should().BeFalse();
     }
 }

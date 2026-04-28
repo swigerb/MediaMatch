@@ -9,7 +9,7 @@ using Moq;
 
 namespace MediaMatch.Application.Tests.Pipeline;
 
-public class MatchingPipelineTests
+public sealed class MatchingPipelineTests
 {
     private readonly Mock<IEpisodeProvider> _episodeProvider = new();
     private readonly Mock<IMovieProvider> _movieProvider = new();

@@ -9,7 +9,7 @@ using Moq;
 
 namespace MediaMatch.Application.Tests.Services;
 
-public class RenamePreviewServiceTests
+public sealed class RenamePreviewServiceTests
 {
     private readonly Mock<IMatchingPipeline> _pipeline = new();
     private readonly IExpressionEngine _expressionEngine = new ScribanExpressionEngine();

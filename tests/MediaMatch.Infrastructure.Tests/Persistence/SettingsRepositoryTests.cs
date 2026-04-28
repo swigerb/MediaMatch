@@ -27,7 +27,7 @@ internal sealed class PassthroughEncryption : ISettingsEncryption
     public bool IsEncrypted(string value) => false;
 }
 
-public class SettingsRepositoryTests
+public sealed class SettingsRepositoryTests
 {
     [Fact]
     public void PassthroughEncryption_Encrypt_ReturnsOriginal()

@@ -4,7 +4,7 @@ using MediaMatch.Core.Enums;
 
 namespace MediaMatch.Application.Tests.Detection;
 
-public class MediaDetectorTests
+public sealed class MediaDetectorTests
 {
     private readonly MediaDetector _detector = new();
 

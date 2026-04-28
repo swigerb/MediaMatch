@@ -13,7 +13,7 @@ using Moq.Protected;
 
 namespace MediaMatch.Infrastructure.Tests.Providers;
 
-public class TmdbArtworkProviderTests
+public sealed class TmdbArtworkProviderTests
 {
     private static readonly ApiConfiguration DefaultConfig = new()
     {

@@ -8,7 +8,7 @@ namespace MediaMatch.EndToEnd.Tests.AiRename;
 /// <summary>
 /// E2E: AI/LLM rename service — mock LLM provider → request → parse → apply suggestion.
 /// </summary>
-public class AiRenameServiceE2ETests
+public sealed class AiRenameServiceE2ETests
 {
     private static MediaContext MakeContext(
         string fileName,
