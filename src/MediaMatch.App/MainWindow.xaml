@@ -125,9 +125,9 @@
             <Border
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                MinWidth="480"
-                MaxWidth="560"
-                MinHeight="400"
+                MinWidth="540"
+                MaxWidth="640"
+                MinHeight="380"
                 CornerRadius="12"
                 BorderBrush="{ThemeResource ControlStrokeColorSecondaryBrush}"
                 BorderThickness="1"
@@ -147,21 +147,13 @@
                         VerticalAlignment="Center"
                         Spacing="20">
 
-                        <!-- Large logo — source is 5632×3072 (wide), give it room -->
+                        <!-- Logo (source is 5632×3072 wide — text is part of the logo) -->
                         <Image
                             Source="Assets/MediaMatch_Logo.png"
-                            MaxWidth="400"
-                            MaxHeight="220"
+                            MaxWidth="520"
+                            MaxHeight="280"
                             HorizontalAlignment="Center"
                             Stretch="Uniform" />
-
-                        <!-- App name -->
-                        <TextBlock
-                            Text="Media Match"
-                            FontSize="28"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                            HorizontalAlignment="Center" />
 
                         <!-- Version -->
                         <TextBlock
