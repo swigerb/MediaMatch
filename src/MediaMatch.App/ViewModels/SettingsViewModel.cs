@@ -67,6 +67,10 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
+    /// <summary>Gets the severity for the current status message.</summary>
+    public Microsoft.UI.Xaml.Controls.InfoBarSeverity StatusSeverity { get; private set; }
+        = Microsoft.UI.Xaml.Controls.InfoBarSeverity.Informational;
+
     /// <summary>Gets or sets a value indicating whether the first-run welcome banner is visible.</summary>
     [ObservableProperty]
     public partial bool ShowWelcomeBanner { get; set; }
@@ -174,7 +178,7 @@ public partial class SettingsViewModel : ViewModelBase
         }
         catch
         {
-            StatusMessage = "Failed to load settings — using defaults.";
+            SetStatus("Failed to load settings — using defaults.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
         }
         finally
         {
@@ -189,7 +193,6 @@ public partial class SettingsViewModel : ViewModelBase
             return;
 
         IsSaving = true;
-        StatusMessage = "Saving...";
 
         try
         {
@@ -217,12 +220,12 @@ public partial class SettingsViewModel : ViewModelBase
             };
 
             await _settingsRepository.SaveAsync(settings);
-            StatusMessage = "Settings saved.";
+            SetStatus("Settings saved.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Success);
             ShowWelcomeBanner = false;
         }
         catch
         {
-            StatusMessage = "Failed to save settings.";
+            SetStatus("Failed to save settings.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
         }
         finally
         {
@@ -251,15 +254,13 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private async Task ClearCacheAsync()
     {
-        StatusMessage = "Clearing cache...";
-
         if (_memoryCache is MemoryCache mc)
         {
-            mc.Compact(1.0); // Evict 100% of entries
+            mc.Compact(1.0);
         }
 
         await Task.CompletedTask;
-        StatusMessage = "Cache cleared.";
+        SetStatus("Cache cleared.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Success);
     }
 
     [RelayCommand]
@@ -267,11 +268,9 @@ public partial class SettingsViewModel : ViewModelBase
     {
         if (_updateCheckService is null)
         {
-            StatusMessage = "Update service not available.";
+            SetStatus("Update service not available.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Warning);
             return;
         }
-
-        StatusMessage = "Checking for updates…";
 
         try
         {
@@ -282,16 +281,16 @@ public partial class SettingsViewModel : ViewModelBase
             {
                 var version = _updateCheckService.LatestVersion ?? "unknown";
                 UpdateMessage = $"Version {version} is available. Download and restart to update.";
-                StatusMessage = $"Update v{version} available!";
+                SetStatus($"Update v{version} available!", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Success);
             }
             else
             {
-                StatusMessage = "You're up to date.";
+                SetStatus("You're up to date.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Success);
             }
         }
         catch (Exception)
         {
-            StatusMessage = "Could not check for updates. Try again later.";
+            SetStatus("Could not check for updates. Try again later.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
         }
     }
 
@@ -316,17 +315,17 @@ public partial class SettingsViewModel : ViewModelBase
     {
         if (!IsValidApiKey(TmdbApiKey))
         {
-            StatusMessage = "TMDB API key contains invalid characters.";
+            SetStatus("TMDB API key contains invalid characters.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
             return false;
         }
         if (!IsValidApiKey(TvdbApiKey))
         {
-            StatusMessage = "TVDB API key contains invalid characters.";
+            SetStatus("TVDB API key contains invalid characters.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
             return false;
         }
         if (!IsValidApiKey(OpenSubtitlesApiKey))
         {
-            StatusMessage = "OpenSubtitles API key contains invalid characters.";
+            SetStatus("OpenSubtitles API key contains invalid characters.", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
             return false;
         }
         return true;
@@ -369,6 +368,13 @@ public partial class SettingsViewModel : ViewModelBase
             .Replace("{extension}", ".mkv");
 
         RenamePreview = $"Movie: {movieExample}\nSeries: {seriesExample}";
+    }
+
+    private void SetStatus(string message, Microsoft.UI.Xaml.Controls.InfoBarSeverity severity =
+        Microsoft.UI.Xaml.Controls.InfoBarSeverity.Informational)
+    {
+        StatusSeverity = severity;
+        StatusMessage = message;
     }
 
     /// <summary>

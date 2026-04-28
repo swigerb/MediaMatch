@@ -10,7 +10,7 @@
     CloseButtonText="Close"
     FullSizeDesired="True">
 
-    <Grid Width="900" MinHeight="500" RowSpacing="12">
+    <Grid MinHeight="500" RowSpacing="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -18,21 +18,50 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Tab selector -->
-        <SelectorBar x:Name="TabSelector" Grid.Row="0" SelectionChanged="TabSelector_SelectionChanged">
-            <SelectorBarItem Text="Logs" IsSelected="True" Tag="logs"
-                             AutomationProperties.Name="Logs tab" />
-            <SelectorBarItem Text="Traces" Tag="traces"
-                             AutomationProperties.Name="Traces tab" />
-        </SelectorBar>
+        <!-- Tab selector + actions in same row -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-        <!-- Toolbar: Search + Filter + Actions -->
+            <SelectorBar x:Name="TabSelector" Grid.Column="0" SelectionChanged="TabSelector_SelectionChanged">
+                <SelectorBarItem Text="Logs" IsSelected="True" Tag="logs"
+                                 AutomationProperties.Name="Logs tab" />
+                <SelectorBarItem Text="Traces" Tag="traces"
+                                 AutomationProperties.Name="Traces tab" />
+            </SelectorBar>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                <Button
+                    ToolTipService.ToolTip="Clear all logs"
+                    Click="ClearLogs_Click"
+                    Style="{ThemeResource SubtleButtonStyle}"
+                    AutomationProperties.Name="Clear logs">
+                    <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                </Button>
+                <Button
+                    ToolTipService.ToolTip="Refresh"
+                    Click="RefreshLogs_Click"
+                    Style="{ThemeResource SubtleButtonStyle}"
+                    AutomationProperties.Name="Refresh logs">
+                    <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                </Button>
+                <Button
+                    ToolTipService.ToolTip="Open logs folder"
+                    Click="OpenLogsFolder_Click"
+                    Style="{ThemeResource SubtleButtonStyle}"
+                    AutomationProperties.Name="Open logs folder">
+                    <FontIcon Glyph="&#xED25;" FontSize="14" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Search + Filter row -->
         <Grid Grid.Row="1" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
@@ -46,7 +75,7 @@
             <ComboBox
                 x:Name="LevelFilter"
                 Grid.Column="1"
-                Width="140"
+                MinWidth="150"
                 SelectedIndex="0"
                 SelectionChanged="LevelFilter_SelectionChanged"
                 AutomationProperties.Name="Log level filter">
@@ -58,36 +87,6 @@
                 <ComboBoxItem Content="❌ Error" />
                 <ComboBoxItem Content="💀 Fatal" />
             </ComboBox>
-
-            <Button
-                Grid.Column="2"
-                ToolTipService.ToolTip="Clear all logs"
-                Click="ClearLogs_Click"
-                AutomationProperties.Name="Clear logs">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <FontIcon Glyph="&#xE74D;" FontSize="14" />
-                    <TextBlock Text="Clear" />
-                </StackPanel>
-            </Button>
-
-            <Button
-                Grid.Column="3"
-                ToolTipService.ToolTip="Refresh"
-                Click="RefreshLogs_Click"
-                AutomationProperties.Name="Refresh logs">
-                <FontIcon Glyph="&#xE72C;" FontSize="14" />
-            </Button>
-
-            <Button
-                Grid.Column="4"
-                ToolTipService.ToolTip="Open logs folder"
-                Click="OpenLogsFolder_Click"
-                AutomationProperties.Name="Open logs folder">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <FontIcon Glyph="&#xED25;" FontSize="14" />
-                    <TextBlock Text="Open Folder" />
-                </StackPanel>
-            </Button>
         </Grid>
 
         <!-- Logs list -->
@@ -104,10 +103,10 @@
                 AutomationProperties.Name="Log entries">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Grid Padding="8,6" ColumnSpacing="8">
+                        <Grid Padding="8,4" ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="70" />
-                                <ColumnDefinition Width="50" />
+                                <ColumnDefinition Width="62" />
+                                <ColumnDefinition Width="42" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <TextBlock
@@ -164,9 +163,9 @@
                 AutomationProperties.Name="Trace entries">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Grid Padding="8,6" ColumnSpacing="8">
+                        <Grid Padding="8,4" ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="62" />
                                 <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="60" />
                                 <ColumnDefinition Width="*" />
@@ -203,13 +202,12 @@
             </ListView>
         </Border>
 
-        <!-- Footer summary -->
-        <Grid Grid.Row="3">
-            <TextBlock
-                x:Name="LogCountText"
-                FontSize="12"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                VerticalAlignment="Center" />
-        </Grid>
+        <!-- Footer status bar -->
+        <TextBlock
+            x:Name="LogCountText"
+            Grid.Row="3"
+            FontSize="11"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            Style="{ThemeResource CaptionTextBlockStyle}" />
     </Grid>
 </ContentDialog>

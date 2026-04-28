@@ -14,17 +14,36 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
     </Page.Resources>
 
-    <ScrollViewer>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Sticky header -->
+        <TextBlock
+            Grid.Row="0"
+            Padding="24,16,24,8"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Settings"
+            AutomationProperties.HeadingLevel="Level1" />
+
+        <!-- Toast notification bar -->
+        <InfoBar
+            x:Name="SettingsNotification"
+            Grid.Row="1"
+            Margin="24,0,24,0"
+            IsOpen="False"
+            IsClosable="True"
+            AutomationProperties.Name="Settings notification"
+            AutomationProperties.LiveSetting="Assertive" />
+
+        <ScrollViewer Grid.Row="2">
         <StackPanel
             MaxWidth="800"
-            Padding="24,16,24,24"
+            Padding="24,8,24,24"
             Spacing="24">
-
-            <!-- Header -->
-            <TextBlock
-                Style="{StaticResource TitleTextBlockStyle}"
-                Text="Settings"
-                AutomationProperties.HeadingLevel="Level1" />
 
             <!-- Welcome Banner (first-run only) -->
             <InfoBar
@@ -285,12 +304,7 @@
                 Title="Update Available"
                 Visibility="{x:Bind ViewModel.IsUpdateAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                 AutomationProperties.Name="Update available notification" />
-
-            <!-- Status -->
-            <TextBlock
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
-                AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
-    </ScrollViewer>
+        </ScrollViewer>
+    </Grid>
 </Page>

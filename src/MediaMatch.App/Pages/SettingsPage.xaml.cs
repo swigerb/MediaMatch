@@ -12,6 +12,15 @@ public sealed partial class SettingsPage : Page
     {
         ViewModel = App.GetService<SettingsViewModel>();
         InitializeComponent();
+
+        ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SettingsViewModel.StatusMessage) &&
+                !string.IsNullOrEmpty(ViewModel.StatusMessage))
+            {
+                ShowNotification(ViewModel.StatusMessage, ViewModel.StatusSeverity);
+            }
+        };
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -26,5 +35,12 @@ public sealed partial class SettingsPage : Page
         {
             ViewModel.ShowWelcomeBanner = true;
         }
+    }
+
+    private void ShowNotification(string message, InfoBarSeverity severity)
+    {
+        SettingsNotification.Message = message;
+        SettingsNotification.Severity = severity;
+        SettingsNotification.IsOpen = true;
     }
 }
