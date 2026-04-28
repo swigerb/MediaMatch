@@ -1,0 +1,91 @@
+name: Winget Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Extract version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.release.tag_name }}"
+          $version = $tag -replace '^v', ''
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "Extracted version: $version"
+
+      - name: Publish CLI (self-contained, win-x64)
+        run: >
+          dotnet publish src/MediaMatch.CLI/MediaMatch.CLI.csproj
+          -c Release -r win-x64 --self-contained
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish/win-x64
+
+      - name: Create ZIP archive
+        shell: pwsh
+        run: |
+          $zipName = "MediaMatch-CLI-${{ steps.version.outputs.VERSION }}-win-x64.zip"
+          Compress-Archive -Path publish/win-x64/* -DestinationPath $zipName
+          echo "ZIP_NAME=$zipName" >> $env:GITHUB_OUTPUT
+        id: zip
+
+      - name: Calculate SHA256
+        id: sha256
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash "${{ steps.zip.outputs.ZIP_NAME }}" -Algorithm SHA256).Hash
+          echo "SHA256=$hash" >> $env:GITHUB_OUTPUT
+          echo "SHA256: $hash"
+
+      - name: Generate winget manifests
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $sha256 = "${{ steps.sha256.outputs.SHA256 }}"
+          $outDir = "winget-manifests/manifests/s/swigerb/MediaMatch/$version"
+          New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+
+          $templates = @(
+            "packaging/winget/swigerb.MediaMatch.yaml",
+            "packaging/winget/swigerb.MediaMatch.installer.yaml",
+            "packaging/winget/swigerb.MediaMatch.locale.en-US.yaml"
+          )
+
+          foreach ($tpl in $templates) {
+            $content = Get-Content $tpl -Raw
+            $content = $content -replace '\$\{VERSION\}', $version
+            $content = $content -replace '\$\{SHA256\}', $sha256
+            $outFile = Join-Path $outDir (Split-Path $tpl -Leaf)
+            Set-Content -Path $outFile -Value $content -NoNewline
+            echo "Generated: $outFile"
+          }
+
+      - name: Upload ZIP to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release upload "${{ github.event.release.tag_name }}"
+          "${{ steps.zip.outputs.ZIP_NAME }}"
+          --clobber
+
+      - name: Upload winget manifests as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: winget-manifests
+          path: winget-manifests/
+          retention-days: 90

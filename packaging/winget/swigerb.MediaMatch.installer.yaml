@@ -1,14 +1,17 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
 PackageIdentifier: swigerb.MediaMatch
 PackageVersion: "${VERSION}"
+MinimumOSVersion: 10.0.17763.0
+Commands:
+  - mediamatch
 Installers:
   - Architecture: x64
-    InstallerUrl: "https://github.com/swigerb/MediaMatch/releases/download/v${VERSION}/MediaMatch-${VERSION}-x64.msix"
-    InstallerType: msix
+    InstallerUrl: "https://github.com/swigerb/MediaMatch/releases/download/v${VERSION}/MediaMatch-CLI-${VERSION}-win-x64.zip"
+    InstallerType: zip
     InstallerSha256: "${SHA256}"
-  - Architecture: arm64
-    InstallerUrl: "https://github.com/swigerb/MediaMatch/releases/download/v${VERSION}/MediaMatch-${VERSION}-arm64.msix"
-    InstallerType: msix
-    InstallerSha256: "${SHA256_ARM64}"
+    NestedInstallerType: portable
+    NestedInstallerFiles:
+      - RelativeFilePath: MediaMatch.CLI.exe
+        PortableCommandAlias: mediamatch
 ManifestType: installer
 ManifestVersion: 1.6.0
