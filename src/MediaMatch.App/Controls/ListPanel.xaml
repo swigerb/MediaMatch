@@ -94,11 +94,24 @@
                 VerticalAlignment="Center"
                 Spacing="8">
                 <FontIcon Glyph="&#xE8A5;" FontSize="48" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                <TextBlock
-                    Text="Drop files here or click Load to generate a list."
-                    Style="{ThemeResource BodyTextBlockStyle}"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    HorizontalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Drop files here or" />
+                    <HyperlinkButton
+                        Padding="0"
+                        VerticalAlignment="Center"
+                        Command="{x:Bind ViewModel.LoadFilesCommand}"
+                        Content="Load"
+                        AutomationProperties.Name="Load files" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource BodyTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="to generate a list." />
+                </StackPanel>
             </StackPanel>
         </Grid>
         </Border>

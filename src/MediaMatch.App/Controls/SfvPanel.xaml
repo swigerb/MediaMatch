@@ -78,11 +78,24 @@
             Spacing="8"
             Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay}">
             <FontIcon Glyph="&#xE73E;" FontSize="36" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-            <TextBlock
-                Text="Drop files here or click Load to verify checksums."
-                Style="{ThemeResource BodyTextBlockStyle}"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                HorizontalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Drop files here or" />
+                <HyperlinkButton
+                    Padding="0"
+                    VerticalAlignment="Center"
+                    Command="{x:Bind ViewModel.LoadFilesCommand}"
+                    Content="Load"
+                    AutomationProperties.Name="Load files" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="to verify checksums." />
+            </StackPanel>
         </StackPanel>
         </Grid>
         </Border>

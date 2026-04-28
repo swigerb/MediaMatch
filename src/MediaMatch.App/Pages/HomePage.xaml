@@ -165,10 +165,18 @@
                             FontSize="36"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Glyph="&#xE8B7;" />
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Drop files here or click Load" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="Drop files here or" />
+                            <HyperlinkButton
+                                Padding="0"
+                                VerticalAlignment="Center"
+                                Command="{x:Bind ViewModel.AddFolderCommand}"
+                                Content="Load Folder"
+                                AutomationProperties.Name="Load folder" />
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- Scanning -->
