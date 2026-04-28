@@ -1,0 +1,29 @@
+<!--
+  Scaffold project for future Uno Platform / Mac Catalyst support.
+  This project is NOT expected to build yet — it serves as a starting point
+  for when Uno Platform integration work begins.
+
+  Prerequisites:
+    - .NET 10 SDK with the maccatalyst workload installed
+    - Uno.Sdk (will be added when Uno Platform integration starts)
+
+  See docs/cross-platform.md and the README.md in this folder for details.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-maccatalyst</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ApplicationId>com.mediamatch.app</ApplicationId>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MediaMatch.Core\MediaMatch.Core.csproj" />
+    <ProjectReference Include="..\MediaMatch.Application\MediaMatch.Application.csproj" />
+    <ProjectReference Include="..\MediaMatch.Infrastructure\MediaMatch.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

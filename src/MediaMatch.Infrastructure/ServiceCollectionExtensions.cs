@@ -6,6 +6,7 @@ using MediaMatch.Infrastructure.Caching;
 using MediaMatch.Infrastructure.FileSystem;
 using MediaMatch.Infrastructure.Http;
 using MediaMatch.Infrastructure.Observability;
+using MediaMatch.Infrastructure.Platform;
 using MediaMatch.Infrastructure.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -173,6 +174,9 @@ public static class ServiceCollectionExtensions
 #pragma warning disable CA1416
         services.AddSingleton<INetworkPathDetector, NetworkPathDetector>();
 #pragma warning restore CA1416
+
+        // Platform detection
+        services.AddSingleton<IPlatformService, PlatformService>();
 
         return services;
     }
