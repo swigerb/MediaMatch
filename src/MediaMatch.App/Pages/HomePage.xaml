@@ -7,6 +7,7 @@
     xmlns:local="using:MediaMatch.App.Pages"
     xmlns:vm="using:MediaMatch.App.ViewModels"
     xmlns:converters="using:MediaMatch.App.Converters"
+    xmlns:controls="using:MediaMatch.App.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     AllowDrop="True"
@@ -317,12 +318,12 @@
             </Grid>
         </Grid>
 
-        <!-- Placeholder panels for other modes (Phase 2) -->
-        <Grid Grid.Row="3" x:Name="EpisodesPanel" Visibility="Collapsed" />
-        <Grid Grid.Row="3" x:Name="SubtitlesPanel" Visibility="Collapsed" />
-        <Grid Grid.Row="3" x:Name="SfvPanel" Visibility="Collapsed" />
-        <Grid Grid.Row="3" x:Name="FilterPanel" Visibility="Collapsed" />
-        <Grid Grid.Row="3" x:Name="ListPanel" Visibility="Collapsed" />
+        <!-- Mode Panels -->
+        <controls:EpisodesPanel Grid.Row="3" x:Name="EpisodesPanel" Visibility="Collapsed" />
+        <controls:SubtitlePanel Grid.Row="3" x:Name="SubtitlesPanel" Visibility="Collapsed" />
+        <controls:SfvPanel Grid.Row="3" x:Name="SfvPanel" Visibility="Collapsed" />
+        <controls:FilterPanel Grid.Row="3" x:Name="FilterPanel" Visibility="Collapsed" />
+        <controls:ListPanel Grid.Row="3" x:Name="ListPanel" Visibility="Collapsed" />
 
         <!-- Status Bar -->
         <Grid

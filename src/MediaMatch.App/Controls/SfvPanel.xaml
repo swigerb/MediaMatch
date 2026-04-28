@@ -1,0 +1,130 @@
+<UserControl
+    x:Class="MediaMatch.App.Controls.SfvPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:MediaMatch.App.ViewModels"
+    xmlns:local="using:MediaMatch.App.Controls"
+    mc:Ignorable="d">
+
+    <Grid RowSpacing="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- File list -->
+        <ListView
+            Grid.Row="0"
+            ItemsSource="{x:Bind ViewModel.Files}"
+            SelectionMode="None"
+            Padding="12,8"
+            AutomationProperties.Name="Checksum files list">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="vm:SfvFileItemViewModel">
+                    <Grid Padding="4,6" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="280" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- State icon -->
+                        <TextBlock
+                            Grid.Column="0"
+                            Text="{x:Bind StateIcon, Mode=OneWay}"
+                            FontSize="16"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+
+                        <!-- File name -->
+                        <TextBlock
+                            Grid.Column="1"
+                            Text="{x:Bind FileName, Mode=OneWay}"
+                            VerticalAlignment="Center"
+                            TextTrimming="CharacterEllipsis" />
+
+                        <!-- Hash value or progress bar -->
+                        <Grid Grid.Column="2" VerticalAlignment="Center">
+                            <TextBlock
+                                Text="{x:Bind HashValue, Mode=OneWay}"
+                                FontFamily="Consolas"
+                                FontSize="12"
+                                VerticalAlignment="Center"
+                                TextTrimming="CharacterEllipsis"
+                                Visibility="{x:Bind local:SfvPanel.IsNotInProgress(State), Mode=OneWay}" />
+                            <ProgressBar
+                                Value="{x:Bind Progress, Mode=OneWay}"
+                                Maximum="100"
+                                Visibility="{x:Bind local:SfvPanel.IsInProgress(State), Mode=OneWay}" />
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Bottom toolbar -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Padding="12,4">
+            <Button
+                Command="{x:Bind ViewModel.VerifyAllCommand}"
+                AutomationProperties.Name="Verify all files"
+                Style="{ThemeResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE73E;" FontSize="14" />
+                    <TextBlock Text="Verify All" />
+                </StackPanel>
+            </Button>
+
+            <Button
+                Command="{x:Bind ViewModel.ClearCommand}"
+                AutomationProperties.Name="Clear file list">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                    <TextBlock Text="Clear" />
+                </StackPanel>
+            </Button>
+
+            <Border Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,4" />
+
+            <!-- Algorithm toggle buttons -->
+            <StackPanel Orientation="Horizontal" Spacing="2">
+                <RadioButton Content="SFV" GroupName="Algorithm" IsChecked="True"
+                    Checked="{x:Bind SetAlgorithm0}" Style="{ThemeResource DefaultRadioButtonStyle}"
+                    AutomationProperties.Name="SFV algorithm" />
+                <RadioButton Content="MD5" GroupName="Algorithm"
+                    Checked="{x:Bind SetAlgorithm1}" Style="{ThemeResource DefaultRadioButtonStyle}"
+                    AutomationProperties.Name="MD5 algorithm" />
+                <RadioButton Content="SHA1" GroupName="Algorithm"
+                    Checked="{x:Bind SetAlgorithm2}" Style="{ThemeResource DefaultRadioButtonStyle}"
+                    AutomationProperties.Name="SHA1 algorithm" />
+                <RadioButton Content="SHA2" GroupName="Algorithm"
+                    Checked="{x:Bind SetAlgorithm3}" Style="{ThemeResource DefaultRadioButtonStyle}"
+                    AutomationProperties.Name="SHA2 algorithm" />
+                <RadioButton Content="SHA3" GroupName="Algorithm"
+                    Checked="{x:Bind SetAlgorithm4}" Style="{ThemeResource DefaultRadioButtonStyle}"
+                    AutomationProperties.Name="SHA3 algorithm" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Total progress bar -->
+        <Grid Grid.Row="2" Padding="12,6" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ProgressBar
+                Grid.Column="0"
+                Value="{x:Bind ViewModel.TotalProgress, Mode=OneWay}"
+                Maximum="100"
+                Visibility="{x:Bind ViewModel.IsVerifying, Mode=OneWay}" />
+            <TextBlock
+                Grid.Column="1"
+                Text="{x:Bind ViewModel.TotalProgressText, Mode=OneWay}"
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                VerticalAlignment="Center" />
+        </Grid>
+    </Grid>
+</UserControl>

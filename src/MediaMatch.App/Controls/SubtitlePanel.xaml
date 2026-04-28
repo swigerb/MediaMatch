@@ -1,0 +1,123 @@
+<UserControl
+    x:Class="MediaMatch.App.Controls.SubtitlePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid RowSpacing="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Padding="12,8">
+            <TextBox
+                Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                PlaceholderText="Search subtitles..."
+                AutomationProperties.Name="Search query"
+                MinWidth="260" />
+
+            <ComboBox
+                ItemsSource="{x:Bind ViewModel.LanguageOptions}"
+                SelectedIndex="{x:Bind ViewModel.SelectedLanguageIndex, Mode=TwoWay}"
+                AutomationProperties.Name="Language"
+                MinWidth="140" />
+
+            <Button
+                Command="{x:Bind ViewModel.FindCommand}"
+                AutomationProperties.Name="Find subtitles"
+                Style="{ThemeResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE11A;" FontSize="14" />
+                    <TextBlock Text="Find" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <!-- Login required info bar -->
+        <InfoBar
+            Grid.Row="1"
+            IsOpen="{x:Bind ViewModel.NeedsLogin, Mode=OneWay}"
+            IsClosable="False"
+            Severity="Warning"
+            Title="OpenSubtitles Account Required"
+            Message="Please configure your OpenSubtitles API key in Settings to search and download subtitles."
+            Margin="12,0" />
+
+        <!-- Results list -->
+        <Grid Grid.Row="2">
+            <ListView
+                ItemsSource="{x:Bind ViewModel.Results}"
+                Visibility="{x:Bind ViewModel.HasResults, Mode=OneWay}"
+                SelectionMode="None"
+                Padding="12,0"
+                AutomationProperties.Name="Subtitle results">
+                <ListView.HeaderTemplate>
+                    <DataTemplate>
+                        <Grid Padding="4,8" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="80" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" IsEnabled="False" Opacity="0" Width="32" />
+                            <TextBlock Grid.Column="1" Text="Title" FontWeight="SemiBold" Style="{ThemeResource CaptionTextBlockStyle}" />
+                            <TextBlock Grid.Column="2" Text="Language" FontWeight="SemiBold" Style="{ThemeResource CaptionTextBlockStyle}" />
+                            <TextBlock Grid.Column="3" Text="Count" FontWeight="SemiBold" Style="{ThemeResource CaptionTextBlockStyle}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.HeaderTemplate>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="4,4" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="80" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}" AutomationProperties.Name="Select subtitle" />
+                            <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="2" Text="{Binding Language}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="3" Text="{Binding SubtitleCount}" VerticalAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <!-- Loading indicator -->
+            <ProgressRing
+                IsActive="{x:Bind ViewModel.IsSearching, Mode=OneWay}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="40" Height="40" />
+        </Grid>
+
+        <!-- Action buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" Padding="12,4">
+            <Button
+                Command="{x:Bind ViewModel.DownloadSelectedCommand}"
+                AutomationProperties.Name="Download selected subtitles">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE118;" FontSize="14" />
+                    <TextBlock Text="Download Selected" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <!-- Status bar -->
+        <Border Grid.Row="4" Padding="12,6" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+            <TextBlock
+                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Border>
+    </Grid>
+</UserControl>

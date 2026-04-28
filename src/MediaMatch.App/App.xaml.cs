@@ -155,6 +155,10 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<MetadataProviderChain>();
         services.AddSingleton<Application.Detection.MusicDetector>();
 
+        // Phase 2/6 services
+        services.AddSingleton<IChecksumService, ChecksumService>();
+        services.AddSingleton<IMediaInfoService, MediaInfoService>();
+
         // ViewModels
         services.AddSingleton<HomeViewModel>(sp => new HomeViewModel(
             sp.GetRequiredService<IBatchOperationService>(),
@@ -165,6 +169,20 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddTransient<AboutViewModel>();
         services.AddTransient<HistoryViewModel>();
         services.AddTransient<ExpressionEditorViewModel>();
+        services.AddTransient<PresetEditorViewModel>();
+
+        // Mode panel ViewModels
+        services.AddTransient<EpisodesPanelViewModel>();
+        services.AddTransient<SubtitlePanelViewModel>();
+        services.AddTransient<SfvPanelViewModel>(sp => new SfvPanelViewModel(
+            sp.GetRequiredService<IChecksumService>(),
+            sp.GetRequiredService<ILogger<SfvPanelViewModel>>()));
+        services.AddTransient<FilterPanelViewModel>(sp => new FilterPanelViewModel(
+            sp.GetRequiredService<IMediaAnalysisService>(),
+            sp.GetRequiredService<ILogger<FilterPanelViewModel>>()));
+        services.AddTransient<ListPanelViewModel>(sp => new ListPanelViewModel(
+            sp.GetRequiredService<IExpressionEngine>(),
+            sp.GetRequiredService<ILogger<ListPanelViewModel>>()));
 
         // Thumbnail service
         services.AddSingleton<ThumbnailService>();
