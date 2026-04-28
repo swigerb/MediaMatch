@@ -10,8 +10,9 @@ public sealed partial class SfvPanel : UserControl
 
     public SfvPanel()
     {
-        ViewModel = new SfvPanelViewModel();
         InitializeComponent();
+        ViewModel = new SfvPanelViewModel();
+        Bindings.Update();
     }
 
     public void SetViewModel(SfvPanelViewModel vm)

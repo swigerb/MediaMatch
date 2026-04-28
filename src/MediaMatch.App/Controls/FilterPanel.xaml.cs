@@ -10,8 +10,9 @@ public sealed partial class FilterPanel : UserControl
 
     public FilterPanel()
     {
-        ViewModel = new FilterPanelViewModel();
         InitializeComponent();
+        ViewModel = new FilterPanelViewModel();
+        Bindings.Update();
     }
 
     public void SetViewModel(FilterPanelViewModel vm)

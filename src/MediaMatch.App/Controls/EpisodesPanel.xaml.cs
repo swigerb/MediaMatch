@@ -9,8 +9,9 @@ public sealed partial class EpisodesPanel : UserControl
 
     public EpisodesPanel()
     {
-        ViewModel = new EpisodesPanelViewModel();
         InitializeComponent();
+        ViewModel = new EpisodesPanelViewModel();
+        Bindings.Update();
     }
 
     public void SetViewModel(EpisodesPanelViewModel vm)

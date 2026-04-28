@@ -9,8 +9,9 @@ public sealed partial class ListPanel : UserControl
 
     public ListPanel()
     {
-        ViewModel = new ListPanelViewModel();
         InitializeComponent();
+        ViewModel = new ListPanelViewModel();
+        Bindings.Update();
     }
 
     public void SetViewModel(ListPanelViewModel vm)

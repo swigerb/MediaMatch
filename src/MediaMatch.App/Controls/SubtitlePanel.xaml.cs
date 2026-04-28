@@ -9,8 +9,9 @@ public sealed partial class SubtitlePanel : UserControl
 
     public SubtitlePanel()
     {
-        ViewModel = new SubtitlePanelViewModel();
         InitializeComponent();
+        ViewModel = new SubtitlePanelViewModel();
+        Bindings.Update();
     }
 
     public void SetViewModel(SubtitlePanelViewModel vm)
