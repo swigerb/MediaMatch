@@ -21,7 +21,11 @@ public sealed class TmdbArtworkProvider : IArtworkProvider
     /// <inheritdoc />
     public string Name => "TMDb";
 
-    /// <summary>Initialises a new <see cref="TmdbArtworkProvider"/>.</summary>
+    /// <summary>Initializes a new instance of the <see cref="TmdbArtworkProvider"/> class.</summary>
+    /// <param name="http">The HTTP client used for TMDb API requests.</param>
+    /// <param name="cache">The metadata cache for storing API responses.</param>
+    /// <param name="config">The API configuration containing the TMDb API key.</param>
+    /// <param name="logger">The logger instance.</param>
     public TmdbArtworkProvider(
         MediaMatchHttpClient http,
         MetadataCache cache,
@@ -34,7 +38,7 @@ public sealed class TmdbArtworkProvider : IArtworkProvider
         _logger = logger;
     }
 
-    /// <summary>Returns true if a TMDb API key has been configured.</summary>
+    /// <summary>Gets a value indicating whether a TMDb API key has been configured.</summary>
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_config.TmdbApiKey);
 
     /// <inheritdoc />
@@ -55,9 +59,9 @@ public sealed class TmdbArtworkProvider : IArtworkProvider
 
             _logger.LogDebug("TMDb TV artwork: {SeriesId}", tvdbId);
 
-            var response = await _http.GetAsync<TmdbImagesResponse>(url, ct);
+            var response = await _http.GetAsync<TmdbImagesResponse>(url, ct).ConfigureAwait(false);
             return MapArtwork(response, type);
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -76,9 +80,9 @@ public sealed class TmdbArtworkProvider : IArtworkProvider
 
             _logger.LogDebug("TMDb movie artwork: {MovieId}", tmdbId);
 
-            var response = await _http.GetAsync<TmdbImagesResponse>(url, ct);
+            var response = await _http.GetAsync<TmdbImagesResponse>(url, ct).ConfigureAwait(false);
             return MapArtwork(response, type);
-        });
+        }).ConfigureAwait(false);
     }
 
     private IReadOnlyList<Artwork> MapArtwork(TmdbImagesResponse? response, ArtworkType? typeFilter)

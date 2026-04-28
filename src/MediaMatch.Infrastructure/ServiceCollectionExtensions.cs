@@ -22,6 +22,12 @@ public static class ServiceCollectionExtensions
     /// Registers all MediaMatch infrastructure services including
     /// HTTP clients, caching, metadata providers, and telemetry.
     /// </summary>
+    /// <param name="services">The service collection to register services into.</param>
+    /// <param name="config">Optional API configuration; uses defaults when <see langword="null"/>.</param>
+    /// <param name="aniDbConfig">Optional AniDB configuration; uses defaults when <see langword="null"/>.</param>
+    /// <param name="llmConfig">Optional LLM provider configuration; uses defaults when <see langword="null"/>.</param>
+    /// <param name="appSettings">Optional application settings; uses defaults when <see langword="null"/>.</param>
+    /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddMediaMatchInfrastructure(
         this IServiceCollection services,
         ApiConfiguration? config = null,
@@ -186,6 +192,10 @@ public static class ServiceCollectionExtensions
     /// Call this in addition to <see cref="AddMediaMatchInfrastructure"/>
     /// for full telemetry support.
     /// </summary>
+    /// <param name="services">The service collection to register services into.</param>
+    /// <param name="enableConsole">Whether to enable the console logging sink.</param>
+    /// <param name="debugMode">Whether to enable debug-level logging.</param>
+    /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddMediaMatchTelemetry(
         this IServiceCollection services,
         bool enableConsole = true,

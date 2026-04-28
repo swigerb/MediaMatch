@@ -19,6 +19,12 @@ public sealed class FileCloneService
     private readonly ILogger<FileCloneService> _logger;
     private readonly ConcurrentDictionary<string, CloneCapability> _volumeCapabilities = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileCloneService"/> class.
+    /// </summary>
+    /// <param name="reFsHandler">Handler for ReFS Copy-on-Write cloning.</param>
+    /// <param name="hardLinkHandler">Handler for NTFS hard link creation.</param>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public FileCloneService(
         ReFsCloneHandler reFsHandler,
         HardLinkHandler hardLinkHandler,
@@ -33,6 +39,9 @@ public sealed class FileCloneService
     /// Clones a file using the best available method for the volume.
     /// Returns the <see cref="CloneCapability"/> that was used.
     /// </summary>
+    /// <param name="source">The source file path to clone.</param>
+    /// <param name="destination">The destination file path.</param>
+    /// <returns>The <see cref="CloneCapability"/> that was actually used for the clone.</returns>
     public CloneCapability CloneFile(string source, string destination)
     {
         var volumeRoot = Path.GetPathRoot(source) ?? string.Empty;

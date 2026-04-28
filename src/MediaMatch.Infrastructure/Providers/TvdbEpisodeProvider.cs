@@ -25,7 +25,11 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
     /// <inheritdoc />
     public string Name => "TVDb";
 
-    /// <summary>Initialises a new <see cref="TvdbEpisodeProvider"/>.</summary>
+    /// <summary>Initializes a new instance of the <see cref="TvdbEpisodeProvider"/> class.</summary>
+    /// <param name="http">The HTTP client used for TVDb API requests.</param>
+    /// <param name="cache">The metadata cache for storing API responses.</param>
+    /// <param name="config">The API configuration containing the TVDb API key.</param>
+    /// <param name="logger">The logger instance.</param>
     public TvdbEpisodeProvider(
         MediaMatchHttpClient http,
         MetadataCache cache,
@@ -38,7 +42,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
         _logger = logger;
     }
 
-    /// <summary>Returns true if a TVDb API key has been configured.</summary>
+    /// <summary>Gets a value indicating whether a TVDb API key has been configured.</summary>
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_config.TvdbApiKey);
 
     /// <inheritdoc />
@@ -53,13 +57,13 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
         var cacheKey = $"tvdb:search:{query}";
         return await _cache.GetOrCreateAsync<IReadOnlyList<SearchResult>>(cacheKey, async () =>
         {
-            await EnsureAuthenticatedAsync(ct);
+            await EnsureAuthenticatedAsync(ct).ConfigureAwait(false);
 
             var url = $"{_config.TvdbBaseUrl}/search?query={Uri.EscapeDataString(query)}&type=series";
 
             _logger.LogDebug("TVDb series search: {Query}", query);
 
-            var response = await _http.GetAsync<TvdbResponse<List<TvdbSearchResult>>>(url, ct);
+            var response = await _http.GetAsync<TvdbResponse<List<TvdbSearchResult>>>(url, ct).ConfigureAwait(false);
             if (response?.Data is null)
                 return Array.Empty<SearchResult>();
 
@@ -71,7 +75,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
                     AliasNames: r.Aliases))
                 .ToList()
                 .AsReadOnly();
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -86,7 +90,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
         var cacheKey = $"tvdb:episodes:{series.Id}:{sortOrder}";
         return await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-            await EnsureAuthenticatedAsync(ct);
+            await EnsureAuthenticatedAsync(ct).ConfigureAwait(false);
 
             var seasonType = sortOrder switch
             {
@@ -103,7 +107,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
             while (true)
             {
                 var url = $"{_config.TvdbBaseUrl}/series/{series.Id}/episodes/{seasonType}?page={page}";
-                var response = await _http.GetAsync<TvdbResponse<TvdbEpisodesData>>(url, ct);
+                var response = await _http.GetAsync<TvdbResponse<TvdbEpisodesData>>(url, ct).ConfigureAwait(false);
 
                 if (response?.Data?.Episodes is null || response.Data.Episodes.Count == 0)
                     break;
@@ -135,7 +139,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
                 SortOrder.DvdOrder => episodes.OrderBy(e => e.Season).ThenBy(e => e.EpisodeNumber).ToList().AsReadOnly(),
                 _ => episodes.OrderBy(e => e.AirDate).ToList().AsReadOnly()
             };
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -153,13 +157,13 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
         var cacheKey = $"tvdb:info:{series.Id}";
         return await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-            await EnsureAuthenticatedAsync(ct);
+            await EnsureAuthenticatedAsync(ct).ConfigureAwait(false);
 
             var url = $"{_config.TvdbBaseUrl}/series/{series.Id}/extended";
 
             _logger.LogDebug("TVDb series info: {SeriesId}", series.Id);
 
-            var response = await _http.GetAsync<TvdbResponse<TvdbSeriesDetail>>(url, ct)
+            var response = await _http.GetAsync<TvdbResponse<TvdbSeriesDetail>>(url, ct).ConfigureAwait(false)
                 ?? throw new InvalidOperationException($"TVDb returned no data for series {series.Id}");
 
             var detail = response.Data
@@ -180,7 +184,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
                 StartDate: SimpleDate.TryParse(detail.FirstAired),
                 Language: detail.OriginalLanguage,
                 AliasNames: detail.Aliases?.Select(a => a.Name ?? string.Empty).ToList());
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -191,7 +195,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
     {
         if (_bearerToken is not null) return;
 
-        await _authLock.WaitAsync(ct);
+        await _authLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             if (_bearerToken is not null) return;
@@ -200,7 +204,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
             var response = await _http.PostAsync<TvdbLoginRequest, TvdbResponse<TvdbLoginData>>(
                 url,
                 new TvdbLoginRequest { Apikey = _config.TvdbApiKey },
-                ct);
+                ct).ConfigureAwait(false);
 
             _bearerToken = response?.Data?.Token
                 ?? throw new InvalidOperationException("Failed to authenticate with TVDb API");

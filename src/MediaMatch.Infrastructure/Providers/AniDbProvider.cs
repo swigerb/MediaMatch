@@ -26,6 +26,11 @@ public sealed class AniDbProvider : IAniDbProvider
     /// <inheritdoc />
     public string Name => "AniDB";
 
+    /// <summary>Initializes a new instance of the <see cref="AniDbProvider"/> class.</summary>
+    /// <param name="http">The HTTP client used for AniDB API requests.</param>
+    /// <param name="cache">The metadata cache for storing API responses.</param>
+    /// <param name="config">The AniDB-specific configuration.</param>
+    /// <param name="logger">The logger instance.</param>
     public AniDbProvider(
         HttpClient http,
         MetadataCache cache,
@@ -43,7 +48,7 @@ public sealed class AniDbProvider : IAniDbProvider
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(string query, CancellationToken ct = default)
-        => await SearchAnimeAsync(query, ct);
+        => await SearchAnimeAsync(query, ct).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> SearchAnimeAsync(string title, CancellationToken ct = default)
@@ -57,7 +62,7 @@ public sealed class AniDbProvider : IAniDbProvider
             // We use the anime lookup approach with the title as a query parameter.
             var url = BuildApiUrl("anime", ("s", title));
 
-            var xml = await GetXmlAsync(url, ct);
+            var xml = await GetXmlAsync(url, ct).ConfigureAwait(false);
             if (xml is null)
                 return Array.Empty<SearchResult>();
 
@@ -86,13 +91,13 @@ public sealed class AniDbProvider : IAniDbProvider
             }
 
             return results.AsReadOnly();
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Episode>> GetEpisodesAsync(
         SearchResult series, SortOrder sortOrder = SortOrder.Airdate, CancellationToken ct = default)
-        => await GetAnimeEpisodesAsync(series.Id, ct);
+        => await GetAnimeEpisodesAsync(series.Id, ct).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Episode>> GetAnimeEpisodesAsync(int animeId, CancellationToken ct = default)
@@ -103,7 +108,7 @@ public sealed class AniDbProvider : IAniDbProvider
             _logger.LogDebug("AniDB fetching episodes for anime {AnimeId}", animeId);
 
             var url = BuildApiUrl("anime", ("aid", animeId.ToString(CultureInfo.InvariantCulture)));
-            var xml = await GetXmlAsync(url, ct);
+            var xml = await GetXmlAsync(url, ct).ConfigureAwait(false);
             if (xml is null)
                 return Array.Empty<Episode>();
 
@@ -164,12 +169,12 @@ public sealed class AniDbProvider : IAniDbProvider
             }
 
             return episodes.OrderBy(e => e.Season).ThenBy(e => e.EpisodeNumber).ToList().AsReadOnly();
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task<SeriesInfo> GetSeriesInfoAsync(SearchResult series, CancellationToken ct = default)
-        => await GetAnimeInfoAsync(series.Id, ct);
+        => await GetAnimeInfoAsync(series.Id, ct).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async Task<SeriesInfo> GetAnimeInfoAsync(int animeId, CancellationToken ct = default)
@@ -180,7 +185,7 @@ public sealed class AniDbProvider : IAniDbProvider
             _logger.LogDebug("AniDB series info: {AnimeId}", animeId);
 
             var url = BuildApiUrl("anime", ("aid", animeId.ToString(CultureInfo.InvariantCulture)));
-            var xml = await GetXmlAsync(url, ct);
+            var xml = await GetXmlAsync(url, ct).ConfigureAwait(false);
             if (xml is null)
                 throw new InvalidOperationException($"AniDB returned no data for anime {animeId}");
 
@@ -221,33 +226,33 @@ public sealed class AniDbProvider : IAniDbProvider
                 Genres: genres,
                 StartDate: SimpleDate.TryParse(startDateStr),
                 AliasNames: aliases.Count > 0 ? aliases : null);
-        });
+        }).ConfigureAwait(false);
     }
 
     // ── Rate-limited XML fetching ────────────────────────────────
 
     private async Task<XElement?> GetXmlAsync(string url, CancellationToken ct)
     {
-        await EnforceRateLimitAsync(ct);
+        await EnforceRateLimitAsync(ct).ConfigureAwait(false);
 
         int attempt = 0;
         while (true)
         {
             try
             {
-                var response = await _http.GetAsync(url, ct);
+                var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
 
                 if ((int)response.StatusCode == 429)
                 {
                     var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(4);
                     _logger.LogWarning("AniDB rate limited, backing off {Seconds}s", retryAfter.TotalSeconds);
-                    await Task.Delay(retryAfter, ct);
+                    await Task.Delay(retryAfter, ct).ConfigureAwait(false);
                     continue;
                 }
 
                 response.EnsureSuccessStatusCode();
 
-                var content = await response.Content.ReadAsStringAsync(ct);
+                var content = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(content))
                     return null;
 
@@ -269,14 +274,14 @@ public sealed class AniDbProvider : IAniDbProvider
                 var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
                 _logger.LogWarning(ex, "Transient failure on AniDB, retry {Attempt}/{Max} in {Delay}s",
                     attempt, _config.MaxRetries, delay.TotalSeconds);
-                await Task.Delay(delay, ct);
+                await Task.Delay(delay, ct).ConfigureAwait(false);
             }
         }
     }
 
     private async Task EnforceRateLimitAsync(CancellationToken ct)
     {
-        await _rateLimitGate.WaitAsync(ct);
+        await _rateLimitGate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             var now = DateTimeOffset.UtcNow;
@@ -287,7 +292,7 @@ public sealed class AniDbProvider : IAniDbProvider
             {
                 var waitTime = minInterval - elapsed;
                 _logger.LogDebug("AniDB rate limit: waiting {Ms}ms", waitTime.TotalMilliseconds);
-                await Task.Delay(waitTime, ct);
+                await Task.Delay(waitTime, ct).ConfigureAwait(false);
             }
 
             _lastRequestTime = DateTimeOffset.UtcNow;

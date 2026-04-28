@@ -14,8 +14,13 @@ public sealed class XmlMetadataProvider : IMovieProvider, IEpisodeProvider, ILoc
 {
     private readonly ILogger<XmlMetadataProvider> _logger;
 
+    /// <inheritdoc />
     public string Name => "XML";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="XmlMetadataProvider"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger instance.</param>
     public XmlMetadataProvider(ILogger<XmlMetadataProvider>? logger = null)
     {
         _logger = logger ?? NullLogger<XmlMetadataProvider>.Instance;
@@ -23,11 +28,13 @@ public sealed class XmlMetadataProvider : IMovieProvider, IEpisodeProvider, ILoc
 
     // ── IMovieProvider ──────────────────────────────────────────
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<Movie>> SearchAsync(string query, int? year = null, CancellationToken ct = default)
     {
         return Task.FromResult<IReadOnlyList<Movie>>(Array.Empty<Movie>());
     }
 
+    /// <inheritdoc />
     public Task<MovieInfo> GetMovieInfoAsync(Movie movie, CancellationToken ct = default)
     {
         return Task.FromResult(new MovieInfo(
@@ -149,16 +156,19 @@ public sealed class XmlMetadataProvider : IMovieProvider, IEpisodeProvider, ILoc
 
     // ── IEpisodeProvider ────────────────────────────────────────
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<SearchResult>> SearchAsync(string query, CancellationToken ct = default)
     {
         return Task.FromResult<IReadOnlyList<SearchResult>>(Array.Empty<SearchResult>());
     }
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<Episode>> GetEpisodesAsync(SearchResult series, SortOrder sortOrder = SortOrder.Airdate, CancellationToken ct = default)
     {
         return Task.FromResult<IReadOnlyList<Episode>>(Array.Empty<Episode>());
     }
 
+    /// <inheritdoc />
     public Task<SeriesInfo> GetSeriesInfoAsync(SearchResult series, CancellationToken ct = default)
     {
         return Task.FromResult(new SeriesInfo(

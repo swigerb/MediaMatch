@@ -7,36 +7,29 @@ namespace MediaMatch.Infrastructure.Platform;
 /// </summary>
 public sealed class PlatformService : IPlatformService
 {
+    /// <inheritdoc />
     public string PlatformName =>
         IsWindows ? "Windows" :
         IsMacOS ? "macOS" :
         IsLinux ? "Linux" :
         "Unknown";
 
+    /// <inheritdoc />
     public bool IsWindows => OperatingSystem.IsWindows();
 
+    /// <inheritdoc />
     public bool IsMacOS => OperatingSystem.IsMacOS();
 
+    /// <inheritdoc />
     public bool IsLinux => OperatingSystem.IsLinux();
 
-    /// <summary>
-    /// Hard links are supported on Windows (NTFS), macOS (APFS/HFS+), and Linux (ext4/Btrfs/XFS).
-    /// </summary>
+    /// <inheritdoc />
     public bool SupportsHardLinks => IsWindows || IsMacOS || IsLinux;
 
-    /// <summary>
-    /// ReFS CoW clone is a Windows-only feature available on ReFS volumes.
-    /// </summary>
+    /// <inheritdoc />
     public bool SupportsReFsClone => IsWindows;
 
-    /// <summary>
-    /// Returns the platform-appropriate settings directory:
-    /// <list type="bullet">
-    ///   <item>Windows: %LOCALAPPDATA%\MediaMatch</item>
-    ///   <item>macOS: ~/Library/Application Support/MediaMatch</item>
-    ///   <item>Linux: ~/.config/MediaMatch (XDG_CONFIG_HOME)</item>
-    /// </list>
-    /// </summary>
+    /// <inheritdoc />
     public string GetSettingsDirectory()
     {
         if (IsWindows)

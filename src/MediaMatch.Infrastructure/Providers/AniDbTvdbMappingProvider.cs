@@ -25,6 +25,12 @@ public sealed class AniDbTvdbMappingProvider
     private Dictionary<int, int>? _anidbToTvdbMap;
     private DateTimeOffset _mappingLoadedAt = DateTimeOffset.MinValue;
 
+    /// <summary>Initializes a new instance of the <see cref="AniDbTvdbMappingProvider"/> class.</summary>
+    /// <param name="http">The HTTP client used to download the mapping file.</param>
+    /// <param name="cache">The metadata cache for storing API responses.</param>
+    /// <param name="config">The AniDB-specific configuration.</param>
+    /// <param name="episodeProviders">The registered episode providers, used for TVDb fallback.</param>
+    /// <param name="logger">The logger instance.</param>
     public AniDbTvdbMappingProvider(
         HttpClient http,
         MetadataCache cache,
@@ -47,7 +53,7 @@ public sealed class AniDbTvdbMappingProvider
     /// </summary>
     public async Task<int?> MapAniDbToTvdbAsync(int anidbId, CancellationToken ct = default)
     {
-        var mapping = await GetMappingAsync(ct);
+        var mapping = await GetMappingAsync(ct).ConfigureAwait(false);
         return mapping.TryGetValue(anidbId, out var tvdbId) ? tvdbId : null;
     }
 
@@ -57,7 +63,7 @@ public sealed class AniDbTvdbMappingProvider
     /// </summary>
     public async Task<int?> MapTvdbToAniDbAsync(int tvdbId, CancellationToken ct = default)
     {
-        var mapping = await GetMappingAsync(ct);
+        var mapping = await GetMappingAsync(ct).ConfigureAwait(false);
         var entry = mapping.FirstOrDefault(kv => kv.Value == tvdbId);
         return entry.Key != 0 ? entry.Key : null;
     }
@@ -69,7 +75,7 @@ public sealed class AniDbTvdbMappingProvider
     public async Task<IReadOnlyList<Episode>> GetEpisodesViaTvdbFallbackAsync(
         int anidbId, string seriesName, CancellationToken ct = default)
     {
-        var tvdbId = await MapAniDbToTvdbAsync(anidbId, ct);
+        var tvdbId = await MapAniDbToTvdbAsync(anidbId, ct).ConfigureAwait(false);
         if (tvdbId is null)
         {
             _logger.LogDebug("No TVDb mapping found for AniDB anime {AniDbId}", anidbId);
@@ -86,7 +92,7 @@ public sealed class AniDbTvdbMappingProvider
         _logger.LogInformation("Falling back to TVDb (ID={TvdbId}) for AniDB anime {AniDbId}", tvdbId, anidbId);
 
         var searchResult = new SearchResult(seriesName, tvdbId.Value);
-        return await tvdbProvider.GetEpisodesAsync(searchResult, SortOrder.Airdate, ct);
+        return await tvdbProvider.GetEpisodesAsync(searchResult, SortOrder.Airdate, ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -95,7 +101,7 @@ public sealed class AniDbTvdbMappingProvider
     public async Task<SeriesInfo?> GetSeriesInfoViaTvdbFallbackAsync(
         int anidbId, string seriesName, CancellationToken ct = default)
     {
-        var tvdbId = await MapAniDbToTvdbAsync(anidbId, ct);
+        var tvdbId = await MapAniDbToTvdbAsync(anidbId, ct).ConfigureAwait(false);
         if (tvdbId is null)
             return null;
 
@@ -104,7 +110,7 @@ public sealed class AniDbTvdbMappingProvider
             return null;
 
         var searchResult = new SearchResult(seriesName, tvdbId.Value);
-        return await tvdbProvider.GetSeriesInfoAsync(searchResult, ct);
+        return await tvdbProvider.GetSeriesInfoAsync(searchResult, ct).ConfigureAwait(false);
     }
 
     // ── Mapping file management ──────────────────────────────────
@@ -117,7 +123,7 @@ public sealed class AniDbTvdbMappingProvider
         if (_anidbToTvdbMap is not null && (now - _mappingLoadedAt) < cacheExpiry)
             return _anidbToTvdbMap;
 
-        await _mappingLock.WaitAsync(ct);
+        await _mappingLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             // Double-check after acquiring lock
@@ -126,10 +132,10 @@ public sealed class AniDbTvdbMappingProvider
 
             _logger.LogInformation("Downloading AniDB-TVDb mapping file from {Url}", _config.TvdbMappingUrl);
 
-            var response = await _http.GetAsync(_config.TvdbMappingUrl, ct);
+            var response = await _http.GetAsync(_config.TvdbMappingUrl, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(ct);
+            var content = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             var doc = XDocument.Parse(content);
 
             var map = new Dictionary<int, int>();

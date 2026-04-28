@@ -17,7 +17,8 @@ public static class SerilogConfig
     /// Creates a fully configured Serilog <see cref="LoggerConfiguration"/>.
     /// </summary>
     /// <param name="enableConsole">Whether to enable the console sink (for CLI/debug).</param>
-    /// <param name="minimumLevel">Minimum log level. Defaults to Information.</param>
+    /// <param name="minimumLevel">Minimum log level. Defaults to <see cref="LogEventLevel.Information"/>.</param>
+    /// <returns>A configured <see cref="LoggerConfiguration"/> ready to build.</returns>
     public static LoggerConfiguration CreateConfiguration(
         bool enableConsole = true,
         LogEventLevel minimumLevel = LogEventLevel.Information)
@@ -52,6 +53,8 @@ public static class SerilogConfig
     /// <summary>
     /// Initializes the global Serilog logger. Call early in app startup.
     /// </summary>
+    /// <param name="enableConsole">Whether to enable the console sink.</param>
+    /// <param name="debugMode">Whether to lower the minimum level to <see cref="LogEventLevel.Debug"/>.</param>
     public static void Initialize(bool enableConsole = true, bool debugMode = false)
     {
         var level = debugMode ? LogEventLevel.Debug : LogEventLevel.Information;

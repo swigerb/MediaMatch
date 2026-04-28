@@ -21,7 +21,11 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
     /// <inheritdoc />
     public string Name => "TMDb";
 
-    /// <summary>Initialises a new <see cref="TmdbEpisodeProvider"/>.</summary>
+    /// <summary>Initializes a new instance of the <see cref="TmdbEpisodeProvider"/> class.</summary>
+    /// <param name="http">The HTTP client used for TMDb API requests.</param>
+    /// <param name="cache">The metadata cache for storing API responses.</param>
+    /// <param name="config">The API configuration containing the TMDb API key.</param>
+    /// <param name="logger">The logger instance.</param>
     public TmdbEpisodeProvider(
         MediaMatchHttpClient http,
         MetadataCache cache,
@@ -34,7 +38,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
         _logger = logger;
     }
 
-    /// <summary>Returns true if a TMDb API key has been configured.</summary>
+    /// <summary>Gets a value indicating whether a TMDb API key has been configured.</summary>
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_config.TmdbApiKey);
 
     /// <inheritdoc />
@@ -53,7 +57,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
 
             _logger.LogDebug("TMDb series search: {Query}", query);
 
-            var response = await _http.GetAsync<TmdbTvSearchResponse>(url, ct);
+            var response = await _http.GetAsync<TmdbTvSearchResponse>(url, ct).ConfigureAwait(false);
             if (response?.Results is null)
                 return Array.Empty<SearchResult>();
 
@@ -63,7 +67,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
                     Id: r.Id))
                 .ToList()
                 .AsReadOnly();
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -80,7 +84,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
         {
             // First get series details to know how many seasons
             var detailUrl = $"{_config.TmdbBaseUrl}/tv/{series.Id}?api_key={_config.TmdbApiKey}&language={_config.Language}";
-            var detail = await _http.GetAsync<TmdbTvDetail>(detailUrl, ct);
+            var detail = await _http.GetAsync<TmdbTvDetail>(detailUrl, ct).ConfigureAwait(false);
 
             if (detail?.Seasons is null)
                 return Array.Empty<Episode>();
@@ -93,7 +97,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
             foreach (var season in detail.Seasons.OrderBy(s => s.SeasonNumber))
             {
                 var seasonUrl = $"{_config.TmdbBaseUrl}/tv/{series.Id}/season/{season.SeasonNumber}?api_key={_config.TmdbApiKey}&language={_config.Language}";
-                var seasonDetail = await _http.GetAsync<TmdbSeasonDetail>(seasonUrl, ct);
+                var seasonDetail = await _http.GetAsync<TmdbSeasonDetail>(seasonUrl, ct).ConfigureAwait(false);
 
                 if (seasonDetail?.Episodes is null) continue;
 
@@ -121,7 +125,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
                 SortOrder.DvdOrder => episodes.OrderBy(e => e.Season).ThenBy(e => e.EpisodeNumber).ToList().AsReadOnly(),
                 _ => episodes.OrderBy(e => e.AirDate).ToList().AsReadOnly()
             };
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -143,7 +147,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
 
             _logger.LogDebug("TMDb series info: {SeriesId}", series.Id);
 
-            var detail = await _http.GetAsync<TmdbTvDetail>(url, ct)
+            var detail = await _http.GetAsync<TmdbTvDetail>(url, ct).ConfigureAwait(false)
                 ?? throw new InvalidOperationException($"TMDb returned no data for series {series.Id}");
 
             var posterUrl = detail.PosterPath is not null
@@ -165,7 +169,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
                 TmdbId: detail.Id,
                 Language: detail.OriginalLanguage,
                 AliasNames: detail.OriginCountry);
-        });
+        }).ConfigureAwait(false);
     }
 
     #region TMDb JSON DTOs

@@ -22,7 +22,11 @@ public sealed class TmdbMovieProvider : IMovieProvider
     /// <inheritdoc />
     public string Name => "TMDb";
 
-    /// <summary>Initialises a new <see cref="TmdbMovieProvider"/>.</summary>
+    /// <summary>Initializes a new instance of the <see cref="TmdbMovieProvider"/> class.</summary>
+    /// <param name="http">The HTTP client used for TMDb API requests.</param>
+    /// <param name="cache">The metadata cache for storing API responses.</param>
+    /// <param name="config">The API configuration containing the TMDb API key.</param>
+    /// <param name="logger">The logger instance.</param>
     public TmdbMovieProvider(
         MediaMatchHttpClient http,
         MetadataCache cache,
@@ -35,7 +39,7 @@ public sealed class TmdbMovieProvider : IMovieProvider
         _logger = logger;
     }
 
-    /// <summary>Returns true if a TMDb API key has been configured.</summary>
+    /// <summary>Gets a value indicating whether a TMDb API key has been configured.</summary>
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_config.TmdbApiKey);
 
     /// <inheritdoc />
@@ -56,7 +60,7 @@ public sealed class TmdbMovieProvider : IMovieProvider
 
             _logger.LogDebug("TMDb movie search: {Query} year={Year}", query, year);
 
-            var response = await _http.GetAsync<TmdbSearchResponse>(url, ct);
+            var response = await _http.GetAsync<TmdbSearchResponse>(url, ct).ConfigureAwait(false);
             if (response?.Results is null)
                 return Array.Empty<Movie>();
 
@@ -68,7 +72,7 @@ public sealed class TmdbMovieProvider : IMovieProvider
                     Language: r.OriginalLanguage))
                 .ToList()
                 .AsReadOnly();
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -93,7 +97,7 @@ public sealed class TmdbMovieProvider : IMovieProvider
 
             _logger.LogDebug("TMDb movie details: {TmdbId}", movie.TmdbId);
 
-            var detail = await _http.GetAsync<TmdbMovieDetail>(url, ct)
+            var detail = await _http.GetAsync<TmdbMovieDetail>(url, ct).ConfigureAwait(false)
                 ?? throw new InvalidOperationException($"TMDb returned no data for movie {movie.TmdbId}");
 
             var cast = detail.Credits?.Cast?
@@ -140,7 +144,7 @@ public sealed class TmdbMovieProvider : IMovieProvider
                 Revenue: detail.Revenue,
                 Budget: detail.Budget,
                 Collection: detail.BelongsToCollection?.Name);
-        });
+        }).ConfigureAwait(false);
     }
 
     private static int ParseYear(string? dateStr)

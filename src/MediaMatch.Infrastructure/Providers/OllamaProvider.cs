@@ -20,10 +20,18 @@ public sealed class OllamaProvider : ILlmProvider
     private readonly LlmConfiguration _config;
     private readonly ILogger<OllamaProvider> _logger;
 
+    /// <inheritdoc />
     public string Name => "Ollama";
 
+    /// <inheritdoc />
     public bool IsAvailable => _config.Provider == LlmProviderType.Ollama;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OllamaProvider"/> class.
+    /// </summary>
+    /// <param name="httpClient">The HTTP client used for Ollama API requests.</param>
+    /// <param name="config">LLM configuration containing endpoint and model settings.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public OllamaProvider(
         HttpClient httpClient,
         LlmConfiguration config,
@@ -34,6 +42,7 @@ public sealed class OllamaProvider : ILlmProvider
         _logger = logger ?? NullLogger<OllamaProvider>.Instance;
     }
 
+    /// <inheritdoc />
     public async Task<string> GenerateRenameAsync(string prompt, MediaContext context, CancellationToken ct = default)
     {
         var endpoint = _config.OllamaEndpoint.TrimEnd('/');
@@ -53,10 +62,10 @@ public sealed class OllamaProvider : ILlmProvider
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        using var response = await _httpClient.SendAsync(httpRequest, ct);
+        using var response = await _httpClient.SendAsync(httpRequest, ct).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        var responseJson = await response.Content.ReadAsStringAsync(ct);
+        var responseJson = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
         var result = JsonSerializer.Deserialize<OllamaResponse>(responseJson, JsonOptions);
 
         var content = result?.Response?.Trim();

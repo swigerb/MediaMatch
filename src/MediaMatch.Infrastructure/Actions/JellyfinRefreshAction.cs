@@ -15,9 +15,18 @@ public sealed class JellyfinRefreshAction : IPostProcessAction
     private readonly JellyfinSettings _settings;
     private readonly ILogger<JellyfinRefreshAction> _logger;
 
+    /// <inheritdoc />
     public string Name => "jellyfin-refresh";
+
+    /// <inheritdoc />
     public bool IsAvailable => !string.IsNullOrWhiteSpace(_settings.Url) && !string.IsNullOrWhiteSpace(_settings.ApiKey);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JellyfinRefreshAction"/> class.
+    /// </summary>
+    /// <param name="http">The HTTP client for sending refresh requests.</param>
+    /// <param name="settings">Jellyfin connection settings.</param>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public JellyfinRefreshAction(HttpClient http, JellyfinSettings settings, ILogger<JellyfinRefreshAction>? logger = null)
     {
         _http = http;
@@ -25,6 +34,7 @@ public sealed class JellyfinRefreshAction : IPostProcessAction
         _logger = logger ?? NullLogger<JellyfinRefreshAction>.Instance;
     }
 
+    /// <inheritdoc />
     public async Task ExecuteAsync(FileOrganizationResult result, CancellationToken ct = default)
     {
         if (!IsAvailable)
@@ -41,7 +51,7 @@ public sealed class JellyfinRefreshAction : IPostProcessAction
 
         try
         {
-            var response = await _http.SendAsync(request, ct);
+            var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
             _logger.LogInformation("Jellyfin library refresh: {Status}", response.StatusCode);
         }
         catch (Exception ex)

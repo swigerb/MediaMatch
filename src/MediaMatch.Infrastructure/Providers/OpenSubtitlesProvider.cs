@@ -25,6 +25,13 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
     /// <summary>Returns true if an OpenSubtitles API key has been configured.</summary>
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_apiKeys.OpenSubtitlesApiKey);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenSubtitlesProvider"/> class.
+    /// </summary>
+    /// <param name="http">The HTTP client used for OpenSubtitles API requests.</param>
+    /// <param name="config">API configuration settings.</param>
+    /// <param name="apiKeys">API key settings containing the OpenSubtitles key.</param>
+    /// <param name="logger">Logger instance.</param>
     public OpenSubtitlesProvider(
         MediaMatchHttpClient http,
         ApiConfiguration config,
@@ -50,7 +57,7 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
         var encodedQuery = Uri.EscapeDataString(query);
         var url = $"{BaseUrl}/subtitles?query={encodedQuery}&languages={Uri.EscapeDataString(language)}";
 
-        return await SearchInternalAsync(url, ct);
+        return await SearchInternalAsync(url, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -65,7 +72,7 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
 
         var url = $"{BaseUrl}/subtitles?moviehash={Uri.EscapeDataString(movieHash)}&languages={Uri.EscapeDataString(language)}";
 
-        return await SearchInternalAsync(url, ct);
+        return await SearchInternalAsync(url, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -83,22 +90,27 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
         var response = await _http.PostAsync<DownloadRequest, DownloadResponse>(
             $"{BaseUrl}/download",
             new DownloadRequest(int.Parse(subtitle.DownloadUrl, System.Globalization.CultureInfo.InvariantCulture)),
-            ct);
+            ct).ConfigureAwait(false);
 
         if (response?.Link is null)
             throw new InvalidOperationException("Failed to obtain download link from OpenSubtitles.");
 
         // Fetch the actual subtitle file as a stream
-        var httpClient = new HttpClient();
+        using var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("MediaMatch/1.0");
-        return await httpClient.GetStreamAsync(response.Link, ct);
+        var stream = await httpClient.GetStreamAsync(response.Link, ct).ConfigureAwait(false);
+        // Copy to a MemoryStream so the HttpClient can be disposed
+        var memStream = new MemoryStream();
+        await stream.CopyToAsync(memStream, ct).ConfigureAwait(false);
+        memStream.Position = 0;
+        return memStream;
     }
 
     private async Task<IReadOnlyList<SubtitleDescriptor>> SearchInternalAsync(string url, CancellationToken ct)
     {
         try
         {
-            var response = await _http.GetAsync<SearchResponse>(url, ct);
+            var response = await _http.GetAsync<SearchResponse>(url, ct).ConfigureAwait(false);
             if (response?.Data is null)
                 return [];
 

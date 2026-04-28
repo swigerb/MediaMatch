@@ -16,6 +16,10 @@ public sealed partial class ReFsCloneHandler
 {
     private readonly ILogger<ReFsCloneHandler> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ReFsCloneHandler"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public ReFsCloneHandler(ILogger<ReFsCloneHandler>? logger = null)
     {
         _logger = logger ?? NullLogger<ReFsCloneHandler>.Instance;
@@ -24,6 +28,8 @@ public sealed partial class ReFsCloneHandler
     /// <summary>
     /// Returns true if the volume at the given path is ReFS.
     /// </summary>
+    /// <param name="path">A file or directory path on the volume to check.</param>
+    /// <returns><see langword="true"/> if the volume uses the ReFS file system; otherwise, <see langword="false"/>.</returns>
     public bool IsReFs(string path)
     {
         var root = Path.GetPathRoot(path);
@@ -47,6 +53,9 @@ public sealed partial class ReFsCloneHandler
     /// <summary>
     /// Clones a file using ReFS CoW. Returns true on success.
     /// </summary>
+    /// <param name="source">The source file path to clone.</param>
+    /// <param name="destination">The destination file path.</param>
+    /// <returns><see langword="true"/> if the CoW clone succeeded; otherwise, <see langword="false"/>.</returns>
     public bool TryClone(string source, string destination)
     {
         try

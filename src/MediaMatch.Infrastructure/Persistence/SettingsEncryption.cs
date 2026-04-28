@@ -16,6 +16,7 @@ public sealed class SettingsEncryption : ISettingsEncryption
 {
     private const string EncryptedPrefix = "ENC:";
 
+    /// <inheritdoc />
     public string Encrypt(string plainText)
     {
         if (string.IsNullOrEmpty(plainText))
@@ -26,6 +27,7 @@ public sealed class SettingsEncryption : ISettingsEncryption
         return EncryptedPrefix + Convert.ToBase64String(cipherBytes);
     }
 
+    /// <inheritdoc />
     public string Decrypt(string cipherText)
     {
         if (string.IsNullOrEmpty(cipherText) || !IsEncrypted(cipherText))
@@ -37,6 +39,7 @@ public sealed class SettingsEncryption : ISettingsEncryption
         return Encoding.UTF8.GetString(plainBytes);
     }
 
+    /// <inheritdoc />
     public bool IsEncrypted(string value)
         => !string.IsNullOrEmpty(value) && value.StartsWith(EncryptedPrefix, StringComparison.Ordinal);
 }

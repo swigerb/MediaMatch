@@ -15,15 +15,24 @@ public sealed class CustomScriptAction : IPostProcessAction
     private readonly string _scriptPath;
     private readonly ILogger<CustomScriptAction> _logger;
 
+    /// <inheritdoc />
     public string Name => "custom-script";
+
+    /// <inheritdoc />
     public bool IsAvailable => !string.IsNullOrWhiteSpace(_scriptPath) && File.Exists(_scriptPath);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CustomScriptAction"/> class.
+    /// </summary>
+    /// <param name="scriptPath">The absolute path to the script file to execute.</param>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public CustomScriptAction(string scriptPath, ILogger<CustomScriptAction>? logger = null)
     {
         _scriptPath = scriptPath;
         _logger = logger ?? NullLogger<CustomScriptAction>.Instance;
     }
 
+    /// <inheritdoc />
     public async Task ExecuteAsync(FileOrganizationResult result, CancellationToken ct = default)
     {
         if (!IsAvailable)
@@ -59,10 +68,10 @@ public sealed class CustomScriptAction : IPostProcessAction
             using var process = new Process { StartInfo = psi };
             process.Start();
 
-            var stdout = await process.StandardOutput.ReadToEndAsync(ct);
-            var stderr = await process.StandardError.ReadToEndAsync(ct);
+            var stdout = await process.StandardOutput.ReadToEndAsync(ct).ConfigureAwait(false);
+            var stderr = await process.StandardError.ReadToEndAsync(ct).ConfigureAwait(false);
 
-            await process.WaitForExitAsync(ct);
+            await process.WaitForExitAsync(ct).ConfigureAwait(false);
 
             if (process.ExitCode == 0)
             {

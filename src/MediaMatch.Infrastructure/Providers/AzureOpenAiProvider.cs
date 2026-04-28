@@ -20,14 +20,22 @@ public sealed class AzureOpenAiProvider : ILlmProvider
     private readonly LlmConfiguration _config;
     private readonly ILogger<AzureOpenAiProvider> _logger;
 
+    /// <inheritdoc />
     public string Name => "AzureOpenAI";
 
+    /// <inheritdoc />
     public bool IsAvailable =>
         _config.Provider == LlmProviderType.AzureOpenAI &&
         !string.IsNullOrWhiteSpace(_config.AzureOpenAiEndpoint) &&
         !string.IsNullOrWhiteSpace(_config.AzureOpenAiApiKey) &&
         !string.IsNullOrWhiteSpace(_config.AzureOpenAiDeployment);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AzureOpenAiProvider"/> class.
+    /// </summary>
+    /// <param name="httpClient">The HTTP client used for Azure OpenAI API requests.</param>
+    /// <param name="config">LLM configuration containing endpoint, API key, and deployment settings.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public AzureOpenAiProvider(
         HttpClient httpClient,
         LlmConfiguration config,
@@ -38,6 +46,7 @@ public sealed class AzureOpenAiProvider : ILlmProvider
         _logger = logger ?? NullLogger<AzureOpenAiProvider>.Instance;
     }
 
+    /// <inheritdoc />
     public async Task<string> GenerateRenameAsync(string prompt, MediaContext context, CancellationToken ct = default)
     {
         var endpoint = _config.AzureOpenAiEndpoint.TrimEnd('/');
@@ -60,10 +69,10 @@ public sealed class AzureOpenAiProvider : ILlmProvider
         };
         httpRequest.Headers.Add("api-key", _config.AzureOpenAiApiKey);
 
-        using var response = await _httpClient.SendAsync(httpRequest, ct);
+        using var response = await _httpClient.SendAsync(httpRequest, ct).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        var responseJson = await response.Content.ReadAsStringAsync(ct);
+        var responseJson = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
         var result = JsonSerializer.Deserialize<AzureChatResponse>(responseJson, JsonOptions);
 
         var content = result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();

@@ -27,8 +27,11 @@ public sealed class MediaMatchHttpClient
     private const int RateLimitMax = 38;    // leave 2-request headroom
 
     /// <summary>
-    /// Initialises a new <see cref="MediaMatchHttpClient"/>.
+    /// Initializes a new instance of the <see cref="MediaMatchHttpClient"/> class.
     /// </summary>
+    /// <param name="http">The underlying <see cref="HttpClient"/> to use for requests.</param>
+    /// <param name="logger">Logger for diagnostics and retry information.</param>
+    /// <param name="maxRetries">Maximum number of retries for transient failures.</param>
     public MediaMatchHttpClient(HttpClient http, ILogger<MediaMatchHttpClient> logger, int maxRetries = 3)
     {
         _http = http;
@@ -45,25 +48,25 @@ public sealed class MediaMatchHttpClient
     /// </summary>
     public async Task<T?> GetAsync<T>(string url, CancellationToken ct = default)
     {
-        await EnforceRateLimitAsync(ct);
+        await EnforceRateLimitAsync(ct).ConfigureAwait(false);
 
         int attempt = 0;
         while (true)
         {
             try
             {
-                var response = await _http.GetAsync(url, ct);
+                var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 {
                     var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(2);
                     _logger.LogWarning("Rate limited on {Url}. Backing off {Seconds}s", url, retryAfter.TotalSeconds);
-                    await Task.Delay(retryAfter, ct);
+                    await Task.Delay(retryAfter, ct).ConfigureAwait(false);
                     continue;
                 }
 
                 response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<T>(JsonOptions, ct);
+                return await response.Content.ReadFromJsonAsync<T>(JsonOptions, ct).ConfigureAwait(false);
             }
             catch (HttpRequestException ex) when (attempt < _maxRetries && IsTransient(ex))
             {
@@ -71,7 +74,7 @@ public sealed class MediaMatchHttpClient
                 var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
                 _logger.LogWarning(ex, "Transient failure on {Url}, retry {Attempt}/{Max} in {Delay}s",
                     url, attempt, _maxRetries, delay.TotalSeconds);
-                await Task.Delay(delay, ct);
+                await Task.Delay(delay, ct).ConfigureAwait(false);
             }
         }
     }
@@ -81,36 +84,36 @@ public sealed class MediaMatchHttpClient
     /// </summary>
     public async Task<TResponse?> PostAsync<TRequest, TResponse>(string url, TRequest body, CancellationToken ct = default)
     {
-        await EnforceRateLimitAsync(ct);
+        await EnforceRateLimitAsync(ct).ConfigureAwait(false);
 
         int attempt = 0;
         while (true)
         {
             try
             {
-                var response = await _http.PostAsJsonAsync(url, body, JsonOptions, ct);
+                var response = await _http.PostAsJsonAsync(url, body, JsonOptions, ct).ConfigureAwait(false);
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 {
                     var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(2);
-                    await Task.Delay(retryAfter, ct);
+                    await Task.Delay(retryAfter, ct).ConfigureAwait(false);
                     continue;
                 }
 
                 response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<TResponse>(JsonOptions, ct);
+                return await response.Content.ReadFromJsonAsync<TResponse>(JsonOptions, ct).ConfigureAwait(false);
             }
             catch (HttpRequestException ex) when (attempt < _maxRetries && IsTransient(ex))
             {
                 attempt++;
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
+                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct).ConfigureAwait(false);
             }
         }
     }
 
     private async Task EnforceRateLimitAsync(CancellationToken ct)
     {
-        await _rateLimitGate.WaitAsync(ct);
+        await _rateLimitGate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             var now = DateTimeOffset.UtcNow;
@@ -124,7 +127,7 @@ public sealed class MediaMatchHttpClient
                 var oldest = _requestTimestamps.Peek();
                 var waitTime = oldest.AddSeconds(RateLimitWindow) - now;
                 if (waitTime > TimeSpan.Zero)
-                    await Task.Delay(waitTime, ct);
+                    await Task.Delay(waitTime, ct).ConfigureAwait(false);
             }
 
             _requestTimestamps.Enqueue(DateTimeOffset.UtcNow);

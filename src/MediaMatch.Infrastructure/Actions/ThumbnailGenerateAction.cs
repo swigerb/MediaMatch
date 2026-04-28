@@ -15,15 +15,23 @@ public sealed class ThumbnailGenerateAction : IPostProcessAction
     private readonly ILogger<ThumbnailGenerateAction> _logger;
     private readonly string? _ffmpegPath;
 
+    /// <inheritdoc />
     public string Name => "thumbnail";
+
+    /// <inheritdoc />
     public bool IsAvailable => _ffmpegPath is not null;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ThumbnailGenerateAction"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public ThumbnailGenerateAction(ILogger<ThumbnailGenerateAction>? logger = null)
     {
         _logger = logger ?? NullLogger<ThumbnailGenerateAction>.Instance;
         _ffmpegPath = FindFfmpeg();
     }
 
+    /// <inheritdoc />
     public async Task ExecuteAsync(FileOrganizationResult result, CancellationToken ct = default)
     {
         if (!IsAvailable || _ffmpegPath is null)
@@ -59,7 +67,7 @@ public sealed class ThumbnailGenerateAction : IPostProcessAction
             };
 
             process.Start();
-            await process.WaitForExitAsync(ct);
+            await process.WaitForExitAsync(ct).ConfigureAwait(false);
 
             if (process.ExitCode == 0)
                 _logger.LogInformation("Thumbnail generated: {Path}", outputPath);

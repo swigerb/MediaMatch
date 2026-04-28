@@ -24,8 +24,12 @@ public sealed class MusicBrainzProvider : IMusicProvider
     private readonly SemaphoreSlim _rateLimiter = new(1, 1);
     private DateTimeOffset _lastRequest = DateTimeOffset.MinValue;
 
+    /// <inheritdoc />
     public string Name => "MusicBrainz";
 
+    /// <summary>Initializes a new instance of the <see cref="MusicBrainzProvider"/> class.</summary>
+    /// <param name="http">The HTTP client used for MusicBrainz API requests.</param>
+    /// <param name="logger">The logger instance.</param>
     public MusicBrainzProvider(HttpClient http, ILogger<MusicBrainzProvider>? logger = null)
     {
         _http = http;
@@ -35,15 +39,17 @@ public sealed class MusicBrainzProvider : IMusicProvider
         _logger = logger ?? NullLogger<MusicBrainzProvider>.Instance;
     }
 
+    /// <inheritdoc />
     public Task<MusicTrack?> LookupAsync(string fingerprint, int duration, CancellationToken ct = default)
     {
         // MusicBrainz does not support fingerprint lookup directly — use AcoustID instead.
         return Task.FromResult<MusicTrack?>(null);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<MusicTrack>> SearchAsync(string artist, string title, CancellationToken ct = default)
     {
-        await RateLimitAsync(ct);
+        await RateLimitAsync(ct).ConfigureAwait(false);
 
         var query = Uri.EscapeDataString($"artist:\"{artist}\" AND recording:\"{title}\"");
         var url = $"recording?query={query}&fmt=json&limit=5";
@@ -52,10 +58,10 @@ public sealed class MusicBrainzProvider : IMusicProvider
 
         try
         {
-            var response = await _http.GetAsync(url, ct);
+            var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<MbRecordingSearchResponse>(JsonOptions, ct);
+            var result = await response.Content.ReadFromJsonAsync<MbRecordingSearchResponse>(JsonOptions, ct).ConfigureAwait(false);
             if (result?.Recordings is null or { Count: 0 })
                 return Array.Empty<MusicTrack>();
 
@@ -109,12 +115,12 @@ public sealed class MusicBrainzProvider : IMusicProvider
 
     private async Task RateLimitAsync(CancellationToken ct)
     {
-        await _rateLimiter.WaitAsync(ct);
+        await _rateLimiter.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             var elapsed = DateTimeOffset.UtcNow - _lastRequest;
             if (elapsed.TotalMilliseconds < 1000)
-                await Task.Delay(1000 - (int)elapsed.TotalMilliseconds, ct);
+                await Task.Delay(1000 - (int)elapsed.TotalMilliseconds, ct).ConfigureAwait(false);
             _lastRequest = DateTimeOffset.UtcNow;
         }
         finally

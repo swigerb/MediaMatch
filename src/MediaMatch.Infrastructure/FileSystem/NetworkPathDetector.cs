@@ -17,6 +17,10 @@ public sealed partial class NetworkPathDetector : INetworkPathDetector
 
     private readonly ILogger<NetworkPathDetector> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NetworkPathDetector"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public NetworkPathDetector(ILogger<NetworkPathDetector>? logger = null)
     {
         _logger = logger ?? NullLogger<NetworkPathDetector>.Instance;

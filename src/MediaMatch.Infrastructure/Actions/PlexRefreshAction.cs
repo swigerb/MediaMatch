@@ -16,9 +16,18 @@ public sealed class PlexRefreshAction : IPostProcessAction
     private readonly PlexSettings _settings;
     private readonly ILogger<PlexRefreshAction> _logger;
 
+    /// <inheritdoc />
     public string Name => "plex-refresh";
+
+    /// <inheritdoc />
     public bool IsAvailable => !string.IsNullOrWhiteSpace(_settings.Url) && !string.IsNullOrWhiteSpace(_settings.Token);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PlexRefreshAction"/> class.
+    /// </summary>
+    /// <param name="http">The HTTP client for sending refresh requests.</param>
+    /// <param name="settings">Plex connection settings.</param>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public PlexRefreshAction(HttpClient http, PlexSettings settings, ILogger<PlexRefreshAction>? logger = null)
     {
         _http = http;
@@ -26,6 +35,7 @@ public sealed class PlexRefreshAction : IPostProcessAction
         _logger = logger ?? NullLogger<PlexRefreshAction>.Instance;
     }
 
+    /// <inheritdoc />
     public async Task ExecuteAsync(FileOrganizationResult result, CancellationToken ct = default)
     {
         if (!IsAvailable)
@@ -44,7 +54,7 @@ public sealed class PlexRefreshAction : IPostProcessAction
 
             try
             {
-                var response = await _http.SendAsync(request, ct);
+                var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
                 _logger.LogInformation("Plex refresh section {Section}: {Status}", sectionId, response.StatusCode);
             }
             catch (Exception ex)

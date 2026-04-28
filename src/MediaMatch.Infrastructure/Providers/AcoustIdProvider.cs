@@ -24,8 +24,15 @@ public sealed class AcoustIdProvider : IMusicProvider
     private readonly string _apiKey;
     private readonly ILogger<AcoustIdProvider> _logger;
 
+    /// <inheritdoc />
     public string Name => "AcoustID";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AcoustIdProvider"/> class.
+    /// </summary>
+    /// <param name="http">The HTTP client used for AcoustID API requests.</param>
+    /// <param name="apiKeys">API key settings containing the AcoustID key.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public AcoustIdProvider(HttpClient http, ApiKeySettings apiKeys, ILogger<AcoustIdProvider>? logger = null)
     {
         _http = http;
@@ -34,6 +41,7 @@ public sealed class AcoustIdProvider : IMusicProvider
         _logger = logger ?? NullLogger<AcoustIdProvider>.Instance;
     }
 
+    /// <inheritdoc />
     public async Task<MusicTrack?> LookupAsync(string fingerprint, int duration, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_apiKey))
@@ -48,10 +56,10 @@ public sealed class AcoustIdProvider : IMusicProvider
 
         try
         {
-            var response = await _http.GetAsync(url, ct);
+            var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<AcoustIdResponse>(JsonOptions, ct);
+            var result = await response.Content.ReadFromJsonAsync<AcoustIdResponse>(JsonOptions, ct).ConfigureAwait(false);
             if (result?.Results is null or { Count: 0 })
                 return null;
 
@@ -92,6 +100,7 @@ public sealed class AcoustIdProvider : IMusicProvider
         }
     }
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<MusicTrack>> SearchAsync(string artist, string title, CancellationToken ct = default)
     {
         // AcoustID is fingerprint-only; search is not supported.

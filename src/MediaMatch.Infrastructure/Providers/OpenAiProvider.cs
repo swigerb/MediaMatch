@@ -22,12 +22,20 @@ public sealed class OpenAiProvider : ILlmProvider
     private readonly ILogger<OpenAiProvider> _logger;
     private int _rateLimitRemaining = int.MaxValue;
 
+    /// <inheritdoc />
     public string Name => "OpenAI";
 
+    /// <inheritdoc />
     public bool IsAvailable =>
         _config.Provider == LlmProviderType.OpenAI &&
         !string.IsNullOrWhiteSpace(_config.OpenAiApiKey);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenAiProvider"/> class.
+    /// </summary>
+    /// <param name="httpClient">The HTTP client used for OpenAI API requests.</param>
+    /// <param name="config">LLM configuration containing API key and model settings.</param>
+    /// <param name="logger">Optional logger instance.</param>
     public OpenAiProvider(
         HttpClient httpClient,
         LlmConfiguration config,
@@ -38,12 +46,13 @@ public sealed class OpenAiProvider : ILlmProvider
         _logger = logger ?? NullLogger<OpenAiProvider>.Instance;
     }
 
+    /// <inheritdoc />
     public async Task<string> GenerateRenameAsync(string prompt, MediaContext context, CancellationToken ct = default)
     {
         if (_rateLimitRemaining <= 0)
         {
             _logger.LogWarning("OpenAI rate limit exhausted, waiting before retry");
-            await Task.Delay(TimeSpan.FromSeconds(5), ct);
+            await Task.Delay(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
         }
 
         var request = new OpenAiRequest
@@ -64,7 +73,7 @@ public sealed class OpenAiProvider : ILlmProvider
         };
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _config.OpenAiApiKey);
 
-        using var response = await _httpClient.SendAsync(httpRequest, ct);
+        using var response = await _httpClient.SendAsync(httpRequest, ct).ConfigureAwait(false);
 
         // Track rate limit headers
         if (response.Headers.TryGetValues("x-ratelimit-remaining-requests", out var remainingValues))
@@ -75,7 +84,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
         response.EnsureSuccessStatusCode();
 
-        var responseJson = await response.Content.ReadAsStringAsync(ct);
+        var responseJson = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
         var result = JsonSerializer.Deserialize<OpenAiResponse>(responseJson, JsonOptions);
 
         var content = result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();

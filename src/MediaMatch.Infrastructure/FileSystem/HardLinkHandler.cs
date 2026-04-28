@@ -14,6 +14,10 @@ public sealed partial class HardLinkHandler
 {
     private readonly ILogger<HardLinkHandler> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HardLinkHandler"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public HardLinkHandler(ILogger<HardLinkHandler>? logger = null)
     {
         _logger = logger ?? NullLogger<HardLinkHandler>.Instance;
@@ -22,6 +26,9 @@ public sealed partial class HardLinkHandler
     /// <summary>
     /// Creates a hard link. Returns true on success.
     /// </summary>
+    /// <param name="linkPath">The path of the hard link to create.</param>
+    /// <param name="targetPath">The existing file to link to.</param>
+    /// <returns><see langword="true"/> if the hard link was created successfully; otherwise, <see langword="false"/>.</returns>
     public bool TryCreateHardLink(string linkPath, string targetPath)
     {
         try

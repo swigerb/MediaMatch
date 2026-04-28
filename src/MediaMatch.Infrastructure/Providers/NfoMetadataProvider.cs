@@ -14,8 +14,13 @@ public sealed class NfoMetadataProvider : IMovieProvider, IEpisodeProvider, ILoc
 {
     private readonly ILogger<NfoMetadataProvider> _logger;
 
+    /// <inheritdoc />
     public string Name => "NFO";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NfoMetadataProvider"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger instance.</param>
     public NfoMetadataProvider(ILogger<NfoMetadataProvider>? logger = null)
     {
         _logger = logger ?? NullLogger<NfoMetadataProvider>.Instance;
@@ -23,6 +28,7 @@ public sealed class NfoMetadataProvider : IMovieProvider, IEpisodeProvider, ILoc
 
     // ── IMovieProvider ──────────────────────────────────────────
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<Movie>> SearchAsync(string query, int? year = null, CancellationToken ct = default)
     {
         // NFO provider doesn't search by query — it needs a file path context.
@@ -30,6 +36,7 @@ public sealed class NfoMetadataProvider : IMovieProvider, IEpisodeProvider, ILoc
         return Task.FromResult<IReadOnlyList<Movie>>(Array.Empty<Movie>());
     }
 
+    /// <inheritdoc />
     public Task<MovieInfo> GetMovieInfoAsync(Movie movie, CancellationToken ct = default)
     {
         // Return minimal info from what we already parsed
@@ -136,16 +143,19 @@ public sealed class NfoMetadataProvider : IMovieProvider, IEpisodeProvider, ILoc
 
     // ── IEpisodeProvider ────────────────────────────────────────
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<SearchResult>> SearchAsync(string query, CancellationToken ct = default)
     {
         return Task.FromResult<IReadOnlyList<SearchResult>>(Array.Empty<SearchResult>());
     }
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<Episode>> GetEpisodesAsync(SearchResult series, SortOrder sortOrder = SortOrder.Airdate, CancellationToken ct = default)
     {
         return Task.FromResult<IReadOnlyList<Episode>>(Array.Empty<Episode>());
     }
 
+    /// <inheritdoc />
     public Task<SeriesInfo> GetSeriesInfoAsync(SearchResult series, CancellationToken ct = default)
     {
         return Task.FromResult(new SeriesInfo(
