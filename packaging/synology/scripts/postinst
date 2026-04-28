@@ -1,0 +1,24 @@
+#!/bin/bash
+# Post-install script for MediaMatch Synology package
+
+PACKAGE_NAME="MediaMatch"
+INSTALL_DIR="/var/packages/${PACKAGE_NAME}/target"
+SYMLINK_PATH="/usr/local/bin/mediamatch"
+
+case "$1" in
+    install|upgrade)
+        # Create symlink so 'mediamatch' is available system-wide
+        ln -sf "${INSTALL_DIR}/MediaMatch.CLI" "${SYMLINK_PATH}"
+
+        # Ensure the binary is executable
+        chmod +x "${INSTALL_DIR}/MediaMatch.CLI"
+
+        echo "MediaMatch installed. Run 'mediamatch --help' to get started."
+        ;;
+    *)
+        echo "postinst called with unknown argument: $1" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

@@ -1,0 +1,27 @@
+#!/bin/bash
+# Synology start-stop-status script for MediaMatch
+# MediaMatch is a CLI tool (startable=no), so this script is minimal.
+# It is included for SPK format compliance and future extensibility.
+
+PACKAGE_NAME="MediaMatch"
+INSTALL_DIR="/var/packages/${PACKAGE_NAME}/target"
+
+case "$1" in
+    start)
+        exit 0
+        ;;
+    stop)
+        exit 0
+        ;;
+    status)
+        if [ -x "${INSTALL_DIR}/MediaMatch.CLI" ]; then
+            exit 0
+        else
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status}" >&2
+        exit 1
+        ;;
+esac

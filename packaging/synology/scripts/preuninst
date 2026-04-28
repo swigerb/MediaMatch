@@ -1,0 +1,19 @@
+#!/bin/bash
+# Pre-uninstall script for MediaMatch Synology package
+
+SYMLINK_PATH="/usr/local/bin/mediamatch"
+
+case "$1" in
+    uninstall|upgrade)
+        # Remove the symlink
+        if [ -L "${SYMLINK_PATH}" ]; then
+            rm -f "${SYMLINK_PATH}"
+        fi
+        ;;
+    *)
+        echo "preuninst called with unknown argument: $1" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

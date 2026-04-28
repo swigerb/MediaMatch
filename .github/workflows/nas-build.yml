@@ -1,0 +1,74 @@
+name: NAS Package Build
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-nas-packages:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - rid: linux-x64
+            spk-arch: x86_64
+            qpkg-arch: x86_64
+          - rid: linux-arm64
+            spk-arch: aarch64
+            qpkg-arch: aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Determine version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish CLI (${{ matrix.rid }})
+        run: |
+          dotnet publish src/MediaMatch.CLI/MediaMatch.CLI.csproj \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            --self-contained \
+            -o publish/${{ matrix.rid }}
+
+      - name: Build Synology SPK
+        run: |
+          chmod +x packaging/synology/build-spk.sh
+          ./packaging/synology/build-spk.sh \
+            "${{ steps.version.outputs.version }}" \
+            "publish/${{ matrix.rid }}" \
+            "${{ matrix.spk-arch }}"
+
+      - name: Build QNAP QPKG
+        run: |
+          chmod +x packaging/qnap/build-qpkg.sh
+          ./packaging/qnap/build-qpkg.sh \
+            "${{ steps.version.outputs.version }}" \
+            "publish/${{ matrix.rid }}" \
+            "${{ matrix.qpkg-arch }}"
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SPK_ARCH="${{ matrix.spk-arch }}"
+          QPKG_ARCH="${{ matrix.qpkg-arch }}"
+
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "artifacts/synology/MediaMatch-${VERSION}-${SPK_ARCH}.spk" \
+            "artifacts/qnap/MediaMatch_${VERSION}_${QPKG_ARCH}.qpkg" \
+            --clobber
