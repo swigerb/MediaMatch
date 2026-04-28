@@ -52,12 +52,12 @@
                 SelectionChanged="LevelFilter_SelectionChanged"
                 AutomationProperties.Name="Log level filter">
                 <ComboBoxItem Content="All Levels" />
-                <ComboBoxItem Content="Verbose" />
-                <ComboBoxItem Content="Debug" />
-                <ComboBoxItem Content="Information" />
-                <ComboBoxItem Content="Warning" />
-                <ComboBoxItem Content="Error" />
-                <ComboBoxItem Content="Fatal" />
+                <ComboBoxItem Content="🔘 Verbose" />
+                <ComboBoxItem Content="🔵 Debug" />
+                <ComboBoxItem Content="ℹ️ Information" />
+                <ComboBoxItem Content="⚠️ Warning" />
+                <ComboBoxItem Content="❌ Error" />
+                <ComboBoxItem Content="💀 Fatal" />
             </ComboBox>
 
             <Button

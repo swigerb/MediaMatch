@@ -86,7 +86,7 @@ public sealed partial class LogViewerDialog : ContentDialog
 
         foreach (var entry in _allLogs)
         {
-            if (minLevel.HasValue && entry.RawLevel < minLevel.Value)
+            if (minLevel.HasValue && entry.RawLevel != minLevel.Value)
                 continue;
 
             if (!string.IsNullOrEmpty(searchText) &&
