@@ -1,7 +1,11 @@
 using MediaMatch.App.Services;
 using MediaMatch.App.ViewModels;
+using MediaMatch.Application.Detection;
+using MediaMatch.Application.Expressions;
+using MediaMatch.Application.Pipeline;
 using MediaMatch.Application.Services;
 using MediaMatch.Core.Configuration;
+using MediaMatch.Core.Expressions;
 using MediaMatch.Core.Services;
 using MediaMatch.Infrastructure;
 using MediaMatch.Infrastructure.Observability;
@@ -120,14 +124,36 @@ public partial class App : Microsoft.UI.Xaml.Application
             builder.AddSerilog(dispose: true);
         });
 
+        // Load persisted settings so API keys flow into provider singletons
+        var encryption = new SettingsEncryption();
+        var settingsRepo = new SettingsRepository(encryption);
+        var savedSettings = settingsRepo.SettingsFileExists()
+            ? settingsRepo.LoadAsync().GetAwaiter().GetResult()
+            : new AppSettings();
+
+        var apiConfig = new ApiConfiguration
+        {
+            TmdbApiKey = savedSettings.ApiKeys.TmdbApiKey,
+            TvdbApiKey = savedSettings.ApiKeys.TvdbApiKey
+        };
+
         // Navigation
         services.AddSingleton<NavigationService>();
         services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
 
+        // Infrastructure (HTTP clients, caching, metadata providers)
+        services.AddMediaMatchInfrastructure(config: apiConfig, appSettings: savedSettings);
+
         // Application services
+        services.AddSingleton<IExpressionEngine, ScribanExpressionEngine>();
+        services.AddSingleton<IMatchingPipeline, MatchingPipeline>();
+        services.AddSingleton<IRenamePreviewService, RenamePreviewService>();
         services.AddSingleton<IFileSystem, PhysicalFileSystem>();
+        services.AddSingleton<IFileOrganizationService, FileOrganizationService>();
         services.AddSingleton<IBatchOperationService, BatchOperationService>();
         services.AddSingleton<IUndoService, UndoService>();
+        services.AddSingleton<MetadataProviderChain>();
+        services.AddSingleton<Application.Detection.MusicDetector>();
 
         // ViewModels
         services.AddSingleton<HomeViewModel>(sp => new HomeViewModel(
@@ -143,9 +169,9 @@ public partial class App : Microsoft.UI.Xaml.Application
         // Notification service
         services.AddSingleton<NotificationService>();
 
-        // Settings persistence
-        services.AddSingleton<ISettingsEncryption, SettingsEncryption>();
-        services.AddSingleton<ISettingsRepository, SettingsRepository>();
+        // Settings persistence (re-register the instances we already created)
+        services.AddSingleton<ISettingsEncryption>(encryption);
+        services.AddSingleton<ISettingsRepository>(settingsRepo);
 
         // Update services
         services.AddSingleton<IUpdateCheckService, UpdateCheckService>();
