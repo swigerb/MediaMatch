@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    x:Class="MediaMatch.App.Web.Dialogs.KeyboardShortcutsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Keyboard Shortcuts"
+    CloseButtonText="Close"
+    DefaultButton="Close"
+    mc:Ignorable="d"
+    AutomationProperties.Name="Keyboard shortcuts reference">
+
+    <StackPanel MinWidth="400" Spacing="16">
+        <TextBlock
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Style="{StaticResource BodyTextBlockStyle}"
+            Text="Use these keyboard shortcuts to work faster in MediaMatch." />
+
+        <!-- File Operations -->
+        <StackPanel Spacing="4">
+            <TextBlock
+                FontWeight="SemiBold"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="File Operations" />
+            <Grid ColumnSpacing="16" RowSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" FontFamily="Consolas,Menlo" Text="Ctrl + O" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Open / Add folder" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" FontFamily="Consolas,Menlo" Text="Ctrl + A" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Select all files" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" FontFamily="Consolas,Menlo" Text="Delete" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Remove selected files" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" FontFamily="Consolas,Menlo" Text="Ctrl + Z" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Undo last rename" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" FontFamily="Consolas,Menlo" Text="F5" />
+                <TextBlock Grid.Row="4" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Refresh file list" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Navigation -->
+        <StackPanel Spacing="4">
+            <TextBlock
+                FontWeight="SemiBold"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Navigation" />
+            <Grid ColumnSpacing="16" RowSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" FontFamily="Consolas,Menlo" Text="F1" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Show this help overlay" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" FontFamily="Consolas,Menlo" Text="Tab" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Move focus to next control" />
+            </Grid>
+        </StackPanel>
+    </StackPanel>
+</ContentDialog>

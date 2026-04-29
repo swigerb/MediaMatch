@@ -1,0 +1,70 @@
+<Page
+    x:Class="MediaMatch.App.Web.Pages.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Browser preview banner -->
+        <Border Grid.Row="0"
+                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                BorderBrush="{ThemeResource SystemFillColorCautionBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Padding="12,8"
+                Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE7BA;" FontSize="16" />
+                <TextBlock VerticalAlignment="Center"
+                           Text="Browser Preview — match and rename are limited in this build. Install the desktop app for full file system access." />
+            </StackPanel>
+        </Border>
+
+        <!-- Toolbar -->
+        <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
+            <AppBarButton Icon="OpenFile" Label="Upload Files" Click="LoadFiles_Click" />
+            <AppBarButton Icon="Play" Label="Match" IsEnabled="False" />
+            <AppBarButton Icon="Rename" Label="Rename" IsEnabled="False" />
+        </CommandBar>
+
+        <!-- Dual-pane file list -->
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Original names -->
+            <Border Grid.Column="0" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    CornerRadius="4" Padding="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Original" Style="{ThemeResource SubtitleTextBlockStyle}" Margin="0,0,0,8" />
+                    <ListView Grid.Row="1" x:Name="OriginalList" />
+                </Grid>
+            </Border>
+
+            <!-- New names -->
+            <Border Grid.Column="2" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    CornerRadius="4" Padding="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="New Names" Style="{ThemeResource SubtitleTextBlockStyle}" Margin="0,0,0,8" />
+                    <ListView Grid.Row="1" x:Name="NewNamesList" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

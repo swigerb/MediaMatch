@@ -1,0 +1,3 @@
+# Static assets for the WASM head are resolved from the Application/Core
+# project resources at runtime via Uno asset loading. This directory is
+# kept so MSBuild's Content globs have a target.

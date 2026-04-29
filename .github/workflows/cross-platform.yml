@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/MediaMatch.App.macOS/**'
       - 'src/MediaMatch.App.Linux/**'
+      - 'src/MediaMatch.App.Web/**'
       - 'src/MediaMatch.Infrastructure.Unix/**'
       - 'src/MediaMatch.Core/**'
       - 'src/MediaMatch.Application/**'
@@ -109,4 +110,31 @@ jobs:
         with:
           name: mediamatch-linux
           path: src/MediaMatch.App.Linux/bin/Release/
+          retention-days: 14
+
+  # WebAssembly head build (Uno Platform WASM)
+  wasm:
+    runs-on: ubuntu-latest
+    needs: shared-libs
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+
+      - name: Build WASM head
+        run: dotnet build src/MediaMatch.App.Web -c Release
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: mediamatch-wasm
+          path: src/MediaMatch.App.Web/bin/Release/
           retention-days: 14

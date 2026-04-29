@@ -1,0 +1,53 @@
+<!--
+  Uno Platform WebAssembly head project.
+  Requires the wasm-tools workload (install via: dotnet workload install wasm-tools).
+  Build:  dotnet build src/MediaMatch.App.Web -c Release
+  Run:    dotnet run -p src/MediaMatch.App.Web
+
+  This project is intentionally NOT included in MediaMatch.slnx because the
+  WebAssembly toolchain is not present on a default Windows install and would
+  break the desktop build for users without the wasm-tools workload installed.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MediaMatch.App.Web</RootNamespace>
+    <WasmShellMonoRuntimeExecutionMode>Interpreter</WasmShellMonoRuntimeExecutionMode>
+    <WasmShellEnableLogProfiler>false</WasmShellEnableLogProfiler>
+    <!--
+      Uno.Wasm.Bootstrap 9.x can pull in a higher Uno.WinUI than the one we
+      pin to match the macOS/Linux heads. Suppress NU1603 so the version
+      bump is treated as a warning, not an error under TreatWarningsAsErrors.
+    -->
+    <NoWarn>$(NoWarn);NU1603</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MediaMatch.Core\MediaMatch.Core.csproj" />
+    <ProjectReference Include="..\MediaMatch.Application\MediaMatch.Application.csproj" />
+    <ProjectReference Include="..\MediaMatch.Infrastructure\MediaMatch.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Uno.WinUI" Version="6.1.23" />
+    <PackageReference Include="Uno.WinUI.WebAssembly" Version="6.1.23" />
+    <PackageReference Include="Uno.Wasm.Bootstrap" Version="9.0.7" />
+    <PackageReference Include="Uno.Wasm.Bootstrap.DevServer" Version="9.0.7" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.7" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="wwwroot\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
