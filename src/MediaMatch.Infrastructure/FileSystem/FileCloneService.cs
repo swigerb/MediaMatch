@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.Versioning;
 using MediaMatch.Core.Enums;
+using MediaMatch.Core.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -12,7 +13,7 @@ namespace MediaMatch.Infrastructure.FileSystem;
 /// Detects filesystem capabilities at first use and caches the result per volume.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public sealed class FileCloneService
+public sealed class FileCloneService : IFileCloneService
 {
     private readonly ReFsCloneHandler _reFsHandler;
     private readonly HardLinkHandler _hardLinkHandler;

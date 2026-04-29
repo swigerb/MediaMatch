@@ -9,6 +9,7 @@
     <Project Path="src/MediaMatch.CLI/MediaMatch.CLI.csproj" />
     <Project Path="src/MediaMatch.Core/MediaMatch.Core.csproj" />
     <Project Path="src/MediaMatch.Infrastructure/MediaMatch.Infrastructure.csproj" />
+    <Project Path="src/MediaMatch.Infrastructure.Unix/MediaMatch.Infrastructure.Unix.csproj" />
     <Project Path="src/MediaMatch.ShellExtension/MediaMatch.ShellExtension.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -18,5 +19,6 @@
     <Project Path="tests/MediaMatch.Core.Tests/MediaMatch.Core.Tests.csproj" />
     <Project Path="tests/MediaMatch.EndToEnd.Tests/MediaMatch.EndToEnd.Tests.csproj" />
     <Project Path="tests/MediaMatch.Infrastructure.Tests/MediaMatch.Infrastructure.Tests.csproj" />
+    <Project Path="tests/MediaMatch.Infrastructure.Unix.Tests/MediaMatch.Infrastructure.Unix.Tests.csproj" />
   </Folder>
 </Solution>

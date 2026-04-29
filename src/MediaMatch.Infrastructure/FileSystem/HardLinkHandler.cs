@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using MediaMatch.Core.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -10,7 +11,7 @@ namespace MediaMatch.Infrastructure.FileSystem;
 /// Works on NTFS volumes only and cannot cross volume boundaries.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public sealed partial class HardLinkHandler
+public sealed partial class HardLinkHandler : IHardLinkHandler
 {
     private readonly ILogger<HardLinkHandler> _logger;
 
