@@ -125,27 +125,8 @@ public sealed class SettingsRepository : ISettingsRepository, IDisposable
 
     private static AppSettings CloneSettings(AppSettings source)
     {
-        return new AppSettings
-        {
-            CacheDurationMinutes = source.CacheDurationMinutes,
-            ApiKeys = new ApiKeySettings
-            {
-                TmdbApiKey = source.ApiKeys.TmdbApiKey,
-                TvdbApiKey = source.ApiKeys.TvdbApiKey,
-                OpenSubtitlesApiKey = source.ApiKeys.OpenSubtitlesApiKey
-            },
-            RenamePatterns = new RenameSettings
-            {
-                MoviePattern = source.RenamePatterns.MoviePattern,
-                SeriesPattern = source.RenamePatterns.SeriesPattern,
-                AnimePattern = source.RenamePatterns.AnimePattern
-            },
-            OutputFolders = new OutputFolderSettings
-            {
-                MoviesRoot = source.OutputFolders.MoviesRoot,
-                SeriesRoot = source.OutputFolders.SeriesRoot
-            }
-        };
+        var json = JsonSerializer.Serialize(source, JsonOptions);
+        return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
     }
 
     /// <inheritdoc />

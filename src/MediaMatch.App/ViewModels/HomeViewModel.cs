@@ -117,6 +117,13 @@ public partial class HomeViewModel : ViewModelBase
     [ObservableProperty]
     public partial PresetDefinitionSettings? SelectedPreset { get; set; }
 
+    /// <summary>Gets whether a preset is currently active.</summary>
+    public bool HasActivePreset => SelectedPreset is not null;
+
+    /// <summary>Gets the display text for the Presets button (shows active preset name).</summary>
+    public string PresetsButtonText => SelectedPreset is not null
+        ? $"Preset: {SelectedPreset.Name}"
+        : "Presets";
     /// <summary>Gets the number of files in the original files pane.</summary>
     public int FileCount => OriginalFiles.Count;
 
@@ -860,6 +867,8 @@ public partial class HomeViewModel : ViewModelBase
     /// <summary>Applies the selected preset's settings to the current session.</summary>
     partial void OnSelectedPresetChanged(PresetDefinitionSettings? value)
     {
+        OnPropertyChanged(nameof(HasActivePreset));
+        OnPropertyChanged(nameof(PresetsButtonText));
         if (value is null) return;
         ApplyPreset(value);
     }

@@ -34,22 +34,45 @@ public sealed partial class HomePage : Page
 
         foreach (var preset in ViewModel.Presets)
         {
+            var isActive = ViewModel.SelectedPreset?.Name == preset.Name;
             var item = new MenuFlyoutItem
             {
                 Text = preset.Name,
                 Tag = preset,
-                Icon = new FontIcon { Glyph = "\uE762" }
+                Icon = new FontIcon { Glyph = isActive ? "\uE73E" : "\uE762" }
             };
+            if (isActive)
+                item.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
             item.Click += (s, _) =>
             {
                 if (s is MenuFlyoutItem { Tag: Core.Configuration.PresetDefinitionSettings p })
-                    ViewModel.ApplyPreset(p);
+                {
+                    ViewModel.SelectedPreset = p;
+                    RebuildPresetsFlyout();
+                }
             };
             PresetsFlyout.Items.Add(item);
         }
 
         if (ViewModel.Presets.Count > 0)
+        {
             PresetsFlyout.Items.Add(new MenuFlyoutSeparator());
+
+            if (ViewModel.HasActivePreset)
+            {
+                var clearItem = new MenuFlyoutItem
+                {
+                    Text = "Clear Preset",
+                    Icon = new FontIcon { Glyph = "\uE711" }
+                };
+                clearItem.Click += (_, _) =>
+                {
+                    ViewModel.SelectedPreset = null;
+                    RebuildPresetsFlyout();
+                };
+                PresetsFlyout.Items.Add(clearItem);
+            }
+        }
 
         var editItem = new MenuFlyoutItem
         {
@@ -133,6 +156,13 @@ public sealed partial class HomePage : Page
     private void EmptyState_Tapped(object sender, TappedRoutedEventArgs e)
     {
         EmptyStateLoadFlyout.ShowAt(EmptyStateArea);
+    }
+
+    private void MatchButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
+    {
+        // Clicking the button face does auto-match (no preset required)
+        if (ViewModel.MatchWithDatasourceCommand.CanExecute("auto"))
+            ViewModel.MatchWithDatasourceCommand.Execute("auto");
     }
 
     private void ModeSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)

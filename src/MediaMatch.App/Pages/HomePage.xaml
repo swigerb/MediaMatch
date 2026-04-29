@@ -94,7 +94,7 @@
                     ToolTipService.ToolTip="Apply a saved preset">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE762;" FontSize="14" />
-                        <TextBlock Text="Presets" />
+                        <TextBlock Text="{x:Bind ViewModel.PresetsButtonText, Mode=OneWay}" />
                     </StackPanel>
                     <DropDownButton.Flyout>
                         <MenuFlyout x:Name="PresetsFlyout" />
@@ -326,17 +326,20 @@
                 Padding="12,0"
                 AutomationProperties.Name="Actions">
 
-                <DropDownButton
+                <SplitButton
                     Width="72" Height="72"
-                    ToolTipService.ToolTip="Match files against metadata providers"
-                    Style="{StaticResource AccentButtonStyle}"
+                    Click="MatchButton_Click"
+                    ToolTipService.ToolTip="Match files (click for auto, dropdown for specific datasource)"
+                    Style="{StaticResource AccentSplitButtonStyle}"
                     AutomationProperties.Name="Match files">
                     <StackPanel Spacing="4">
                         <FontIcon Glyph="&#xE8AF;" FontSize="24" HorizontalAlignment="Center" />
                         <TextBlock Text="Match" HorizontalAlignment="Center" FontSize="11" />
                     </StackPanel>
-                    <DropDownButton.Flyout>
+                    <SplitButton.Flyout>
                         <MenuFlyout Placement="Bottom">
+                            <MenuFlyoutItem Text="Automatic" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="auto" />
+                            <MenuFlyoutSeparator />
                             <MenuFlyoutSubItem Text="Episode Mode">
                                 <MenuFlyoutItem Text="TheTVDB" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="tvdb" />
                                 <MenuFlyoutItem Text="AniDB" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="anidb" />
@@ -353,15 +356,14 @@
                             </MenuFlyoutSubItem>
                             <MenuFlyoutSeparator />
                             <MenuFlyoutSubItem Text="Smart Mode">
-                                <MenuFlyoutItem Text="Automatic" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="auto" />
                                 <MenuFlyoutItem Text="Attributes" Command="{x:Bind ViewModel.MatchWithDatasourceCommand}" CommandParameter="xattr" />
                             </MenuFlyoutSubItem>
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem Text="Edit Format..." Command="{x:Bind ViewModel.EditFormatCommand}" />
                             <MenuFlyoutItem Text="Preferences..." Command="{x:Bind ViewModel.OpenPreferencesCommand}" />
                         </MenuFlyout>
-                    </DropDownButton.Flyout>
-                </DropDownButton>
+                    </SplitButton.Flyout>
+                </SplitButton>
 
                 <Button
                     Width="72" Height="72"
