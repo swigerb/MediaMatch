@@ -188,9 +188,9 @@ public sealed partial class HomePage : Page
         EmptyStateLoadFlyout.ShowAt(EmptyStateArea);
     }
 
-    private void MatchButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
+    private void MatchButton_Click(object sender, RoutedEventArgs e)
     {
-        // Clicking the button face does auto-match (no preset required)
+        // Clicking Match does auto-match (no preset required)
         if (ViewModel.MatchWithDatasourceCommand.CanExecute("auto"))
             ViewModel.MatchWithDatasourceCommand.Execute("auto");
     }
