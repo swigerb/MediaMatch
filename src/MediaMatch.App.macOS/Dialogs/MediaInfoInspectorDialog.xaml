@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    x:Class="MediaMatch.App.macOS.Dialogs.MediaInfoInspectorDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="ThisDialog"
+    Title="MediaInfo Inspector"
+    CloseButtonText="Close"
+    DefaultButton="Close"
+    mc:Ignorable="d">
+
+    <Grid MinWidth="640" MinHeight="420">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- File path display + Open File button -->
+        <Grid Grid.Row="0" ColumnSpacing="8" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                x:Name="FilePathText"
+                Grid.Column="0"
+                VerticalAlignment="Center"
+                TextTrimming="CharacterEllipsis"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                IsTextSelectionEnabled="True"
+                AutomationProperties.Name="File path" />
+            <Button
+                Grid.Column="1"
+                Content="Open File…"
+                Click="OpenFile_Click"
+                AutomationProperties.Name="Open a different file" />
+        </Grid>
+
+        <!-- Loading indicator -->
+        <StackPanel
+            x:Name="LoadingPanel"
+            Grid.Row="1"
+            Orientation="Horizontal"
+            Spacing="8"
+            Visibility="Collapsed"
+            Margin="0,0,0,8">
+            <ProgressRing x:Name="LoadingRing" Width="20" Height="20" IsActive="False" />
+            <TextBlock
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="Analyzing file…" />
+        </StackPanel>
+
+        <!-- Error / ffprobe unavailable message -->
+        <InfoBar
+            x:Name="ErrorInfoBar"
+            Grid.Row="1"
+            IsOpen="False"
+            IsClosable="False"
+            Severity="Warning"
+            Title="Cannot inspect file"
+            Visibility="Collapsed"
+            Margin="0,0,0,8" />
+
+        <!-- Tabbed stream content -->
+        <Pivot
+            x:Name="ContentPivot"
+            Grid.Row="2"
+            Visibility="Collapsed">
+
+            <!-- General tab -->
+            <PivotItem Header="General">
+                <ListView
+                    x:Name="GeneralList"
+                    SelectionMode="None"
+                    AutomationProperties.Name="General properties">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="4,4" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Text="{Binding Key}"
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{Binding Value}"
+                                    IsTextSelectionEnabled="True"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </PivotItem>
+
+            <!-- Video tab -->
+            <PivotItem Header="Video">
+                <ListView
+                    x:Name="VideoList"
+                    SelectionMode="None"
+                    AutomationProperties.Name="Video streams">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Spacing="4" Margin="0,0,0,12">
+                                <TextBlock
+                                    Text="{Binding Name}"
+                                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                                    Margin="0,4,0,4" />
+                                <ItemsRepeater ItemsSource="{Binding Properties}">
+                                    <ItemsRepeater.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="4,2" ColumnSpacing="12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="200" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock
+                                                    Grid.Column="0"
+                                                    Text="{Binding Key}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Text="{Binding Value}"
+                                                    IsTextSelectionEnabled="True"
+                                                    TextWrapping="Wrap" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </PivotItem>
+
+            <!-- Audio tab -->
+            <PivotItem Header="Audio">
+                <ListView
+                    x:Name="AudioList"
+                    SelectionMode="None"
+                    AutomationProperties.Name="Audio streams">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Spacing="4" Margin="0,0,0,12">
+                                <TextBlock
+                                    Text="{Binding Name}"
+                                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                                    Margin="0,4,0,4" />
+                                <ItemsRepeater ItemsSource="{Binding Properties}">
+                                    <ItemsRepeater.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="4,2" ColumnSpacing="12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="200" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock
+                                                    Grid.Column="0"
+                                                    Text="{Binding Key}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Text="{Binding Value}"
+                                                    IsTextSelectionEnabled="True"
+                                                    TextWrapping="Wrap" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </PivotItem>
+
+            <!-- Subtitles tab -->
+            <PivotItem Header="Subtitles">
+                <ListView
+                    x:Name="SubtitlesList"
+                    SelectionMode="None"
+                    AutomationProperties.Name="Subtitle streams">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Spacing="4" Margin="0,0,0,12">
+                                <TextBlock
+                                    Text="{Binding Name}"
+                                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                                    Margin="0,4,0,4" />
+                                <ItemsRepeater ItemsSource="{Binding Properties}">
+                                    <ItemsRepeater.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="4,2" ColumnSpacing="12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="200" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock
+                                                    Grid.Column="0"
+                                                    Text="{Binding Key}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Text="{Binding Value}"
+                                                    IsTextSelectionEnabled="True"
+                                                    TextWrapping="Wrap" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </PivotItem>
+        </Pivot>
+
+        <!-- Bottom toolbar: Copy to Clipboard -->
+        <StackPanel
+            x:Name="CopyPanel"
+            Grid.Row="3"
+            Orientation="Horizontal"
+            HorizontalAlignment="Left"
+            Spacing="8"
+            Margin="0,12,0,0"
+            Visibility="Collapsed">
+            <Button
+                Content="📋 Copy to Clipboard"
+                Click="CopyToClipboard_Click"
+                AutomationProperties.Name="Copy media info to clipboard" />
+        </StackPanel>
+    </Grid>
+</ContentDialog>

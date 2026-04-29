@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    x:Class="MediaMatch.App.macOS.Dialogs.PresetEditorDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="ThisDialog"
+    Title="Edit Preset"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    PrimaryButtonText="Save"
+    mc:Ignorable="d">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MinWidth="560" Spacing="16" Padding="0,0,16,0">
+
+            <!-- Name -->
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Name" />
+                <TextBox
+                    Text="{Binding ViewModel.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=ThisDialog}"
+                    PlaceholderText="e.g., TV Shows → Plex"
+                    AutomationProperties.Name="Preset name" />
+            </StackPanel>
+
+            <!-- Input Folder -->
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Input Folder" />
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        Grid.Column="0"
+                        Text="{Binding ViewModel.InputFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=ThisDialog}"
+                        PlaceholderText="Source folder path"
+                        AutomationProperties.Name="Input folder path" />
+                    <Button
+                        Grid.Column="1"
+                        Content="Browse"
+                        Click="BrowseInputFolder_Click"
+                        AutomationProperties.Name="Browse input folder" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Include Filter -->
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Include Filter" />
+                <TextBox
+                    Text="{Binding ViewModel.IncludeFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=ThisDialog}"
+                    PlaceholderText="*.mkv, *.mp4"
+                    AutomationProperties.Name="Include filter pattern" />
+            </StackPanel>
+
+            <!-- Expression / Rename Pattern -->
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Expression / Rename Pattern" />
+                <TextBox
+                    Text="{Binding ViewModel.RenamePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=ThisDialog}"
+                    FontFamily="Cascadia Code, Consolas, Menlo, Courier New"
+                    PlaceholderText="{}{SeriesName}/Season {Season}/{SeriesName} - S{Season:D2}E{Episode:D2} - {Title}{extension}"
+                    AutomationProperties.Name="Rename expression pattern" />
+            </StackPanel>
+
+            <!-- Options Expander -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                IsExpanded="False"
+                AutomationProperties.Name="Advanced options">
+                <Expander.Header>
+                    <TextBlock Text="Options" />
+                </Expander.Header>
+                <Expander.Content>
+                    <StackPanel Spacing="12">
+
+                        <!-- Datasource -->
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="Datasource" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding ViewModel.DatasourceOptions, ElementName=ThisDialog}"
+                                SelectedIndex="{Binding ViewModel.SelectedDatasourceIndex, Mode=TwoWay, ElementName=ThisDialog}"
+                                AutomationProperties.Name="Datasource" />
+                        </StackPanel>
+
+                        <!-- Language -->
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="Language" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding ViewModel.LanguageOptions, ElementName=ThisDialog}"
+                                SelectedIndex="{Binding ViewModel.SelectedLanguageIndex, Mode=TwoWay, ElementName=ThisDialog}"
+                                AutomationProperties.Name="Language" />
+                        </StackPanel>
+
+                        <!-- Episode Order -->
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="Episode Order" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding ViewModel.EpisodeOrderOptions, ElementName=ThisDialog}"
+                                SelectedIndex="{Binding ViewModel.SelectedEpisodeOrderIndex, Mode=TwoWay, ElementName=ThisDialog}"
+                                AutomationProperties.Name="Episode order" />
+                        </StackPanel>
+
+                        <!-- Match Mode -->
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="Match Mode" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding ViewModel.MatchModeOptions, ElementName=ThisDialog}"
+                                SelectedIndex="{Binding ViewModel.SelectedMatchModeIndex, Mode=TwoWay, ElementName=ThisDialog}"
+                                AutomationProperties.Name="Match mode" />
+                        </StackPanel>
+
+                        <!-- Rename Action -->
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="Rename Action" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding ViewModel.RenameActionOptions, ElementName=ThisDialog}"
+                                SelectedIndex="{Binding ViewModel.SelectedRenameActionIndex, Mode=TwoWay, ElementName=ThisDialog}"
+                                AutomationProperties.Name="Rename action" />
+                        </StackPanel>
+
+                    </StackPanel>
+                </Expander.Content>
+            </Expander>
+
+            <!-- Keyboard Shortcut -->
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Keyboard Shortcut" />
+                <ComboBox
+                    ItemsSource="{Binding ViewModel.KeyboardShortcutOptions, ElementName=ThisDialog}"
+                    SelectedIndex="{Binding ViewModel.SelectedShortcutIndex, Mode=TwoWay, ElementName=ThisDialog}"
+                    AutomationProperties.Name="Keyboard shortcut"
+                    MinWidth="200" />
+            </StackPanel>
+
+            <!-- Output Folder -->
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Output Folder" />
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        Grid.Column="0"
+                        Text="{Binding ViewModel.OutputFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=ThisDialog}"
+                        PlaceholderText="Target output folder path"
+                        AutomationProperties.Name="Output folder path" />
+                    <Button
+                        Grid.Column="1"
+                        Content="Browse"
+                        Click="BrowseOutputFolder_Click"
+                        AutomationProperties.Name="Browse output folder" />
+                </Grid>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>

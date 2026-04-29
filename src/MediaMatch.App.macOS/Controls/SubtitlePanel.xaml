@@ -1,0 +1,120 @@
+<UserControl
+    x:Class="MediaMatch.App.macOS.Controls.SubtitlePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="16" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Search bar -->
+        <Grid Grid.Row="0" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0"
+                     PlaceholderText="Search for subtitles..."
+                     Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <ComboBox Grid.Column="1"
+                      MinWidth="120"
+                      ItemsSource="{Binding LanguageOptions}"
+                      SelectedIndex="{Binding SelectedLanguageIndex, Mode=TwoWay}"/>
+            <Button Grid.Column="2"
+                    Content="Find"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    Command="{Binding FindCommand}"/>
+        </Grid>
+
+        <!-- Login warning -->
+        <InfoBar Grid.Row="1"
+                 IsOpen="{Binding NeedsLogin}"
+                 Severity="Warning"
+                 Title="Login Required"
+                 Message="Sign in to OpenSubtitles in Settings to download subtitles."
+                 IsClosable="False"/>
+
+        <!-- Results list -->
+        <ListView Grid.Row="2"
+                  Grid.RowSpan="2"
+                  ItemsSource="{Binding Results}"
+                  Visibility="{Binding HasResults}"
+                  SelectionMode="None">
+            <ListView.HeaderTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,8" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="1" Text="Title" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="2" Text="Language" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="3" Text="Count" FontWeight="SemiBold"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.HeaderTemplate>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="4,8" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="0"
+                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Title}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2"
+                                   Text="{Binding Language}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="3"
+                                   Text="{Binding SubtitleCount}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Progress -->
+        <ProgressRing Grid.Row="4"
+                      IsActive="{Binding IsSearching}"
+                      Visibility="{Binding IsSearching}"
+                      Width="24" Height="24"
+                      HorizontalAlignment="Left"/>
+
+        <!-- Bottom bar -->
+        <Grid Grid.Row="5" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="Download Selected"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    Command="{Binding DownloadSelectedCommand}"/>
+            <TextBlock Grid.Column="1"
+                       Text="{Binding StatusMessage}"
+                       VerticalAlignment="Center"
+                       Style="{ThemeResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+    </Grid>
+</UserControl>

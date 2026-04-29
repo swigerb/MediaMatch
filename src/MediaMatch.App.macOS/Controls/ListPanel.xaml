@@ -1,0 +1,91 @@
+<UserControl
+    x:Class="MediaMatch.App.macOS.Controls.ListPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="16" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Pattern input -->
+        <TextBox Grid.Row="0"
+                 Header="Naming Pattern"
+                 PlaceholderText="e.g. {show} - S{season}E{episode} - {title}"
+                 Text="{Binding Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <!-- Number range + Apply -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+            <NumberBox Header="From" Minimum="0" SpinButtonPlacementMode="Compact"
+                       Value="{Binding FromNumber, Mode=TwoWay}" MinWidth="100"/>
+            <NumberBox Header="To" Minimum="0" SpinButtonPlacementMode="Compact"
+                       Value="{Binding ToNumber, Mode=TwoWay}" MinWidth="100"/>
+            <Button Content="Apply"
+                    VerticalAlignment="Bottom"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    Command="{Binding ApplyPatternCommand}"/>
+        </StackPanel>
+
+        <!-- Files list -->
+        <ListView Grid.Row="2"
+                  ItemsSource="{Binding Files}"
+                  Visibility="{Binding HasFiles}"
+                  SelectionMode="None">
+            <ListView.HeaderTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,8" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="File Name" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="1" Text="Output" FontWeight="SemiBold"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.HeaderTemplate>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="4,8" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding FileName}"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Output}"
+                                   Foreground="{ThemeResource SystemAccentColor}"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Action buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
+            <DropDownButton Content="Load">
+                <DropDownButton.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="Load Files" Command="{Binding LoadFilesCommand}"/>
+                        <MenuFlyoutItem Text="Load Folder" Command="{Binding LoadFolderCommand}"/>
+                    </MenuFlyout>
+                </DropDownButton.Flyout>
+            </DropDownButton>
+            <Button Content="Clear" Command="{Binding ClearCommand}"/>
+        </StackPanel>
+
+        <!-- Status -->
+        <TextBlock Grid.Row="4"
+                   Text="{Binding StatusMessage}"
+                   Style="{ThemeResource CaptionTextBlockStyle}"
+                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+    </Grid>
+</UserControl>
