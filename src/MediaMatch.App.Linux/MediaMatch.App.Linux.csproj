@@ -19,7 +19,7 @@
       version, triggering NU1603. Suppress so it isn't promoted to error under
       TreatWarningsAsErrors.
     -->
-    <NoWarn>$(NoWarn);NU1603</NoWarn>
+    <NoWarn>$(NoWarn);NU1603;NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -58,7 +58,7 @@ jobs:
 
   # macOS head build (requires maccatalyst workload)
   macos:
-    runs-on: macos-latest
+    runs-on: macos-26
     needs: shared-libs
     
     steps:

@@ -37,4 +37,18 @@ public sealed class BrowserSettingsEncryption : ISettingsEncryption
             return string.Empty;
         }
     }
+
+    public bool IsEncrypted(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return false;
+        try
+        {
+            Convert.FromBase64String(value);
+            return value.Length > 0 && value.Length % 4 == 0;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
 }
