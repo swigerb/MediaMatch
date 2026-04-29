@@ -46,7 +46,13 @@ public sealed class MediaMatchHttpClient
     /// Sends a GET request and deserialises the JSON response.
     /// Handles transient failures and rate-limit back-off automatically.
     /// </summary>
-    public async Task<T?> GetAsync<T>(string url, CancellationToken ct = default)
+    public Task<T?> GetAsync<T>(string url, CancellationToken ct = default)
+        => GetAsync<T>(url, headers: null, ct);
+
+    /// <summary>
+    /// Sends a GET request with optional custom headers and deserialises the JSON response.
+    /// </summary>
+    public async Task<T?> GetAsync<T>(string url, IDictionary<string, string>? headers, CancellationToken ct = default)
     {
         await EnforceRateLimitAsync(ct).ConfigureAwait(false);
 
@@ -55,7 +61,10 @@ public sealed class MediaMatchHttpClient
         {
             try
             {
-                var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                ApplyHeaders(request, headers);
+
+                using var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 {
@@ -82,7 +91,17 @@ public sealed class MediaMatchHttpClient
     /// <summary>
     /// Sends a POST request with a JSON body and deserialises the response.
     /// </summary>
-    public async Task<TResponse?> PostAsync<TRequest, TResponse>(string url, TRequest body, CancellationToken ct = default)
+    public Task<TResponse?> PostAsync<TRequest, TResponse>(string url, TRequest body, CancellationToken ct = default)
+        => PostAsync<TRequest, TResponse>(url, body, headers: null, ct);
+
+    /// <summary>
+    /// Sends a POST request with a JSON body and optional custom headers, then deserialises the response.
+    /// </summary>
+    public async Task<TResponse?> PostAsync<TRequest, TResponse>(
+        string url,
+        TRequest body,
+        IDictionary<string, string>? headers,
+        CancellationToken ct = default)
     {
         await EnforceRateLimitAsync(ct).ConfigureAwait(false);
 
@@ -91,7 +110,13 @@ public sealed class MediaMatchHttpClient
         {
             try
             {
-                var response = await _http.PostAsJsonAsync(url, body, JsonOptions, ct).ConfigureAwait(false);
+                using var request = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = JsonContent.Create(body, options: JsonOptions)
+                };
+                ApplyHeaders(request, headers);
+
+                using var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 {
@@ -108,6 +133,16 @@ public sealed class MediaMatchHttpClient
                 attempt++;
                 await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct).ConfigureAwait(false);
             }
+        }
+    }
+
+    private static void ApplyHeaders(HttpRequestMessage request, IDictionary<string, string>? headers)
+    {
+        if (headers is null) return;
+        foreach (var (key, value) in headers)
+        {
+            // TryAddWithoutValidation tolerates non-standard header values (e.g. raw bearer tokens).
+            request.Headers.TryAddWithoutValidation(key, value);
         }
     }
 

@@ -46,10 +46,23 @@ public sealed class ExpressionFormatHelper : ScriptObject
         return string.Empty;
     }
 
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(2);
+
     /// <summary>Replace with regex: {{mm.regex_replace text "pattern" "replacement"}}</summary>
     public static string RegexReplace(string? text, string pattern, string replacement)
     {
         if (string.IsNullOrEmpty(text)) return string.Empty;
-        return Regex.Replace(text, pattern, replacement);
+        try
+        {
+            return Regex.Replace(text, pattern, replacement, RegexOptions.None, RegexTimeout);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return text;
+        }
+        catch (ArgumentException)
+        {
+            return text;
+        }
     }
 }

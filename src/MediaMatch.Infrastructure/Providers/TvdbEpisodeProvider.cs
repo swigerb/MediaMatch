@@ -63,7 +63,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
 
             _logger.LogDebug("TVDb series search: {Query}", query);
 
-            var response = await _http.GetAsync<TvdbResponse<List<TvdbSearchResult>>>(url, ct).ConfigureAwait(false);
+            var response = await _http.GetAsync<TvdbResponse<List<TvdbSearchResult>>>(url, AuthHeaders(), ct).ConfigureAwait(false);
             if (response?.Data is null)
                 return Array.Empty<SearchResult>();
 
@@ -107,7 +107,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
             while (true)
             {
                 var url = $"{_config.TvdbBaseUrl}/series/{series.Id}/episodes/{seasonType}?page={page}";
-                var response = await _http.GetAsync<TvdbResponse<TvdbEpisodesData>>(url, ct).ConfigureAwait(false);
+                var response = await _http.GetAsync<TvdbResponse<TvdbEpisodesData>>(url, AuthHeaders(), ct).ConfigureAwait(false);
 
                 if (response?.Data?.Episodes is null || response.Data.Episodes.Count == 0)
                     break;
@@ -163,7 +163,7 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
 
             _logger.LogDebug("TVDb series info: {SeriesId}", series.Id);
 
-            var response = await _http.GetAsync<TvdbResponse<TvdbSeriesDetail>>(url, ct).ConfigureAwait(false)
+            var response = await _http.GetAsync<TvdbResponse<TvdbSeriesDetail>>(url, AuthHeaders(), ct).ConfigureAwait(false)
                 ?? throw new InvalidOperationException($"TVDb returned no data for series {series.Id}");
 
             var detail = response.Data
@@ -215,6 +215,18 @@ public sealed class TvdbEpisodeProvider : IEpisodeProvider
         {
             _authLock.Release();
         }
+    }
+
+    /// <summary>
+    /// Builds the Authorization header dictionary used for every TVDb API call after login.
+    /// Returns an empty dictionary if no token is yet available so callers don't crash.
+    /// </summary>
+    private Dictionary<string, string> AuthHeaders()
+    {
+        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrEmpty(_bearerToken))
+            headers["Authorization"] = $"Bearer {_bearerToken}";
+        return headers;
     }
 
     #region TVDb JSON DTOs

@@ -1,3 +1,5 @@
+using MediaMatch.Core.Enums;
+
 namespace MediaMatch.Core.Configuration;
 
 /// <summary>
@@ -16,15 +18,24 @@ public sealed class FileOrganizationRules
     public string AnimeRule { get; set; } = "Anime/{SeriesName}/Season {Season}";
 
     /// <summary>
-    /// Returns the organization rule pattern for the given media type string.
+    /// Returns the organization rule pattern for the given media type, or <c>null</c>
+    /// if no organization pattern is defined for that type.
     /// </summary>
-    /// <param name="mediaType">The media type string (e.g., "Movie", "Series", "Anime").</param>
-    /// <returns>The matching organization rule pattern.</returns>
-    public string GetRuleForMediaType(string mediaType) => mediaType.ToUpperInvariant() switch
+    /// <param name="mediaType">The media type to look up.</param>
+    /// <returns>
+    /// The matching organization rule pattern for <see cref="MediaType.Movie"/>,
+    /// <see cref="MediaType.TvSeries"/>, or <see cref="MediaType.Anime"/>.
+    /// Returns <c>null</c> for <see cref="MediaType.Music"/>, <see cref="MediaType.Subtitle"/>,
+    /// and <see cref="MediaType.Unknown"/>, which have no defined folder structure.
+    /// </returns>
+    public string? GetRuleForMediaType(MediaType mediaType) => mediaType switch
     {
-        "MOVIE" => MovieRule,
-        "SERIES" or "TV" => SeriesRule,
-        "ANIME" => AnimeRule,
-        _ => SeriesRule
+        MediaType.Movie => MovieRule,
+        MediaType.TvSeries => SeriesRule,
+        MediaType.Anime => AnimeRule,
+        MediaType.Music => null,
+        MediaType.Subtitle => null,
+        MediaType.Unknown => null,
+        _ => null
     };
 }

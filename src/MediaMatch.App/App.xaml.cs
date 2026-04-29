@@ -161,6 +161,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         // Phase 2/6 services
         services.AddSingleton<IChecksumService, ChecksumService>();
         services.AddSingleton<IMediaInfoService, MediaInfoService>();
+        services.AddSingleton<IMediaAnalysisService, MediaAnalysisService>();
 
         // ViewModels
         services.AddSingleton<HomeViewModel>(sp => new HomeViewModel(

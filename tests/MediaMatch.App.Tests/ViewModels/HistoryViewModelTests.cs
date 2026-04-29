@@ -88,10 +88,11 @@ public sealed class HistoryViewModelTests
     }
 
     [Fact]
-    public async Task ClearHistory_ClearsAllEntries()
+    public async Task LoadHistory_WithSingleEntry_PopulatesCollection()
     {
-        // Arrange — ClearHistory shows a ContentDialog which we can't test in unit tests,
-        // so we test the grouping logic and state management instead.
+        // The production ClearHistoryAsync command shows a ContentDialog and is excluded
+        // under #if !MEDIAMATH_TESTS, so it cannot be exercised here. This test verifies
+        // that loading produces the expected populated state (the prerequisite for clear).
         var baseTime = DateTimeOffset.UtcNow;
         var entries = new List<UndoEntry>
         {
@@ -106,8 +107,6 @@ public sealed class HistoryViewModelTests
         await vm.LoadHistoryCommand.ExecuteAsync(null);
 
         vm.Sessions.Should().HaveCount(1);
-
-        // Verify that after loading, the grouping is correct and state reflects data
         vm.IsEmpty.Should().BeFalse();
         vm.HasHistory.Should().BeTrue();
     }

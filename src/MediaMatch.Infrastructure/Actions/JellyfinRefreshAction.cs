@@ -51,7 +51,7 @@ public sealed class JellyfinRefreshAction : IPostProcessAction
 
         try
         {
-            var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
+            using var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
             _logger.LogInformation("Jellyfin library refresh: {Status}", response.StatusCode);
         }
         catch (Exception ex)

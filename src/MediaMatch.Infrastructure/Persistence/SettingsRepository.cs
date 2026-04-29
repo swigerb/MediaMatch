@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MediaMatch.Core.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MediaMatch.Infrastructure.Persistence;
 
@@ -13,11 +15,8 @@ namespace MediaMatch.Infrastructure.Persistence;
 /// </summary>
 public sealed class SettingsRepository : ISettingsRepository, IDisposable
 {
-    private static readonly string SettingsDir =
+    private static readonly string DefaultSettingsDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MediaMatch");
-
-    private static readonly string SettingsPath =
-        Path.Combine(SettingsDir, "settings.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -28,23 +27,37 @@ public sealed class SettingsRepository : ISettingsRepository, IDisposable
 
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly ISettingsEncryption _encryption;
+    private readonly ILogger<SettingsRepository> _logger;
+    private readonly string _settingsDir;
+    private readonly string _settingsPath;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsRepository"/> class.
     /// </summary>
     /// <param name="encryption">The encryption service used to protect API key values.</param>
-    public SettingsRepository(ISettingsEncryption encryption)
+    /// <param name="settingsDirectory">
+    /// Optional override for the directory containing settings.json. Defaults to
+    /// %LOCALAPPDATA%/MediaMatch. Used by tests to isolate file I/O.
+    /// </param>
+    /// <param name="logger">Optional logger for diagnostics; defaults to <see cref="NullLogger{T}"/>.</param>
+    public SettingsRepository(
+        ISettingsEncryption encryption,
+        string? settingsDirectory = null,
+        ILogger<SettingsRepository>? logger = null)
     {
         _encryption = encryption;
+        _settingsDir = settingsDirectory ?? DefaultSettingsDir;
+        _settingsPath = Path.Combine(_settingsDir, "settings.json");
+        _logger = logger ?? NullLogger<SettingsRepository>.Instance;
     }
 
     /// <inheritdoc />
-    public bool SettingsFileExists() => File.Exists(SettingsPath);
+    public bool SettingsFileExists() => File.Exists(_settingsPath);
 
     /// <inheritdoc />
     public async Task<AppSettings> LoadAsync(CancellationToken ct = default)
     {
-        if (!File.Exists(SettingsPath))
+        if (!File.Exists(_settingsPath))
             return new AppSettings();
 
         await _lock.WaitAsync(ct).ConfigureAwait(false);
@@ -52,7 +65,7 @@ public sealed class SettingsRepository : ISettingsRepository, IDisposable
         {
             // Use FileShare.Read so CLI can read while App is open
             var stream = new FileStream(
-                SettingsPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                _settingsPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             await using (stream.ConfigureAwait(false))
             {
                 var settings = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions, ct).ConfigureAwait(false);
@@ -60,7 +73,7 @@ public sealed class SettingsRepository : ISettingsRepository, IDisposable
                     return new AppSettings();
 
                 // Decrypt API keys after loading
-                DecryptApiKeys(settings.ApiKeys);
+                DecryptApiKeys(settings);
                 return settings;
             }
         }
@@ -86,14 +99,14 @@ public sealed class SettingsRepository : ISettingsRepository, IDisposable
         await _lock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            Directory.CreateDirectory(SettingsDir);
+            Directory.CreateDirectory(_settingsDir);
 
             // Clone API keys so we encrypt without mutating the in-memory settings
             var clone = CloneSettings(settings);
-            EncryptApiKeys(clone.ApiKeys);
+            EncryptApiKeys(clone);
 
             // Write to a temp file first, then move — atomic on NTFS
-            var tempPath = SettingsPath + ".tmp";
+            var tempPath = _settingsPath + ".tmp";
             var stream = new FileStream(
                 tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
             await using (stream.ConfigureAwait(false))
@@ -101,7 +114,7 @@ public sealed class SettingsRepository : ISettingsRepository, IDisposable
                 await JsonSerializer.SerializeAsync(stream, clone, JsonOptions, ct).ConfigureAwait(false);
             }
 
-            File.Move(tempPath, SettingsPath, overwrite: true);
+            File.Move(tempPath, _settingsPath, overwrite: true);
         }
         finally
         {
@@ -109,18 +122,61 @@ public sealed class SettingsRepository : ISettingsRepository, IDisposable
         }
     }
 
-    private void EncryptApiKeys(ApiKeySettings keys)
+    private void EncryptApiKeys(AppSettings settings)
     {
+        var keys = settings.ApiKeys;
         keys.TmdbApiKey = _encryption.Encrypt(keys.TmdbApiKey);
         keys.TvdbApiKey = _encryption.Encrypt(keys.TvdbApiKey);
         keys.OpenSubtitlesApiKey = _encryption.Encrypt(keys.OpenSubtitlesApiKey);
+        keys.AcoustIdApiKey = _encryption.Encrypt(keys.AcoustIdApiKey);
+
+        settings.Plex.Token = _encryption.Encrypt(settings.Plex.Token);
+        settings.Jellyfin.ApiKey = _encryption.Encrypt(settings.Jellyfin.ApiKey);
+
+        var llm = settings.LlmSettings;
+        llm.OpenAiApiKey = _encryption.Encrypt(llm.OpenAiApiKey);
+        llm.AzureOpenAiApiKey = _encryption.Encrypt(llm.AzureOpenAiApiKey);
     }
 
-    private void DecryptApiKeys(ApiKeySettings keys)
+    private void DecryptApiKeys(AppSettings settings)
     {
-        keys.TmdbApiKey = _encryption.Decrypt(keys.TmdbApiKey);
-        keys.TvdbApiKey = _encryption.Decrypt(keys.TvdbApiKey);
-        keys.OpenSubtitlesApiKey = _encryption.Decrypt(keys.OpenSubtitlesApiKey);
+        var keys = settings.ApiKeys;
+        keys.TmdbApiKey = SafeDecrypt(keys.TmdbApiKey, nameof(keys.TmdbApiKey));
+        keys.TvdbApiKey = SafeDecrypt(keys.TvdbApiKey, nameof(keys.TvdbApiKey));
+        keys.OpenSubtitlesApiKey = SafeDecrypt(keys.OpenSubtitlesApiKey, nameof(keys.OpenSubtitlesApiKey));
+        keys.AcoustIdApiKey = SafeDecrypt(keys.AcoustIdApiKey, nameof(keys.AcoustIdApiKey));
+
+        settings.Plex.Token = SafeDecrypt(settings.Plex.Token, "Plex.Token");
+        settings.Jellyfin.ApiKey = SafeDecrypt(settings.Jellyfin.ApiKey, "Jellyfin.ApiKey");
+
+        var llm = settings.LlmSettings;
+        llm.OpenAiApiKey = SafeDecrypt(llm.OpenAiApiKey, nameof(llm.OpenAiApiKey));
+        llm.AzureOpenAiApiKey = SafeDecrypt(llm.AzureOpenAiApiKey, nameof(llm.AzureOpenAiApiKey));
+    }
+
+    /// <summary>
+    /// Decrypts a value, returning empty string if the ciphertext is corrupt.
+    /// Treats <see cref="FormatException"/> (bad Base64) and
+    /// <see cref="System.Security.Cryptography.CryptographicException"/> (wrong DPAPI scope or
+    /// tampered ciphertext) as recoverable: the affected key is reset rather than crashing
+    /// the whole settings load.
+    /// </summary>
+    private string SafeDecrypt(string cipherText, string fieldName)
+    {
+        try
+        {
+            return _encryption.Decrypt(cipherText);
+        }
+        catch (FormatException ex)
+        {
+            _logger.LogWarning(ex, "Encrypted setting {Field} has invalid Base64; resetting to empty.", fieldName);
+            return string.Empty;
+        }
+        catch (System.Security.Cryptography.CryptographicException ex)
+        {
+            _logger.LogWarning(ex, "Encrypted setting {Field} could not be decrypted (different user/machine?); resetting to empty.", fieldName);
+            return string.Empty;
+        }
     }
 
     private static AppSettings CloneSettings(AppSettings source)

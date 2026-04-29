@@ -18,8 +18,12 @@ public sealed class AesFileEncryption : ISettingsEncryption
     private const int NonceSizeBytes = 12; // GCM standard
     private const int TagSizeBytes = 16; // GCM standard
 
+    private static readonly UnixFileMode KeyFileMode =
+        UnixFileMode.UserRead | UnixFileMode.UserWrite;
+
     private readonly string _keyFilePath;
     private readonly ILogger<AesFileEncryption> _logger;
+    private readonly object _keyLock = new();
     private byte[]? _cachedKey;
 
     public AesFileEncryption(ILogger<AesFileEncryption>? logger = null)
@@ -96,37 +100,96 @@ public sealed class AesFileEncryption : ISettingsEncryption
 
     private byte[] GetOrCreateKey()
     {
-        if (_cachedKey is not null)
-            return _cachedKey;
+        // Fast path: cached key already loaded.
+        var cached = Volatile.Read(ref _cachedKey);
+        if (cached is not null)
+            return cached;
 
-        if (File.Exists(_keyFilePath))
+        // Serialize key initialization across threads — without this, two threads
+        // racing in this method could each generate (and persist) a fresh key,
+        // causing one to overwrite the other and breaking decryption of values
+        // encrypted with the discarded key.
+        lock (_keyLock)
         {
-            _cachedKey = File.ReadAllBytes(_keyFilePath);
-            if (_cachedKey.Length == KeySizeBytes)
+            if (_cachedKey is not null)
                 return _cachedKey;
 
-            _logger.LogWarning("Key file has unexpected size ({Size} bytes), regenerating", _cachedKey.Length);
+            if (File.Exists(_keyFilePath))
+            {
+                EnsureRestrictivePermissions(_keyFilePath);
+                var existing = File.ReadAllBytes(_keyFilePath);
+                if (existing.Length == KeySizeBytes)
+                {
+                    _cachedKey = existing;
+                    return _cachedKey;
+                }
+
+                _logger.LogWarning(
+                    "Key file has unexpected size ({Size} bytes), regenerating",
+                    existing.Length);
+                File.Delete(_keyFilePath);
+            }
+
+            var key = new byte[KeySizeBytes];
+            RandomNumberGenerator.Fill(key);
+
+            var keyDir = Path.GetDirectoryName(_keyFilePath)!;
+            Directory.CreateDirectory(keyDir);
+            WriteKeyFile(_keyFilePath, key);
+
+            _logger.LogInformation("Generated new encryption key at {Path}", _keyFilePath);
+            _cachedKey = key;
+            return key;
         }
+    }
 
-        // Generate a new key
-        var key = new byte[KeySizeBytes];
-        RandomNumberGenerator.Fill(key);
-
-        // Save with restricted permissions
-        var keyDir = Path.GetDirectoryName(_keyFilePath)!;
-        Directory.CreateDirectory(keyDir);
-        File.WriteAllBytes(_keyFilePath, key);
-
-        // On Unix, restrict permissions to owner only (0600)
+    private static void WriteKeyFile(string path, byte[] key)
+    {
+        // Use FileStreamOptions so the file is created atomically with 0600
+        // permissions, closing the umask race window where File.WriteAllBytes
+        // followed by File.SetUnixFileMode briefly leaves the key world-readable
+        // (and leaves it permanently exposed if the process crashes between
+        // the write and the chmod).
         if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
         {
-            File.SetUnixFileMode(_keyFilePath,
-                UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            var options = new FileStreamOptions
+            {
+                Mode = FileMode.CreateNew,
+                Access = FileAccess.Write,
+                Share = FileShare.None,
+                UnixCreateMode = KeyFileMode,
+            };
+            using var fs = new FileStream(path, options);
+            fs.Write(key);
         }
+        else
+        {
+            // Non-Unix path (e.g. running tests on Windows) — UnixCreateMode is
+            // not supported. Permissions are not a concern on Windows here.
+            File.WriteAllBytes(path, key);
+        }
+    }
 
-        _logger.LogInformation("Generated new encryption key at {Path}", _keyFilePath);
-        _cachedKey = key;
-        return key;
+    private void EnsureRestrictivePermissions(string path)
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+            return;
+
+        try
+        {
+            var current = File.GetUnixFileMode(path);
+            if (current != KeyFileMode)
+            {
+                _logger.LogWarning(
+                    "Key file {Path} had permissions {Current}; restricting to owner-only",
+                    path, current);
+                File.SetUnixFileMode(path, KeyFileMode);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to verify permissions on {Path}", path);
+        }
     }
 
     private static string GetDefaultKeyFilePath()

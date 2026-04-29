@@ -72,7 +72,7 @@ public sealed class TmdbMovieProviderTests
     public async Task SearchAsync_ValidQuery_ReturnsMovies()
     {
         const string json = """
-            {"results":[{"id":550,"title":"Fight Club","originalTitle":"Fight Club","releaseDate":"1999-10-15","originalLanguage":"en"}]}
+            {"results":[{"id":550,"title":"Fight Club","original_title":"Fight Club","release_date":"1999-10-15","original_language":"en"}]}
             """;
         var provider = CreateProvider(CreateMockHandler(HttpStatusCode.OK, json));
 
@@ -88,7 +88,7 @@ public sealed class TmdbMovieProviderTests
     [Fact]
     public async Task SearchAsync_WithYear_IncludesYearInUrl()
     {
-        const string json = """{"results":[{"id":550,"title":"Fight Club","originalTitle":"Fight Club","releaseDate":"1999-10-15","originalLanguage":"en"}]}""";
+        const string json = """{"results":[{"id":550,"title":"Fight Club","original_title":"Fight Club","release_date":"1999-10-15","original_language":"en"}]}""";
         var handler = new Mock<HttpMessageHandler>();
         handler.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync",
@@ -135,18 +135,18 @@ public sealed class TmdbMovieProviderTests
     {
         const string json = """
             {
-                "id":550,"title":"Fight Club","originalTitle":"Fight Club",
+                "id":550,"title":"Fight Club","original_title":"Fight Club",
                 "overview":"An insomniac...","tagline":"Mischief...",
-                "releaseDate":"1999-10-15","posterPath":"/poster.jpg",
-                "voteAverage":8.4,"runtime":139,"imdbId":"tt0137523",
-                "originalLanguage":"en","revenue":100853753,"budget":63000000,
+                "release_date":"1999-10-15","poster_path":"/poster.jpg",
+                "vote_average":8.4,"runtime":139,"imdb_id":"tt0137523",
+                "original_language":"en","revenue":100853753,"budget":63000000,
                 "genres":[{"name":"Drama"}],
                 "credits":{
-                    "cast":[{"id":819,"name":"Edward Norton","character":"The Narrator","profilePath":"/profile.jpg","order":0}],
-                    "crew":[{"id":7467,"name":"David Fincher","department":"Directing","job":"Director","profilePath":null}]
+                    "cast":[{"id":819,"name":"Edward Norton","character":"The Narrator","profile_path":"/profile.jpg","order":0}],
+                    "crew":[{"id":7467,"name":"David Fincher","department":"Directing","job":"Director","profile_path":null}]
                 },
-                "releaseDates":{"results":[{"iso3166_1":"US","releaseDates":[{"certification":"R"}]}]},
-                "belongsToCollection":null
+                "release_dates":{"results":[{"iso_3166_1":"US","release_dates":[{"certification":"R"}]}]},
+                "belongs_to_collection":null
             }
             """;
         var provider = CreateProvider(CreateMockHandler(HttpStatusCode.OK, json));
@@ -197,7 +197,7 @@ public sealed class TmdbMovieProviderTests
     [Fact]
     public async Task SearchAsync_UsesCaching_SecondCallSkipsHttp()
     {
-        const string json = """{"results":[{"id":550,"title":"Fight Club","originalTitle":"Fight Club","releaseDate":"1999-10-15","originalLanguage":"en"}]}""";
+        const string json = """{"results":[{"id":550,"title":"Fight Club","original_title":"Fight Club","release_date":"1999-10-15","original_language":"en"}]}""";
         var handler = CreateVerifiableMockHandler(HttpStatusCode.OK, json);
         var cache = new MetadataCache(new MemoryCache(new MemoryCacheOptions()));
         var provider = CreateProvider(handler.Object, cache);

@@ -58,7 +58,7 @@ public sealed class MusicBrainzProvider : IMusicProvider
 
         try
         {
-            var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<MbRecordingSearchResponse>(JsonOptions, ct).ConfigureAwait(false);

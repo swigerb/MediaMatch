@@ -123,10 +123,15 @@ public sealed class MusicDetectionE2ETests
         track.DiscNumber.Should().Be(1);
     }
 
-    // ── Mock MusicBrainz provider flow ────────────────────────────────────
+    // ── IMusicProvider contract tests ─────────────────────────────────────
+    // These tests verify the IMusicProvider interface contract (not real provider behavior).
+    // For real MusicDetector and provider chain coverage see:
+    //   tests/MediaMatch.Application.Tests/Detection/MusicDetectorTests.cs
+    //   tests/MediaMatch.Application.Tests/Services/MetadataProviderChainTests.cs
+    //   tests/MediaMatch.Infrastructure.Tests/Providers/Music/MusicBrainzProviderTests.cs
 
     [Fact]
-    public async Task MusicProvider_SearchAndMatch_ReturnsMusicTrack()
+    public async Task IMusicProvider_Contract_SearchAsync_ReturnsMatchedTracks()
     {
         var musicProvider = new Mock<IMusicProvider>();
         musicProvider.Setup(p => p.Name).Returns("MusicBrainz");
@@ -147,7 +152,7 @@ public sealed class MusicDetectionE2ETests
     }
 
     [Fact]
-    public async Task MusicProvider_NoMatch_ReturnsEmpty()
+    public async Task IMusicProvider_Contract_SearchAsync_NoMatchReturnsEmpty()
     {
         var musicProvider = new Mock<IMusicProvider>();
         musicProvider.Setup(p => p.Name).Returns("MusicBrainz");
@@ -185,7 +190,7 @@ public sealed class MusicDetectionE2ETests
     // ── AcoustID fingerprint flow ─────────────────────────────────────────
 
     [Fact]
-    public async Task AcoustIdProvider_Fingerprint_ReturnsMatchedTrack()
+    public async Task IMusicProvider_Contract_AcoustIdSearchAsync_ReturnsFingerprintMatch()
     {
         var acoustId = new Mock<IMusicProvider>();
         acoustId.Setup(p => p.Name).Returns("AcoustID");

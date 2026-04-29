@@ -104,8 +104,8 @@ public sealed class ParallelFileScannerE2ETests : IDisposable
     public async Task Scanner_Recursive_FindsFilesInSubdirectories()
     {
         _tempDir.CreateFile("root.mkv");
-        _tempDir.CreateFile(@"Season 1\s01e01.mkv");
-        _tempDir.CreateFile(@"Season 2\s02e01.mkv");
+        _tempDir.CreateFile(Path.Combine("Season 1", "s01e01.mkv"));
+        _tempDir.CreateFile(Path.Combine("Season 2", "s02e01.mkv"));
 
         var scanner = CreateScanner();
         var results = await scanner.ScanToListAsync(_tempDir.RootPath);
@@ -116,7 +116,7 @@ public sealed class ParallelFileScannerE2ETests : IDisposable
     [Fact]
     public async Task Scanner_DeepNested_RespectsMaxDepth()
     {
-        var deep = @"a\b\c\d\e\f\g\h\i\j\k\deep.mkv";
+        var deep = Path.Combine("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "deep.mkv");
         _tempDir.CreateFile(deep);
         _tempDir.CreateFile("shallow.mkv");
 

@@ -126,9 +126,9 @@ public sealed class CoreModelExtendedTests
     [Fact]
     public void Movie_WithAllOptionals_SetsCorrectly()
     {
-        var movie = new Movie("Test", 2024, TmdbId: 12345, ImdbId: 67890, Language: "en");
+        var movie = new Movie("Test", 2024, TmdbId: 12345, ImdbId: "tt0067890", Language: "en");
         movie.TmdbId.Should().Be(12345);
-        movie.ImdbId.Should().Be(67890);
+        movie.ImdbId.Should().Be("tt0067890");
         movie.Language.Should().Be("en");
     }
 

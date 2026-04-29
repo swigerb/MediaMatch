@@ -79,7 +79,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
             return previews;
         }
 
-        var completed = new List<(string From, string To)>();
+        var completed = new List<(string From, string To, RenameAction Action)>();
         var finalResults = new List<FileOrganizationResult>(previews.Count);
 
         try
@@ -107,7 +107,7 @@ public sealed class FileOrganizationService : IFileOrganizationService
                 try
                 {
                     await ApplyRenameAsync(preview.OriginalPath, preview.NewPath, action).ConfigureAwait(false);
-                    completed.Add((preview.OriginalPath, preview.NewPath));
+                    completed.Add((preview.OriginalPath, preview.NewPath, action));
                     finalResults.Add(preview);
                 }
                 catch (Exception ex)
@@ -158,31 +158,81 @@ public sealed class FileOrganizationService : IFileOrganizationService
                 _fileSystem.CopyFile(source, destination);
                 break;
             case RenameAction.Hardlink:
-                _fileSystem.CreateHardLink(destination, source);
+                try
+                {
+                    _fileSystem.CreateHardLink(destination, source);
+                }
+                catch (Exception ex) when (ex is PlatformNotSupportedException or NotSupportedException)
+                {
+                    _logger.LogWarning(ex, "Hard links are not supported on this platform for {Source}", source);
+                    throw;
+                }
+                break;
+            case RenameAction.Symlink:
+                try
+                {
+                    _fileSystem.CreateSymbolicLink(destination, source);
+                }
+                catch (Exception ex) when (ex is PlatformNotSupportedException or NotSupportedException or UnauthorizedAccessException)
+                {
+                    _logger.LogWarning(ex, "Symbolic link creation is not supported or not permitted for {Source}", source);
+                    throw;
+                }
+                break;
+            case RenameAction.Reflink:
+                try
+                {
+                    await _fileSystem.CloneFileAsync(source, destination).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is PlatformNotSupportedException or NotSupportedException)
+                {
+                    _logger.LogWarning(ex, "Reflink (CoW clone) is not supported on this volume for {Source}; consider using Copy", source);
+                    throw;
+                }
                 break;
             case RenameAction.Clone:
                 await _fileSystem.CloneFileAsync(source, destination).ConfigureAwait(false);
                 break;
             default:
-                _fileSystem.MoveFile(source, destination);
-                break;
+                throw new ArgumentOutOfRangeException(nameof(action), action, $"Unsupported rename action: {action}");
         }
     }
 
-    private Task RollbackAsync(List<(string From, string To)> completed)
+    private Task RollbackAsync(List<(string From, string To, RenameAction Action)> completed)
     {
         // Rollback in reverse order
         for (int i = completed.Count - 1; i >= 0; i--)
         {
             try
             {
-                var (from, to) = completed[i];
-                if (_fileSystem.FileExists(to))
-                    _fileSystem.MoveFile(to, from);
+                var (from, to, act) = completed[i];
+                if (!_fileSystem.FileExists(to))
+                    continue;
+
+                switch (act)
+                {
+                    case RenameAction.Move:
+                        // Source was removed; move destination back to source
+                        _fileSystem.MoveFile(to, from);
+                        break;
+                    case RenameAction.Copy:
+                    case RenameAction.Hardlink:
+                    case RenameAction.Symlink:
+                    case RenameAction.Reflink:
+                    case RenameAction.Clone:
+                        // Source still exists; just delete the new destination/link/clone
+                        _fileSystem.DeleteFile(to);
+                        break;
+                    default:
+                        // Unknown action — fall back to move-back to be safe
+                        _fileSystem.MoveFile(to, from);
+                        break;
+                }
             }
-            catch
+            catch (Exception ex)
             {
                 // Best-effort rollback — log but don't throw
+                _logger.LogWarning(ex, "Rollback step failed for {Entry}", completed[i].To);
             }
         }
 
@@ -224,6 +274,19 @@ public interface IFileSystem
     void CreateHardLink(string linkPath, string targetPath);
 
     /// <summary>
+    /// Creates a symbolic link at the specified path pointing to the target file.
+    /// </summary>
+    /// <param name="linkPath">The path for the new symbolic link.</param>
+    /// <param name="targetPath">The path to the existing target file.</param>
+    void CreateSymbolicLink(string linkPath, string targetPath);
+
+    /// <summary>
+    /// Deletes the file at the specified path. No-op if the file does not exist.
+    /// </summary>
+    /// <param name="path">The file path to delete.</param>
+    void DeleteFile(string path);
+
+    /// <summary>
     /// Creates a directory at the specified path, including any intermediate directories.
     /// </summary>
     /// <param name="path">The directory path to create.</param>
@@ -236,10 +299,30 @@ public interface IFileSystem
 }
 
 /// <summary>
-/// Default implementation that delegates to System.IO.
+/// Default implementation that delegates to System.IO and (optionally) Core file-system handlers.
 /// </summary>
 public sealed class PhysicalFileSystem : IFileSystem
 {
+    private readonly IHardLinkHandler? _hardLinkHandler;
+    private readonly IFileCloneService? _cloneService;
+    private readonly ILogger<PhysicalFileSystem> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PhysicalFileSystem"/> class.
+    /// </summary>
+    /// <param name="hardLinkHandler">Optional hard-link handler. Falls back to copy when absent.</param>
+    /// <param name="cloneService">Optional clone service (CoW/reflink). Falls back to copy when absent.</param>
+    /// <param name="logger">Optional logger instance.</param>
+    public PhysicalFileSystem(
+        IHardLinkHandler? hardLinkHandler = null,
+        IFileCloneService? cloneService = null,
+        ILogger<PhysicalFileSystem>? logger = null)
+    {
+        _hardLinkHandler = hardLinkHandler;
+        _cloneService = cloneService;
+        _logger = logger ?? NullLogger<PhysicalFileSystem>.Instance;
+    }
+
     /// <inheritdoc/>
     public bool FileExists(string path) => File.Exists(path);
 
@@ -255,14 +338,41 @@ public sealed class PhysicalFileSystem : IFileSystem
     /// <inheritdoc/>
     public void CreateHardLink(string linkPath, string targetPath)
     {
-        // .NET doesn't have a built-in hard link API; fall back to copy
-        File.Copy(targetPath, linkPath);
+        if (_hardLinkHandler is null)
+        {
+            _logger.LogWarning("No IHardLinkHandler registered; cannot create hard link {Link} -> {Target}", linkPath, targetPath);
+            throw new NotSupportedException("Hard link creation is not supported in this configuration.");
+        }
+
+        if (!_hardLinkHandler.TryCreateHardLink(linkPath, targetPath))
+        {
+            throw new IOException($"Failed to create hard link '{linkPath}' -> '{targetPath}'.");
+        }
+    }
+
+    /// <inheritdoc/>
+    public void CreateSymbolicLink(string linkPath, string targetPath)
+    {
+        File.CreateSymbolicLink(linkPath, targetPath);
+    }
+
+    /// <inheritdoc/>
+    public void DeleteFile(string path)
+    {
+        if (File.Exists(path))
+            File.Delete(path);
     }
 
     /// <inheritdoc/>
     public Task CloneFileAsync(string source, string destination, CancellationToken ct = default)
     {
-        // Default implementation falls back to copy
+        if (_cloneService is not null)
+        {
+            _cloneService.CloneFile(source, destination);
+            return Task.CompletedTask;
+        }
+
+        // Fallback when no clone service is wired in.
         File.Copy(source, destination, overwrite: true);
         return Task.CompletedTask;
     }

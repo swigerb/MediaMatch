@@ -85,6 +85,7 @@ public sealed class UndoService : IUndoService
 
             int toUndo = Math.Min(count, journal.Count);
             int undone = 0;
+            var failedIndexes = new HashSet<int>();
 
             // Undo from most recent backwards
             for (int i = journal.Count - 1; i >= journal.Count - toUndo; i--)
@@ -108,17 +109,25 @@ public sealed class UndoService : IUndoService
                     else
                     {
                         _logger.LogWarning("Cannot undo: file not found at {Path}", entry.NewPath);
+                        failedIndexes.Add(i);
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to undo rename for {Path}", entry.NewPath);
+                    failedIndexes.Add(i);
                 }
             }
 
-            // Remove undone entries from journal
-            journal.RemoveRange(journal.Count - toUndo, toUndo);
-            await SaveJournalAsync(journal).ConfigureAwait(false);
+            // Keep failed entries in the journal so they can be retried; remove only successful ones.
+            var remaining = new List<UndoEntry>(journal.Count);
+            for (int i = 0; i < journal.Count; i++)
+            {
+                bool wasInRange = i >= journal.Count - toUndo;
+                if (!wasInRange || failedIndexes.Contains(i))
+                    remaining.Add(journal[i]);
+            }
+            await SaveJournalAsync(remaining).ConfigureAwait(false);
 
             return undone;
         }

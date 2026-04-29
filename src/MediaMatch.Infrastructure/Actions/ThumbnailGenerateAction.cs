@@ -67,12 +67,23 @@ public sealed class ThumbnailGenerateAction : IPostProcessAction
             };
 
             process.Start();
+
+            // Drain stdout/stderr concurrently so a full pipe buffer cannot deadlock ffmpeg.
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
+            var stderrTask = process.StandardError.ReadToEndAsync(ct);
             await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            var stdout = await stdoutTask.ConfigureAwait(false);
+            var stderr = await stderrTask.ConfigureAwait(false);
 
             if (process.ExitCode == 0)
+            {
                 _logger.LogInformation("Thumbnail generated: {Path}", outputPath);
+            }
             else
-                _logger.LogWarning("ffmpeg exited with code {Code} for {Path}", process.ExitCode, videoPath);
+            {
+                _logger.LogWarning("ffmpeg exited with code {Code} for {Path}: {Error}",
+                    process.ExitCode, videoPath, string.IsNullOrWhiteSpace(stderr) ? stdout.Trim() : stderr.Trim());
+            }
         }
         catch (Exception ex)
         {

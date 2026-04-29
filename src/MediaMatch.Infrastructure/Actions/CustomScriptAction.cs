@@ -68,10 +68,14 @@ public sealed class CustomScriptAction : IPostProcessAction
             using var process = new Process { StartInfo = psi };
             process.Start();
 
-            var stdout = await process.StandardOutput.ReadToEndAsync(ct).ConfigureAwait(false);
-            var stderr = await process.StandardError.ReadToEndAsync(ct).ConfigureAwait(false);
+            // Start drain tasks before WaitForExit so a full stdout or stderr pipe cannot deadlock the script.
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
+            var stderrTask = process.StandardError.ReadToEndAsync(ct);
 
             await process.WaitForExitAsync(ct).ConfigureAwait(false);
+
+            var stdout = await stdoutTask.ConfigureAwait(false);
+            var stderr = await stderrTask.ConfigureAwait(false);
 
             if (process.ExitCode == 0)
             {

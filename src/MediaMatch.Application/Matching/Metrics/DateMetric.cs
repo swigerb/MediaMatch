@@ -33,7 +33,9 @@ public sealed class DateMetric : ISimilarityMetric
 
         if (value is SimpleDate sd)
         {
-            date = sd.ToDateOnly();
+            var converted = sd.ToDateOnly();
+            if (converted is null) return false;
+            date = converted.Value;
             return true;
         }
 

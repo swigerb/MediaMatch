@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Models;
 using MediaMatch.Core.Providers;
@@ -183,6 +184,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
     {
         public int Id { get; set; }
         public string? Name { get; set; }
+        [JsonPropertyName("original_name")]
         public string? OriginalName { get; set; }
     }
 
@@ -192,15 +194,22 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
         public string? Name { get; set; }
         public string? Overview { get; set; }
         public string? Status { get; set; }
+        [JsonPropertyName("poster_path")]
         public string? PosterPath { get; set; }
+        [JsonPropertyName("vote_average")]
         public double? VoteAverage { get; set; }
+        [JsonPropertyName("first_air_date")]
         public string? FirstAirDate { get; set; }
+        [JsonPropertyName("original_language")]
         public string? OriginalLanguage { get; set; }
+        [JsonPropertyName("episode_run_time")]
         public List<int>? EpisodeRunTime { get; set; }
+        [JsonPropertyName("origin_country")]
         public List<string>? OriginCountry { get; set; }
         public List<TmdbGenre>? Genres { get; set; }
         public List<TmdbNetwork>? Networks { get; set; }
         public List<TmdbSeason>? Seasons { get; set; }
+        [JsonPropertyName("external_ids")]
         public TmdbExternalIds? ExternalIds { get; set; }
     }
 
@@ -209,6 +218,7 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
 
     private sealed class TmdbSeason
     {
+        [JsonPropertyName("season_number")]
         public int SeasonNumber { get; set; }
     }
 
@@ -219,13 +229,16 @@ public sealed class TmdbEpisodeProvider : IEpisodeProvider
 
     private sealed class TmdbEpisode
     {
+        [JsonPropertyName("episode_number")]
         public int EpisodeNumber { get; set; }
         public string? Name { get; set; }
+        [JsonPropertyName("air_date")]
         public string? AirDate { get; set; }
     }
 
     private sealed class TmdbExternalIds
     {
+        [JsonPropertyName("imdb_id")]
         public string? ImdbId { get; set; }
     }
 

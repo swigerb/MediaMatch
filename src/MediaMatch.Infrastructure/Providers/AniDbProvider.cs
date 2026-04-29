@@ -240,7 +240,7 @@ public sealed class AniDbProvider : IAniDbProvider
         {
             try
             {
-                var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+                using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
 
                 if ((int)response.StatusCode == 429)
                 {

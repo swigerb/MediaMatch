@@ -31,7 +31,7 @@ public sealed class MusicDetectorTests
     [Fact]
     public void DetectFromFilename_ArtistDashTitle_ParsesCorrectly()
     {
-        var track = _detector.DetectFromFilename(@"C:\music\Queen - Bohemian Rhapsody.mp3");
+        var track = _detector.DetectFromFilename(Path.Combine("C:", "music", "Queen - Bohemian Rhapsody.mp3"));
         track.Should().NotBeNull();
         track!.Artist.Should().Be("Queen");
         track.Title.Should().Be("Bohemian Rhapsody");
@@ -40,7 +40,7 @@ public sealed class MusicDetectorTests
     [Fact]
     public void DetectFromFilename_TrackNumberWithDash_ParsesCorrectly()
     {
-        var track = _detector.DetectFromFilename(@"C:\music\01 - Intro.mp3");
+        var track = _detector.DetectFromFilename(Path.Combine("C:", "music", "01 - Intro.mp3"));
         track.Should().NotBeNull();
         track!.TrackNumber.Should().Be(1);
         track.Title.Should().Be("Intro");
@@ -49,7 +49,7 @@ public sealed class MusicDetectorTests
     [Fact]
     public void DetectFromFilename_TrackNumberWithDot_ParsesCorrectly()
     {
-        var track = _detector.DetectFromFilename(@"C:\music\03. Song Title.mp3");
+        var track = _detector.DetectFromFilename(Path.Combine("C:", "music", "03. Song Title.mp3"));
         track.Should().NotBeNull();
         track!.TrackNumber.Should().Be(3);
     }
@@ -57,7 +57,7 @@ public sealed class MusicDetectorTests
     [Fact]
     public void DetectFromFilename_NoArtist_TitleOnly()
     {
-        var track = _detector.DetectFromFilename(@"C:\music\Just A Title.mp3");
+        var track = _detector.DetectFromFilename(Path.Combine("C:", "music", "Just A Title.mp3"));
         track.Should().NotBeNull();
         track!.Artist.Should().BeEmpty();
         track.Title.Should().Be("Just A Title");
@@ -66,7 +66,7 @@ public sealed class MusicDetectorTests
     [Fact]
     public void DetectFromFilename_EmptyFilename_ReturnsNull()
     {
-        var track = _detector.DetectFromFilename(@"C:\music\.mp3");
+        var track = _detector.DetectFromFilename(Path.Combine("C:", "music", ".mp3"));
         track.Should().BeNull();
     }
 
@@ -112,14 +112,19 @@ public sealed class MusicDetectorTests
     }
 
     // ── Disc Number Detection ───────────────────────────────────
+    public static IEnumerable<object?[]> DiscNumberCases()
+    {
+        yield return new object?[] { Path.Combine("C:", "music", "Album", "CD1", "song.mp3"), 1 };
+        yield return new object?[] { Path.Combine("C:", "music", "Album", "CD2", "song.mp3"), 2 };
+        yield return new object?[] { Path.Combine("C:", "music", "Album", "Disc 1", "song.mp3"), 1 };
+        yield return new object?[] { Path.Combine("C:", "music", "Album", "Disc 3", "song.mp3"), 3 };
+        yield return new object?[] { Path.Combine("C:", "music", "Album", "DISC01", "song.mp3"), 1 };
+        yield return new object?[] { Path.Combine("C:", "music", "Album", "disk2", "song.mp3"), 2 };
+        yield return new object?[] { Path.Combine("C:", "music", "Album", "song.mp3"), null };
+    }
+
     [Theory]
-    [InlineData(@"C:\music\Album\CD1\song.mp3", 1)]
-    [InlineData(@"C:\music\Album\CD2\song.mp3", 2)]
-    [InlineData(@"C:\music\Album\Disc 1\song.mp3", 1)]
-    [InlineData(@"C:\music\Album\Disc 3\song.mp3", 3)]
-    [InlineData(@"C:\music\Album\DISC01\song.mp3", 1)]
-    [InlineData(@"C:\music\Album\disk2\song.mp3", 2)]
-    [InlineData(@"C:\music\Album\song.mp3", null)]
+    [MemberData(nameof(DiscNumberCases))]
     public void DetectDiscNumber_ParsesFolderPatterns(string path, int? expected)
     {
         MusicDetector.DetectDiscNumber(path).Should().Be(expected);
@@ -152,7 +157,7 @@ public sealed class MusicDetectorTests
     [Fact]
     public void DetectFromFilename_FeaturedInTitle_CleanedFromTitle()
     {
-        var track = _detector.DetectFromFilename(@"C:\music\Artist - Song (feat. Guest).mp3");
+        var track = _detector.DetectFromFilename(Path.Combine("C:", "music", "Artist - Song (feat. Guest).mp3"));
         track.Should().NotBeNull();
         track!.Title.Should().Be("Song");
         track.FeaturedArtists.Should().Contain("Guest");

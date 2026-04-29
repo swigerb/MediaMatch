@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 using MediaMatch.Core.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -5,11 +7,25 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace MediaMatch.Infrastructure.Unix.FileSystem;
 
 /// <summary>
-/// Detects network paths on Unix/macOS by checking UNC-style paths (Samba)
-/// and reading mount information from /proc/mounts (Linux) or mount output (macOS).
+/// Detects network paths on Unix/macOS by reading mount information from
+/// /proc/mounts (Linux) or by parsing the output of /sbin/mount (macOS).
 /// </summary>
-public sealed class UnixNetworkPathDetector : INetworkPathDetector
+public sealed partial class UnixNetworkPathDetector : INetworkPathDetector
 {
+    private static readonly HashSet<string> LinuxNetworkFsTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "nfs", "nfs4", "cifs", "smbfs", "fuse.sshfs", "ncpfs", "9p",
+    };
+
+    private static readonly HashSet<string> MacNetworkFsTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "nfs", "smbfs", "afpfs", "webdav", "webdavfs",
+    };
+
+    // Matches macOS `mount` output:  <device> on <mount-point> (<fstype>, <opts>)
+    [GeneratedRegex(@"^(?<device>.+?)\s+on\s+(?<mount>.+?)\s+\((?<fstype>[^,\)]+)", RegexOptions.Compiled)]
+    private static partial Regex MacMountLineRegex();
+
     private readonly ILogger<UnixNetworkPathDetector> _logger;
 
     public UnixNetworkPathDetector(ILogger<UnixNetworkPathDetector>? logger = null)
@@ -22,22 +38,15 @@ public sealed class UnixNetworkPathDetector : INetworkPathDetector
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
-        // SMB/CIFS shares mounted at /mnt or /media — resolve to real path first
         try
         {
             var fullPath = Path.GetFullPath(path);
 
-            // Check /proc/mounts on Linux for network filesystem types
             if (File.Exists("/proc/mounts"))
-            {
                 return IsNetworkMountLinux(fullPath);
-            }
 
-            // macOS: check mount output for network types (nfs, smbfs, afpfs)
-            if (File.Exists("/sbin/mount"))
-            {
+            if (OperatingSystem.IsMacOS() && File.Exists("/sbin/mount"))
                 return IsNetworkMountMacOS(fullPath);
-            }
 
             _logger.LogDebug("No mount detection available, assuming local path: {Path}", path);
             return false;
@@ -51,12 +60,6 @@ public sealed class UnixNetworkPathDetector : INetworkPathDetector
 
     private bool IsNetworkMountLinux(string fullPath)
     {
-        // Network filesystem types in /proc/mounts
-        var networkFsTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "nfs", "nfs4", "cifs", "smbfs", "fuse.sshfs", "ncpfs", "9p"
-        };
-
         try
         {
             foreach (var line in File.ReadLines("/proc/mounts"))
@@ -69,7 +72,7 @@ public sealed class UnixNetworkPathDetector : INetworkPathDetector
                 var fsType = parts[2];
 
                 if (fullPath.StartsWith(mountPoint, StringComparison.Ordinal) &&
-                    networkFsTypes.Contains(fsType))
+                    LinuxNetworkFsTypes.Contains(fsType))
                 {
                     _logger.LogDebug("Network mount detected: {Path} on {MountPoint} ({FsType})", fullPath, mountPoint, fsType);
                     return true;
@@ -86,40 +89,66 @@ public sealed class UnixNetworkPathDetector : INetworkPathDetector
 
     private bool IsNetworkMountMacOS(string fullPath)
     {
-        // On macOS, read /etc/mtab or use mount output
-        // Common network fs types: nfs, smbfs, afpfs, webdavfs
-        var networkFsTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "nfs", "smbfs", "afpfs", "webdavfs"
-        };
-
+        // Run `/sbin/mount` and parse each line. Output looks like:
+        //   /dev/disk1s5 on / (apfs, local, journaled)
+        //   //user@server/share on /Volumes/share (smbfs, nodev, nosuid, mounted by user)
+        string mountOutput;
         try
         {
-            // macOS /etc/mnttab doesn't exist, but we can read from /etc/fstab
-            // or parse mount command output — for now, use a simpler heuristic
-            if (File.Exists("/etc/mtab"))
+            using var proc = new Process
             {
-                foreach (var line in File.ReadLines("/etc/mtab"))
+                StartInfo = new ProcessStartInfo
                 {
-                    var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length < 3)
-                        continue;
+                    FileName = "/sbin/mount",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                },
+            };
 
-                    var mountPoint = parts[1];
-                    var fsType = parts[2];
+            proc.Start();
+            mountOutput = proc.StandardOutput.ReadToEnd();
 
-                    if (fullPath.StartsWith(mountPoint, StringComparison.Ordinal) &&
-                        networkFsTypes.Contains(fsType))
-                    {
-                        _logger.LogDebug("Network mount detected: {Path} on {MountPoint} ({FsType})", fullPath, mountPoint, fsType);
-                        return true;
-                    }
-                }
+            if (!proc.WaitForExit(5_000))
+            {
+                _logger.LogDebug("/sbin/mount timed out");
+                try { proc.Kill(); } catch { /* best-effort */ }
+                return false;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Failed to read mount info on macOS");
+            _logger.LogDebug(ex, "Failed to invoke /sbin/mount");
+            return false;
+        }
+
+        string? bestMatch = null;
+        var bestLength = 0;
+        var matchedFsType = string.Empty;
+
+        foreach (var line in mountOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var match = MacMountLineRegex().Match(line);
+            if (!match.Success)
+                continue;
+
+            var mountPoint = match.Groups["mount"].Value.Trim();
+            var fsType = match.Groups["fstype"].Value.Trim();
+
+            if (fullPath.StartsWith(mountPoint, StringComparison.Ordinal) &&
+                mountPoint.Length > bestLength)
+            {
+                bestMatch = mountPoint;
+                bestLength = mountPoint.Length;
+                matchedFsType = fsType;
+            }
+        }
+
+        if (bestMatch is not null && MacNetworkFsTypes.Contains(matchedFsType))
+        {
+            _logger.LogDebug("Network mount detected: {Path} on {MountPoint} ({FsType})", fullPath, bestMatch, matchedFsType);
+            return true;
         }
 
         return false;

@@ -80,9 +80,10 @@ public sealed class CoreModelTests
 
         var dateOnly = simple.ToDateOnly();
 
-        dateOnly.Year.Should().Be(2023);
-        dateOnly.Month.Should().Be(12);
-        dateOnly.Day.Should().Be(25);
+        dateOnly.Should().NotBeNull();
+        dateOnly!.Value.Year.Should().Be(2023);
+        dateOnly.Value.Month.Should().Be(12);
+        dateOnly.Value.Day.Should().Be(25);
     }
 
     [Fact]

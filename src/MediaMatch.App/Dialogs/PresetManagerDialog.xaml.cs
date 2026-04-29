@@ -8,9 +8,18 @@ namespace MediaMatch.App.Dialogs;
 /// ContentDialog for managing the list of presets (add / edit / delete).
 /// Returns the updated list via <see cref="Presets"/> when the user clicks Save.
 /// </summary>
+/// <remarks>
+/// WinUI only allows one ContentDialog open at a time. To launch the per-item editor
+/// we must Hide() this dialog, which completes its own ShowAsync() with a non-Primary
+/// result. <see cref="ShowManagedAsync"/> bridges around that by tracking whether the
+/// Closed event came from a real user action or from an internal hide/re-show, so the
+/// caller only observes the user's final Save/Cancel choice.
+/// </remarks>
 public sealed partial class PresetManagerDialog : ContentDialog
 {
     private readonly List<PresetDefinitionSettings> _presets;
+    private readonly TaskCompletionSource<ContentDialogResult> _finalResult = new();
+    private bool _suppressNextClose;
 
     /// <summary>The current preset list — updated in-place by add/edit/delete actions.</summary>
     public List<PresetDefinitionSettings> Presets => _presets;
@@ -20,6 +29,27 @@ public sealed partial class PresetManagerDialog : ContentDialog
         _presets = [.. presets];
         InitializeComponent();
         RefreshList();
+        Closed += OnClosed;
+    }
+
+    /// <summary>
+    /// Shows the manager dialog and returns only when the user has finished
+    /// (Save or Cancel), even if the editor sub-dialog was opened in between.
+    /// </summary>
+    public Task<ContentDialogResult> ShowManagedAsync()
+    {
+        _ = ShowAsync();
+        return _finalResult.Task;
+    }
+
+    private void OnClosed(ContentDialog sender, ContentDialogClosedEventArgs args)
+    {
+        if (_suppressNextClose)
+        {
+            _suppressNextClose = false;
+            return;
+        }
+        _finalResult.TrySetResult(args.Result);
     }
 
     private void RefreshList()
@@ -36,7 +66,9 @@ public sealed partial class PresetManagerDialog : ContentDialog
             XamlRoot = this.XamlRoot
         };
 
-        // Hide this dialog while the editor is shown (WinUI only allows one ContentDialog)
+        // Hide this dialog while the editor is shown (WinUI only allows one ContentDialog).
+        // The Closed handler will skip this hide so the caller's task stays pending.
+        _suppressNextClose = true;
         Hide();
 
         var result = await editor.ShowAsync();
@@ -45,7 +77,6 @@ public sealed partial class PresetManagerDialog : ContentDialog
             _presets.Add(editor.Preset);
         }
 
-        // Re-show this dialog
         RefreshList();
         _ = ShowAsync();
     }
@@ -62,6 +93,7 @@ public sealed partial class PresetManagerDialog : ContentDialog
             XamlRoot = this.XamlRoot
         };
 
+        _suppressNextClose = true;
         Hide();
 
         var result = await editor.ShowAsync();

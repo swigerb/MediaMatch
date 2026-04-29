@@ -54,7 +54,7 @@ public sealed class PlexRefreshAction : IPostProcessAction
 
             try
             {
-                var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
+                using var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
                 _logger.LogInformation("Plex refresh section {Section}: {Status}", sectionId, response.StatusCode);
             }
             catch (Exception ex)

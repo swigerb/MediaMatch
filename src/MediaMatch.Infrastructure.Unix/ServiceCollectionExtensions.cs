@@ -17,7 +17,9 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddUnixInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<ISettingsEncryption, AesFileEncryption>();
-        services.AddSingleton<IHardLinkHandler, UnixHardLinkHandler>();
+        services.AddSingleton<UnixHardLinkHandler>();
+        services.AddSingleton<IHardLinkHandler>(sp => sp.GetRequiredService<UnixHardLinkHandler>());
+        services.AddSingleton<IUnixHardLinkHandler>(sp => sp.GetRequiredService<UnixHardLinkHandler>());
         services.AddSingleton<INetworkPathDetector, UnixNetworkPathDetector>();
         services.AddSingleton<IFileCloneService, CopyFallbackCloneService>();
 

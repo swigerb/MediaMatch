@@ -910,7 +910,7 @@ public partial class HomeViewModel : ViewModelBase
             XamlRoot = App.MainWindow.Content.XamlRoot
         };
 
-        var result = await dialog.ShowAsync();
+        var result = await dialog.ShowManagedAsync();
         if (result == ContentDialogResult.Primary)
         {
             settings.Presets = dialog.Presets;

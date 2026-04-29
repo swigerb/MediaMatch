@@ -141,6 +141,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ReFsCloneHandler>();
         services.AddSingleton<HardLinkHandler>();
         services.AddSingleton<FileCloneService>();
+        services.AddSingleton<IHardLinkHandler>(sp => sp.GetRequiredService<HardLinkHandler>());
+        services.AddSingleton<IFileCloneService>(sp => sp.GetRequiredService<FileCloneService>());
 #pragma warning restore CA1416
 
         // Music providers

@@ -182,7 +182,7 @@ public sealed class OpportunisticMatcher
                             Title: movie.Name,
                             Year: movie.Year,
                             MetadataSummary: summary,
-                            ProviderId: movie.TmdbId?.ToString() ?? movie.ImdbId?.ToString()));
+                            ProviderId: movie.TmdbId?.ToString() ?? movie.ImdbId));
                     }
                 }
             }

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Models;
 using MediaMatch.Core.Providers;
@@ -171,8 +172,11 @@ public sealed class TmdbMovieProvider : IMovieProvider
     {
         public int Id { get; set; }
         public string? Title { get; set; }
+        [JsonPropertyName("original_title")]
         public string? OriginalTitle { get; set; }
+        [JsonPropertyName("release_date")]
         public string? ReleaseDate { get; set; }
+        [JsonPropertyName("original_language")]
         public string? OriginalLanguage { get; set; }
     }
 
@@ -180,20 +184,28 @@ public sealed class TmdbMovieProvider : IMovieProvider
     {
         public int Id { get; set; }
         public string? Title { get; set; }
+        [JsonPropertyName("original_title")]
         public string? OriginalTitle { get; set; }
         public string? Overview { get; set; }
         public string? Tagline { get; set; }
+        [JsonPropertyName("release_date")]
         public string? ReleaseDate { get; set; }
+        [JsonPropertyName("poster_path")]
         public string? PosterPath { get; set; }
+        [JsonPropertyName("vote_average")]
         public double? VoteAverage { get; set; }
         public int? Runtime { get; set; }
+        [JsonPropertyName("imdb_id")]
         public string? ImdbId { get; set; }
+        [JsonPropertyName("original_language")]
         public string? OriginalLanguage { get; set; }
         public long? Revenue { get; set; }
         public long? Budget { get; set; }
         public List<TmdbGenre>? Genres { get; set; }
         public TmdbCredits? Credits { get; set; }
+        [JsonPropertyName("release_dates")]
         public TmdbReleaseDatesContainer? ReleaseDates { get; set; }
+        [JsonPropertyName("belongs_to_collection")]
         public TmdbCollection? BelongsToCollection { get; set; }
     }
 
@@ -211,6 +223,7 @@ public sealed class TmdbMovieProvider : IMovieProvider
         public int Id { get; set; }
         public string? Name { get; set; }
         public string? Character { get; set; }
+        [JsonPropertyName("profile_path")]
         public string? ProfilePath { get; set; }
         public int? Order { get; set; }
     }
@@ -221,6 +234,7 @@ public sealed class TmdbMovieProvider : IMovieProvider
         public string? Name { get; set; }
         public string? Department { get; set; }
         public string? Job { get; set; }
+        [JsonPropertyName("profile_path")]
         public string? ProfilePath { get; set; }
     }
 
@@ -231,7 +245,9 @@ public sealed class TmdbMovieProvider : IMovieProvider
 
     private sealed class TmdbReleaseDateCountry
     {
+        [JsonPropertyName("iso_3166_1")]
         public string? Iso3166_1 { get; set; }
+        [JsonPropertyName("release_dates")]
         public List<TmdbReleaseDate>? ReleaseDates { get; set; }
     }
 

@@ -8,14 +8,48 @@ namespace MediaMatch.Core.Models;
 /// <param name="Day">The day component (1–31).</param>
 public readonly record struct SimpleDate(int Year, int Month, int Day) : IComparable<SimpleDate>
 {
-    /// <summary>Converts this instance to a <see cref="DateOnly"/> value.</summary>
-    /// <returns>A <see cref="DateOnly"/> representing the same date.</returns>
-    public DateOnly ToDateOnly() => new(Year, Month, Day);
+    /// <summary>
+    /// Returns <c>true</c> if this instance represents a valid Gregorian calendar date.
+    /// The default value (Year=0, Month=0, Day=0) is not valid.
+    /// </summary>
+    public bool IsValid =>
+        Year is >= 1 and <= 9999 &&
+        Month is >= 1 and <= 12 &&
+        Day >= 1 && Day <= DateTime.DaysInMonth(Year, Month);
+
+    /// <summary>Converts this instance to a <see cref="DateOnly"/> value if valid.</summary>
+    /// <returns>
+    /// A <see cref="DateOnly"/> representing the same date, or <c>null</c> if this
+    /// instance is the default value or otherwise represents an invalid date.
+    /// </returns>
+    public DateOnly? ToDateOnly() => IsValid ? new DateOnly(Year, Month, Day) : null;
 
     /// <summary>Creates a <see cref="SimpleDate"/> from a <see cref="DateOnly"/> value.</summary>
     /// <param name="date">The source date.</param>
     /// <returns>A <see cref="SimpleDate"/> representing the same date.</returns>
     public static SimpleDate FromDateOnly(DateOnly date) => new(date.Year, date.Month, date.Day);
+
+    /// <summary>
+    /// Attempts to construct a <see cref="SimpleDate"/> from year/month/day components,
+    /// validating that they form a real calendar date.
+    /// </summary>
+    /// <param name="year">The year (1–9999).</param>
+    /// <param name="month">The month (1–12).</param>
+    /// <param name="day">The day of month (1–end of month).</param>
+    /// <param name="result">The created <see cref="SimpleDate"/> when successful.</param>
+    /// <returns><c>true</c> if the components form a valid date; otherwise, <c>false</c>.</returns>
+    public static bool TryCreate(int year, int month, int day, out SimpleDate result)
+    {
+        var candidate = new SimpleDate(year, month, day);
+        if (candidate.IsValid)
+        {
+            result = candidate;
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
 
     /// <summary>Attempts to parse a date string into a <see cref="SimpleDate"/>.</summary>
     /// <param name="text">The date string to parse.</param>

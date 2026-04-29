@@ -12,12 +12,12 @@ namespace MediaMatch.Infrastructure.Unix.FileSystem;
 /// </summary>
 public sealed class CopyFallbackCloneService : IFileCloneService
 {
-    private readonly IHardLinkHandler _hardLinkHandler;
+    private readonly IUnixHardLinkHandler _hardLinkHandler;
     private readonly ILogger<CopyFallbackCloneService> _logger;
     private readonly ConcurrentDictionary<string, bool> _hardLinkCapable = new(StringComparer.OrdinalIgnoreCase);
 
     public CopyFallbackCloneService(
-        IHardLinkHandler hardLinkHandler,
+        IUnixHardLinkHandler hardLinkHandler,
         ILogger<CopyFallbackCloneService>? logger = null)
     {
         _hardLinkHandler = hardLinkHandler;
@@ -37,21 +37,32 @@ public sealed class CopyFallbackCloneService : IFileCloneService
 
         if (string.Equals(sourceMount, destMount, StringComparison.Ordinal))
         {
-            // Check cached capability
-            if (!_hardLinkCapable.TryGetValue(sourceMount, out var capable))
+            // Skip if we've already proven this mount can't do hard links at all.
+            if (!_hardLinkCapable.TryGetValue(sourceMount, out var capable) || capable)
             {
-                capable = true; // assume capable until proven otherwise
-            }
+                var result = _hardLinkHandler.TryCreateHardLinkWithResult(destination, source);
+                switch (result)
+                {
+                    case HardLinkResult.Success:
+                        _logger.LogDebug("Used hard link for {Source}", source);
+                        _hardLinkCapable[sourceMount] = true;
+                        return CloneCapability.HardLink;
 
-            if (capable && _hardLinkHandler.TryCreateHardLink(destination, source))
-            {
-                _logger.LogDebug("Used hard link for {Source}", source);
-                _hardLinkCapable[sourceMount] = true;
-                return CloneCapability.HardLink;
-            }
+                    case HardLinkResult.FilesystemUnsupported:
+                        // Cache so future clones on this mount skip straight to copy.
+                        _logger.LogDebug(
+                            "Mount {Mount} does not support hard links — caching", sourceMount);
+                        _hardLinkCapable[sourceMount] = false;
+                        break;
 
-            // Hard link failed — cache that this mount doesn't support it
-            _hardLinkCapable[sourceMount] = false;
+                    case HardLinkResult.PathSpecificFailure:
+                        // Do NOT cache — this failure is for this specific path/operation only.
+                        _logger.LogDebug(
+                            "Hard link failed for {Source} (path-specific) — falling back without caching",
+                            source);
+                        break;
+                }
+            }
         }
 
         // Fallback to standard copy

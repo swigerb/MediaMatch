@@ -282,14 +282,10 @@ public sealed class NfoMetadataProvider : IMovieProvider, IEpisodeProvider, ILoc
         return null;
     }
 
-    private static int? ParseImdbId(string? value)
+    private static string? ParseImdbId(string? value)
     {
-        if (value is null) return null;
-        // Handle "tt1234567" format
-        var numStr = value.StartsWith("tt", StringComparison.OrdinalIgnoreCase)
-            ? value[2..]
-            : value;
-        return int.TryParse(numStr, out var result) ? result : null;
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        return value.StartsWith("tt", StringComparison.OrdinalIgnoreCase) ? value : "tt" + value;
     }
 
     private static double? ParseDouble(string? value)

@@ -5,21 +5,21 @@ namespace MediaMatch.Core.Enums;
 /// </summary>
 public enum MediaType
 {
+    /// <summary>An unrecognized or unclassified media type. This is the default value.</summary>
+    Unknown = 0,
+
     /// <summary>A feature film.</summary>
-    Movie,
+    Movie = 1,
 
     /// <summary>A television series.</summary>
-    TvSeries,
+    TvSeries = 2,
 
     /// <summary>An anime series.</summary>
-    Anime,
+    Anime = 3,
 
     /// <summary>A music track or album.</summary>
-    Music,
+    Music = 4,
 
     /// <summary>A subtitle file.</summary>
-    Subtitle,
-
-    /// <summary>An unrecognized or unclassified media type.</summary>
-    Unknown
+    Subtitle = 5
 }

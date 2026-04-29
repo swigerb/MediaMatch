@@ -56,7 +56,7 @@ public sealed class AcoustIdProvider : IMusicProvider
 
         try
         {
-            var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<AcoustIdResponse>(JsonOptions, ct).ConfigureAwait(false);

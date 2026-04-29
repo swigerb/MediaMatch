@@ -90,6 +90,7 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
         var response = await _http.PostAsync<DownloadRequest, DownloadResponse>(
             $"{BaseUrl}/download",
             new DownloadRequest(int.Parse(subtitle.DownloadUrl, System.Globalization.CultureInfo.InvariantCulture)),
+            AuthHeaders(),
             ct).ConfigureAwait(false);
 
         if (response?.Link is null)
@@ -98,10 +99,11 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
         // Fetch the actual subtitle file as a stream
         using var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("MediaMatch/1.0");
-        var stream = await httpClient.GetStreamAsync(response.Link, ct).ConfigureAwait(false);
+        using var fileResponse = await httpClient.GetAsync(response.Link, ct).ConfigureAwait(false);
+        fileResponse.EnsureSuccessStatusCode();
         // Copy to a MemoryStream so the HttpClient can be disposed
         var memStream = new MemoryStream();
-        await stream.CopyToAsync(memStream, ct).ConfigureAwait(false);
+        await fileResponse.Content.CopyToAsync(memStream, ct).ConfigureAwait(false);
         memStream.Position = 0;
         return memStream;
     }
@@ -110,7 +112,7 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
     {
         try
         {
-            var response = await _http.GetAsync<SearchResponse>(url, ct).ConfigureAwait(false);
+            var response = await _http.GetAsync<SearchResponse>(url, AuthHeaders(), ct).ConfigureAwait(false);
             if (response?.Data is null)
                 return [];
 
@@ -152,6 +154,17 @@ public sealed class OpenSubtitlesProvider : ISubtitleProvider
         "SMI" or "SAMI" => SubtitleFormat.Sami,
         _ => SubtitleFormat.Unknown
     };
+
+    /// <summary>
+    /// Builds the Api-Key header dictionary required by every OpenSubtitles REST API v1 request.
+    /// </summary>
+    private Dictionary<string, string> AuthHeaders()
+    {
+        return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Api-Key"] = _apiKeys.OpenSubtitlesApiKey
+        };
+    }
 
     // Private DTOs for OpenSubtitles REST API v1
 

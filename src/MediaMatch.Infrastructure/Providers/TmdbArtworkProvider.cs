@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MediaMatch.Core.Configuration;
 using MediaMatch.Core.Models;
 using MediaMatch.Core.Providers;
@@ -142,8 +143,11 @@ public sealed class TmdbArtworkProvider : IArtworkProvider
 
     private sealed class TmdbImage
     {
+        [JsonPropertyName("file_path")]
         public string? FilePath { get; set; }
+        [JsonPropertyName("iso_639_1")]
         public string? Iso639_1 { get; set; }
+        [JsonPropertyName("vote_average")]
         public double? VoteAverage { get; set; }
         public int? Width { get; set; }
         public int? Height { get; set; }

@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using MediaMatch.App.Dialogs;
 using MediaMatch.App.Services;
 using MediaMatch.App.ViewModels;
@@ -13,19 +14,39 @@ public sealed partial class HomePage : Page
 {
     public HomeViewModel ViewModel { get; }
 
+    private readonly NotifyCollectionChangedEventHandler _presetsChangedHandler;
+
     public HomePage()
     {
         ViewModel = App.GetService<HomeViewModel>();
         InitializeComponent();
+
+        // Wire mode panels to their DI-resolved ViewModels (the parameterless
+        // constructors only exist for design-time / XAML binding initialization).
+        SfvPanel.SetViewModel(App.GetService<SfvPanelViewModel>());
+        EpisodesPanel.SetViewModel(App.GetService<EpisodesPanelViewModel>());
+        SubtitlesPanel.SetViewModel(App.GetService<SubtitlePanelViewModel>());
+        FilterPanel.SetViewModel(App.GetService<FilterPanelViewModel>());
+        ListPanel.SetViewModel(App.GetService<ListPanelViewModel>());
 
         // Wire the notification InfoBar to the NotificationService
         var notificationService = App.GetService<NotificationService>();
         notificationService.SetInfoBar(NotificationBar);
         ViewModel.SetNotificationService(notificationService);
 
-        // Rebuild the presets flyout whenever the collection changes
-        ViewModel.Presets.CollectionChanged += (_, _) => RebuildPresetsFlyout();
+        // Rebuild the presets flyout whenever the collection changes.
+        // Store the handler so we can unsubscribe on Unloaded — HomeViewModel is a
+        // singleton, so a leaked subscription would keep this page alive forever.
+        _presetsChangedHandler = (_, _) => RebuildPresetsFlyout();
+        ViewModel.Presets.CollectionChanged += _presetsChangedHandler;
+        Unloaded += HomePage_Unloaded;
         RebuildPresetsFlyout();
+    }
+
+    private void HomePage_Unloaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.Presets.CollectionChanged -= _presetsChangedHandler;
+        Unloaded -= HomePage_Unloaded;
     }
 
     private void RebuildPresetsFlyout()

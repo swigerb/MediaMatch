@@ -25,9 +25,9 @@ public sealed class TmdbArtworkProviderTests
 
     private static readonly string ImagesJson = """
         {
-            "posters":[{"filePath":"/poster.jpg","iso639_1":"en","voteAverage":5.3,"width":500,"height":750}],
-            "backdrops":[{"filePath":"/backdrop.jpg","iso639_1":null,"voteAverage":5.0,"width":1920,"height":1080}],
-            "logos":[{"filePath":"/logo.png","iso639_1":"en","voteAverage":4.0,"width":400,"height":200}]
+            "posters":[{"file_path":"/poster.jpg","iso_639_1":"en","vote_average":5.3,"width":500,"height":750}],
+            "backdrops":[{"file_path":"/backdrop.jpg","iso_639_1":null,"vote_average":5.0,"width":1920,"height":1080}],
+            "logos":[{"file_path":"/logo.png","iso_639_1":"en","vote_average":4.0,"width":400,"height":200}]
         }
         """;
 

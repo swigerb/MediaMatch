@@ -104,15 +104,15 @@ public sealed class TmdbEpisodeProviderTests
         const string detailJson = """
             {
                 "id":1396,"name":"Breaking Bad","overview":"A chemistry teacher...",
-                "status":"Ended","posterPath":"/bb.jpg","voteAverage":8.9,
-                "firstAirDate":"2008-01-20","originalLanguage":"en",
-                "episodeRunTime":[47],"originCountry":["US"],
+                "status":"Ended","poster_path":"/bb.jpg","vote_average":8.9,
+                "first_air_date":"2008-01-20","original_language":"en",
+                "episode_run_time":[47],"origin_country":["US"],
                 "genres":[{"name":"Drama"}],"networks":[{"name":"AMC"}],
-                "seasons":[{"seasonNumber":1}],"externalIds":{"imdbId":"tt0903747"}
+                "seasons":[{"season_number":1}],"external_ids":{"imdb_id":"tt0903747"}
             }
             """;
         const string seasonJson = """
-            {"episodes":[{"episodeNumber":1,"name":"Pilot","airDate":"2008-01-20"},{"episodeNumber":2,"name":"Cat's in the Bag...","airDate":"2008-01-27"}]}
+            {"episodes":[{"episode_number":1,"name":"Pilot","air_date":"2008-01-20"},{"episode_number":2,"name":"Cat's in the Bag...","air_date":"2008-01-27"}]}
             """;
 
         var handler = CreateUrlRoutingHandler(new Dictionary<string, string>
@@ -151,12 +151,12 @@ public sealed class TmdbEpisodeProviderTests
         const string json = """
             {
                 "id":1396,"name":"Breaking Bad","overview":"A chemistry teacher...",
-                "status":"Ended","posterPath":"/bb.jpg","voteAverage":8.9,
-                "firstAirDate":"2008-01-20","originalLanguage":"en",
-                "episodeRunTime":[47],"originCountry":["US"],
+                "status":"Ended","poster_path":"/bb.jpg","vote_average":8.9,
+                "first_air_date":"2008-01-20","original_language":"en",
+                "episode_run_time":[47],"origin_country":["US"],
                 "genres":[{"name":"Drama"}],"networks":[{"name":"AMC"}],
-                "seasons":[{"seasonNumber":1}],
-                "externalIds":{"imdbId":"tt0903747"}
+                "seasons":[{"season_number":1}],
+                "external_ids":{"imdb_id":"tt0903747"}
             }
             """;
         var provider = CreateProvider(CreateMockHandler(HttpStatusCode.OK, json));
