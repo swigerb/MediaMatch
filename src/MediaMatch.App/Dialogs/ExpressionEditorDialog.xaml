@@ -9,26 +9,32 @@
     Title="Expression Editor"
     CloseButtonText="Cancel"
     DefaultButton="Primary"
-    PrimaryButtonText="Apply"
+    PrimaryButtonText="Use Format"
     mc:Ignorable="d">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="600">
-    <StackPanel MinWidth="560" Spacing="16">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="680">
+    <StackPanel MinWidth="760" Spacing="14">
 
-        <!-- Example expressions -->
-        <StackPanel Spacing="4">
-            <TextBlock
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="Templates" />
-            <ComboBox
-                x:Name="ExamplesComboBox"
-                HorizontalAlignment="Stretch"
-                DisplayMemberPath="Name"
-                ItemsSource="{x:Bind ViewModel.ExampleExpressions}"
-                SelectedItem="{x:Bind ViewModel.SelectedExample, Mode=TwoWay}"
-                AutomationProperties.Name="Expression templates" />
-        </StackPanel>
+        <!-- Live preview banner -->
+        <Border
+            Padding="16,12"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="6">
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Preview" />
+                <TextBlock
+                    FontFamily="Cascadia Code, Consolas, Courier New"
+                    FontSize="14"
+                    IsTextSelectionEnabled="True"
+                    Text="{x:Bind ViewModel.Preview, Mode=OneWay}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
 
         <!-- Expression input -->
         <StackPanel Spacing="4">
@@ -38,95 +44,167 @@
                 Text="Expression" />
             <TextBox
                 x:Name="ExpressionTextBox"
-                MinHeight="80"
+                MinHeight="64"
                 AcceptsReturn="True"
                 FontFamily="Cascadia Code, Consolas, Courier New"
                 Text="{x:Bind ViewModel.Expression, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 TextWrapping="Wrap"
                 SelectionChanged="ExpressionTextBox_SelectionChanged"
                 AutomationProperties.Name="Expression input" />
-        </StackPanel>
-
-        <!-- Validation indicator -->
-        <StackPanel Orientation="Horizontal" Spacing="8">
-            <FontIcon
-                FontSize="14"
-                Glyph="{x:Bind ValidationGlyph(ViewModel.IsValid), Mode=OneWay}"
-                Foreground="{x:Bind ValidationBrush(ViewModel.IsValid), Mode=OneWay}" />
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
+                <FontIcon
+                    FontSize="14"
+                    Glyph="{x:Bind ValidationGlyph(ViewModel.IsValid), Mode=OneWay}"
+                    Foreground="{x:Bind ValidationBrush(ViewModel.IsValid), Mode=OneWay}" />
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{x:Bind ValidationBrush(ViewModel.IsValid), Mode=OneWay}"
+                    Text="{x:Bind ViewModel.ValidationMessage, Mode=OneWay}" />
+            </StackPanel>
             <TextBlock
+                Margin="0,2,0,0"
                 Style="{StaticResource CaptionTextBlockStyle}"
-                Foreground="{x:Bind ValidationBrush(ViewModel.IsValid), Mode=OneWay}"
-                Text="{x:Bind ViewModel.ValidationMessage, Mode=OneWay}" />
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Text="Syntax: {} expression, n name, s season, e episode, t title, y year, ext file extension" />
         </StackPanel>
 
-        <!-- Live preview -->
+        <!-- Category selector -->
         <StackPanel Spacing="4">
             <TextBlock
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="Preview" />
+                Text="Category" />
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <RadioButton x:Name="CategoryTvRadio" Content="TV Episodes" GroupName="ExprCategory" Tag="TV Episodes" IsChecked="True" Checked="CategoryRadio_Checked" />
+                <RadioButton x:Name="CategoryMoviesRadio" Content="Movies" GroupName="ExprCategory" Tag="Movies" Checked="CategoryRadio_Checked" />
+                <RadioButton x:Name="CategoryAnimeRadio" Content="Anime" GroupName="ExprCategory" Tag="Anime" Checked="CategoryRadio_Checked" />
+                <RadioButton x:Name="CategoryMusicRadio" Content="Music" GroupName="ExprCategory" Tag="Music" Checked="CategoryRadio_Checked" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Examples list -->
+        <StackPanel Spacing="4">
+            <TextBlock
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="Examples" />
             <Border
-                Padding="12,8"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
                 CornerRadius="4">
-                <TextBlock
-                    FontFamily="Cascadia Code, Consolas, Courier New"
-                    IsTextSelectionEnabled="True"
-                    Text="{x:Bind ViewModel.Preview, Mode=OneWay}"
-                    TextWrapping="Wrap"
-                    Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                <ListView
+                    x:Name="ExamplesListView"
+                    MaxHeight="180"
+                    SelectionMode="Single"
+                    ItemsSource="{x:Bind ViewModel.ExampleExpressions, Mode=OneWay}"
+                    SelectionChanged="ExamplesListView_SelectionChanged"
+                    AutomationProperties.Name="Format examples">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ExpressionExample">
+                            <Grid Padding="10,6" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontFamily="Cascadia Code, Consolas, Courier New"
+                                    Text="{x:Bind Expression}"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTipService.ToolTip="{x:Bind Expression}" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Opacity="0.5"
+                                    Text="→" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Opacity="0.75"
+                                    Text="{x:Bind Preview}"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTipService.ToolTip="{x:Bind Preview}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
             </Border>
         </StackPanel>
 
-        <!-- Available tokens -->
-        <Expander
-            HorizontalAlignment="Stretch"
-            HorizontalContentAlignment="Stretch"
-            AutomationProperties.Name="Available tokens">
-            <Expander.Header>
-                <TextBlock Text="Available Tokens" />
-            </Expander.Header>
-            <Expander.Content>
+        <!-- Tokens -->
+        <StackPanel Spacing="6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Tokens" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                    <RadioButton Content="All" GroupName="TokenFilter" Tag="All" IsChecked="True" Checked="TokenFilterRadio_Checked" />
+                    <RadioButton Content="Common" GroupName="TokenFilter" Tag="Common" Checked="TokenFilterRadio_Checked" />
+                    <RadioButton Content="Series" GroupName="TokenFilter" Tag="Series" Checked="TokenFilterRadio_Checked" />
+                    <RadioButton Content="Movie" GroupName="TokenFilter" Tag="Movie" Checked="TokenFilterRadio_Checked" />
+                    <RadioButton Content="Music" GroupName="TokenFilter" Tag="Music" Checked="TokenFilterRadio_Checked" />
+                    <RadioButton Content="Technical" GroupName="TokenFilter" Tag="Technical" Checked="TokenFilterRadio_Checked" />
+                </StackPanel>
+            </Grid>
+            <Border
+                Padding="8"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
                 <ScrollViewer
-                    MaxHeight="280"
+                    MaxHeight="200"
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto">
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.AvailableTokens}">
-                    <ItemsRepeater.Layout>
-                        <UniformGridLayout
-                            MinColumnSpacing="4"
-                            MinRowSpacing="4"
-                            MinItemWidth="160"
-                            ItemsStretch="Fill" />
-                    </ItemsRepeater.Layout>
-                    <ItemsRepeater.ItemTemplate>
-                        <DataTemplate x:DataType="vm:TokenInfo">
-                            <Button
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Left"
-                                Padding="8,6"
-                                Click="TokenButton_Click"
-                                Tag="{x:Bind Name}"
-                                AutomationProperties.Name="{x:Bind Name}"
-                                ToolTipService.ToolTip="{x:Bind Description}">
-                                <StackPanel Spacing="2">
-                                    <TextBlock
-                                        FontFamily="Cascadia Code, Consolas, Courier New"
-                                        FontSize="12"
-                                        Text="{x:Bind Name}" />
-                                    <TextBlock
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        Style="{StaticResource CaptionTextBlockStyle}"
-                                        Text="{x:Bind Description}"
-                                        TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsRepeater.ItemTemplate>
-                </ItemsRepeater>
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.FilteredTokens, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout
+                                MinColumnSpacing="4"
+                                MinRowSpacing="4"
+                                MinItemWidth="170"
+                                ItemsStretch="Fill" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TokenInfo">
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Padding="8,6"
+                                    Click="TokenButton_Click"
+                                    Tag="{x:Bind Name}"
+                                    AutomationProperties.Name="{x:Bind Name}"
+                                    ToolTipService.ToolTip="{x:Bind Description}">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock
+                                            FontFamily="Cascadia Code, Consolas, Courier New"
+                                            FontSize="12"
+                                            Text="{x:Bind Name}" />
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind Description}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
                 </ScrollViewer>
-            </Expander.Content>
-        </Expander>
+            </Border>
+        </StackPanel>
 
     </StackPanel>
     </ScrollViewer>

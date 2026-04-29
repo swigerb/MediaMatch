@@ -8,7 +8,8 @@ using Microsoft.UI.Xaml.Media;
 namespace MediaMatch.App.Dialogs;
 
 /// <summary>
-/// ContentDialog for editing expression format strings with live preview and token insertion.
+/// ContentDialog for editing expression format strings with live preview, clickable
+/// examples, category selection, and token insertion (FileBot-style).
 /// </summary>
 public sealed partial class ExpressionEditorDialog : ContentDialog
 {
@@ -32,7 +33,6 @@ public sealed partial class ExpressionEditorDialog : ContentDialog
         {
             ViewModel.InsertTokenCommand.Execute(token);
 
-            // Return focus to the expression TextBox
             ExpressionTextBox.Focus(FocusState.Programmatic);
             ExpressionTextBox.SelectionStart = ViewModel.CursorPosition;
             ExpressionTextBox.SelectionLength = 0;
@@ -43,6 +43,28 @@ public sealed partial class ExpressionEditorDialog : ContentDialog
     {
         if (sender is TextBox textBox)
             ViewModel.CursorPosition = textBox.SelectionStart;
+    }
+
+    private void ExamplesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ListView list && list.SelectedItem is ExpressionExample example)
+        {
+            ViewModel.Expression = example.Expression;
+            // Allow the same example to be re-clicked later.
+            list.SelectedItem = null;
+        }
+    }
+
+    private void CategoryRadio_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb && rb.Tag is string category)
+            ViewModel.SelectedCategory = category;
+    }
+
+    private void TokenFilterRadio_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb && rb.Tag is string filter)
+            ViewModel.SelectedTokenFilter = filter;
     }
 
     // x:Bind helpers — return validation indicator glyph and brush
