@@ -1,0 +1,39 @@
+<!--
+  Uno Platform Linux head project (Skia + X11).
+  Requires: Linux with X11 display server
+  Build on Linux only: dotnet build
+
+  This project is excluded from the default Visual Studio build on Windows
+  since the Skia.X11 host is Linux-only.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MediaMatch.App.Linux</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MediaMatch.Core\MediaMatch.Core.csproj" />
+    <ProjectReference Include="..\MediaMatch.Application\MediaMatch.Application.csproj" />
+    <ProjectReference Include="..\MediaMatch.Infrastructure\MediaMatch.Infrastructure.csproj" />
+    <ProjectReference Include="..\MediaMatch.Infrastructure.Unix\MediaMatch.Infrastructure.Unix.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Uno.WinUI" Version="6.1.23" />
+    <PackageReference Include="Uno.WinUI.Skia.X11" Version="6.1.23" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.7" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+</Project>
