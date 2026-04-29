@@ -11,11 +11,10 @@ namespace MediaMatch.App.macOS.Dialogs;
 public partial class MatchSelectionViewModel : ObservableObject
 {
     [ObservableProperty]
-    public partial string FileName { get; set; } = string.Empty;
+    private string _fileName = string.Empty;
 
     [ObservableProperty]
-    public partial MatchSuggestion? SelectedMatch { get; set; }
-
+    private MatchSuggestion? _selectedMatch;
     /// <summary>
     /// Ranked match candidates from opportunistic matching.
     /// </summary>

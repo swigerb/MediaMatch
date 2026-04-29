@@ -9,22 +9,22 @@ namespace MediaMatch.App.Linux.Dialogs;
 public partial class ConflictDialogViewModel : ObservableObject
 {
     [ObservableProperty]
-    public partial string SourcePath { get; set; } = string.Empty;
+    private string _sourcePath = string.Empty;
 
     [ObservableProperty]
-    public partial string TargetPath { get; set; } = string.Empty;
+    private string _targetPath = string.Empty;
 
     [ObservableProperty]
-    public partial string SourceSize { get; set; } = string.Empty;
+    private string _sourceSize = string.Empty;
 
     [ObservableProperty]
-    public partial string TargetSize { get; set; } = string.Empty;
+    private string _targetSize = string.Empty;
 
     [ObservableProperty]
-    public partial string SourceLastModified { get; set; } = string.Empty;
+    private string _sourceLastModified = string.Empty;
 
     [ObservableProperty]
-    public partial string TargetLastModified { get; set; } = string.Empty;
+    private string _targetLastModified = string.Empty;
 
     /// <summary>
     /// The user's chosen resolution after the dialog closes.

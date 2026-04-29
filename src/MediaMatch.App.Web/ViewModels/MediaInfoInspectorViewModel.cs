@@ -20,19 +20,18 @@ public partial class MediaInfoInspectorViewModel : ViewModelBase
 
     /// <summary>Gets or sets the path of the file being inspected.</summary>
     [ObservableProperty]
-    public partial string FilePath { get; set; } = string.Empty;
+    private string _filePath = string.Empty;
 
     /// <summary>Gets or sets a value indicating whether media info is being loaded.</summary>
     [ObservableProperty]
-    public partial bool IsLoading { get; set; }
-
+    private bool _isLoading;
     /// <summary>Gets or sets a value indicating whether ffprobe is available on the system.</summary>
     [ObservableProperty]
-    public partial bool IsFfprobeAvailable { get; set; } = true;
+    private bool _isFfprobeAvailable = true;
 
     /// <summary>Gets or sets the error message to display when loading fails.</summary>
     [ObservableProperty]
-    public partial string ErrorMessage { get; set; } = string.Empty;
+    private string _errorMessage = string.Empty;
 
     /// <summary>Gets the general container properties for the loaded file.</summary>
     public ObservableCollection<PropertyItem> GeneralProperties { get; } = [];

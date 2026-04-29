@@ -18,6 +18,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>MediaMatch.App.macOS</RootNamespace>
+    <!--
+      Uno.WinUI 6.1.23 has a transitive dependency that resolves to a higher
+      version, triggering NU1603. Suppress so it isn't promoted to error under
+      TreatWarningsAsErrors.
+    -->
+    <NoWarn>$(NoWarn);NU1603</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

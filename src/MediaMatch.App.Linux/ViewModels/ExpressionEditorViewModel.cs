@@ -16,28 +16,25 @@ public partial class ExpressionEditorViewModel : ViewModelBase
 
     /// <summary>Gets or sets the expression text being edited.</summary>
     [ObservableProperty]
-    public partial string Expression { get; set; } = string.Empty;
+    private string _expression = string.Empty;
 
     /// <summary>Gets or sets a value indicating whether the current expression is valid.</summary>
     [ObservableProperty]
-    public partial bool IsValid { get; set; }
-
+    private bool _isValid;
     /// <summary>Gets or sets the validation message for the current expression.</summary>
     [ObservableProperty]
-    public partial string ValidationMessage { get; set; } = string.Empty;
+    private string _validationMessage = string.Empty;
 
     /// <summary>Gets or sets the live preview output of the current expression.</summary>
     [ObservableProperty]
-    public partial string Preview { get; set; } = string.Empty;
+    private string _preview = string.Empty;
 
     /// <summary>Gets or sets the currently selected example expression template.</summary>
     [ObservableProperty]
-    public partial ExpressionExample? SelectedExample { get; set; }
-
+    private ExpressionExample? _selectedExample;
     /// <summary>Gets or sets the cursor position in the expression text box.</summary>
     [ObservableProperty]
-    public partial int CursorPosition { get; set; }
-
+    private int _cursorPosition;
     /// <summary>Gets the list of available tokens for insertion.</summary>
     public ObservableCollection<TokenInfo> AvailableTokens { get; } = new(BuildTokenList());
 

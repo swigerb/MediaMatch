@@ -12,48 +12,42 @@ public partial class PresetEditorViewModel : ViewModelBase
 {
     /// <summary>Gets or sets the preset display name.</summary>
     [ObservableProperty]
-    public partial string Name { get; set; } = string.Empty;
+    private string _name = string.Empty;
 
     /// <summary>Gets or sets the preset input folder path.</summary>
     [ObservableProperty]
-    public partial string InputFolder { get; set; } = string.Empty;
+    private string _inputFolder = string.Empty;
 
     /// <summary>Gets or sets the file include filter pattern.</summary>
     [ObservableProperty]
-    public partial string IncludeFilter { get; set; } = string.Empty;
+    private string _includeFilter = string.Empty;
 
     /// <summary>Gets or sets the rename pattern template.</summary>
     [ObservableProperty]
-    public partial string RenamePattern { get; set; } = string.Empty;
+    private string _renamePattern = string.Empty;
 
     /// <summary>Gets or sets the output folder path for renamed files.</summary>
     [ObservableProperty]
-    public partial string OutputFolder { get; set; } = string.Empty;
+    private string _outputFolder = string.Empty;
 
     /// <summary>Gets or sets the selected keyboard shortcut index.</summary>
     [ObservableProperty]
-    public partial int SelectedShortcutIndex { get; set; }
-
+    private int _selectedShortcutIndex;
     /// <summary>Gets or sets the selected data source index.</summary>
     [ObservableProperty]
-    public partial int SelectedDatasourceIndex { get; set; }
-
+    private int _selectedDatasourceIndex;
     /// <summary>Gets or sets the selected language index.</summary>
     [ObservableProperty]
-    public partial int SelectedLanguageIndex { get; set; }
-
+    private int _selectedLanguageIndex;
     /// <summary>Gets or sets the selected episode ordering index.</summary>
     [ObservableProperty]
-    public partial int SelectedEpisodeOrderIndex { get; set; }
-
+    private int _selectedEpisodeOrderIndex;
     /// <summary>Gets or sets the selected match mode index.</summary>
     [ObservableProperty]
-    public partial int SelectedMatchModeIndex { get; set; }
-
+    private int _selectedMatchModeIndex;
     /// <summary>Gets or sets the selected rename action index.</summary>
     [ObservableProperty]
-    public partial int SelectedRenameActionIndex { get; set; }
-
+    private int _selectedRenameActionIndex;
     /// <summary>Gets the available data source labels.</summary>
     public string[] DatasourceOptions { get; } =
     [
