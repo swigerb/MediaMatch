@@ -1,0 +1,31 @@
+<Page
+    x:Class="MediaMatch.App.macOS.Pages.HistoryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="History" Style="{ThemeResource TitleTextBlockStyle}" Margin="0,0,0,16" />
+
+        <ListView Grid.Row="1" x:Name="HistoryList">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="8,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding OldName}" />
+                        <TextBlock Grid.Column="1" Text="{Binding NewName}" />
+                        <TextBlock Grid.Column="2" Text="{Binding Timestamp}" Opacity="0.6" />
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

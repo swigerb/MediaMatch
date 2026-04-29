@@ -1,13 +1,10 @@
 <!--
-  Scaffold project for future Uno Platform / Mac Catalyst support.
-  This project is NOT expected to build yet — it serves as a starting point
-  for when Uno Platform integration work begins.
+  Uno Platform macOS head project.
+  Requires: dotnet workload install maccatalyst
+  Build on macOS only: dotnet build -f net10.0-maccatalyst
 
-  Prerequisites:
-    - .NET 10 SDK with the maccatalyst workload installed
-    - Uno.Sdk (will be added when Uno Platform integration starts)
-
-  See docs/cross-platform.md and the README.md in this folder for details.
+  This project is excluded from the default Visual Studio build on Windows
+  since the maccatalyst workload is not available there.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
@@ -15,15 +12,31 @@
     <TargetFramework>net10.0-maccatalyst</TargetFramework>
     <OutputType>Exe</OutputType>
     <ApplicationId>com.mediamatch.app</ApplicationId>
-    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
-    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+    <ApplicationVersion>2</ApplicationVersion>
     <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MediaMatch.App.macOS</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MediaMatch.Core\MediaMatch.Core.csproj" />
     <ProjectReference Include="..\MediaMatch.Application\MediaMatch.Application.csproj" />
     <ProjectReference Include="..\MediaMatch.Infrastructure\MediaMatch.Infrastructure.csproj" />
+    <ProjectReference Include="..\MediaMatch.Infrastructure.Unix\MediaMatch.Infrastructure.Unix.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Uno.WinUI" Version="6.1.23" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.7" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
 </Project>
