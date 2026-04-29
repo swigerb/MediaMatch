@@ -176,36 +176,56 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Padding="8,4" />
 
-                <!-- File list or empty state -->
-                <Border Grid.Row="1"
+                <!-- File list or empty state — entire area is a drop target -->
+                <Border x:Name="SourceFilesBorder"
+                        Grid.Row="1"
                         BorderBrush="{x:Bind ViewModel.ActiveMatchMode, Mode=OneWay, Converter={StaticResource MatchModeBrush}}"
                         BorderThickness="1"
-                        CornerRadius="4">
+                        CornerRadius="4"
+                        AllowDrop="True"
+                        DragOver="SourceFiles_DragOver"
+                        DragLeave="SourceFiles_DragLeave"
+                        Drop="SourceFiles_Drop"
+                        AutomationProperties.Name="Source files drop area. Drop files or folders here, or click to load.">
                     <Grid>
-                    <!-- Empty state -->
-                    <StackPanel
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="12"
-                        Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <FontIcon
+                    <!-- Empty state — clickable to show load flyout -->
+                    <Grid
+                        x:Name="EmptyStateArea"
+                        Background="Transparent"
+                        Tapped="EmptyState_Tapped"
+                        Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.Name="Click to load files or folders">
+                        <Grid.Resources>
+                            <MenuFlyout x:Name="EmptyStateLoadFlyout" Placement="Bottom">
+                                <MenuFlyoutItem Text="Load Files…" Command="{x:Bind ViewModel.AddFilesCommand}"
+                                                AutomationProperties.Name="Load individual files">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8E5;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Load Folder…" Command="{x:Bind ViewModel.AddFolderCommand}"
+                                                AutomationProperties.Name="Load folder">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8B7;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Grid.Resources>
+                        <StackPanel
                             HorizontalAlignment="Center"
-                            FontSize="36"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Glyph="&#xE8B7;" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                            VerticalAlignment="Center"
+                            Spacing="12">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                FontSize="36"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Glyph="&#xE8B7;" />
                             <TextBlock
-                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Drop files here or" />
-                            <HyperlinkButton
-                                Padding="0"
-                                VerticalAlignment="Center"
-                                Command="{x:Bind ViewModel.AddFolderCommand}"
-                                Content="Load"
-                                AutomationProperties.Name="Load files or folder" />
+                                Text="Drop files here or click to load" />
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
 
                     <!-- Scanning -->
                     <StackPanel

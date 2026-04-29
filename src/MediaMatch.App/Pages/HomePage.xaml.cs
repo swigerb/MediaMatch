@@ -87,6 +87,54 @@ public sealed partial class HomePage : Page
         }
     }
 
+    private void SourceFiles_DragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = DataPackageOperation.Copy;
+        e.DragUIOverride.Caption = "Drop to add files";
+        e.DragUIOverride.IsCaptionVisible = true;
+        e.Handled = true;
+
+        // Visual highlight on the border
+        SourceFilesBorder.BorderThickness = new Thickness(2);
+        SourceFilesBorder.Background = (Microsoft.UI.Xaml.Media.Brush)Resources["ControlFillColorDefaultBrush"]
+            ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+    }
+
+    private void SourceFiles_DragLeave(object sender, DragEventArgs e)
+    {
+        SourceFilesBorder.BorderThickness = new Thickness(1);
+        SourceFilesBorder.Background = null;
+    }
+
+    private async void SourceFiles_Drop(object sender, DragEventArgs e)
+    {
+        // Reset visual state
+        SourceFilesBorder.BorderThickness = new Thickness(1);
+        SourceFilesBorder.Background = null;
+        e.Handled = true;
+
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems)) return;
+
+        var items = await e.DataView.GetStorageItemsAsync();
+        foreach (var item in items)
+        {
+            if (item is Windows.Storage.StorageFolder folder)
+            {
+                // Dropped a folder — scan it
+                await ViewModel.ScanDroppedFolderAsync(folder.Path);
+            }
+            else if (!string.IsNullOrEmpty(item.Path))
+            {
+                ViewModel.AddFiles(new[] { item.Path });
+            }
+        }
+    }
+
+    private void EmptyState_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        EmptyStateLoadFlyout.ShowAt(EmptyStateArea);
+    }
+
     private void ModeSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
         // Show/hide panels based on selected mode

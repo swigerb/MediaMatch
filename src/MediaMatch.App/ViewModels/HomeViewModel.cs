@@ -643,11 +643,19 @@ public partial class HomeViewModel : ViewModelBase
 
     /// <summary>
     /// Adds files to the original files pane programmatically (for drag-and-drop).
+    /// Handles both files and folders — folders are scanned recursively.
     /// </summary>
     public void AddFiles(IEnumerable<string> filePaths)
     {
         foreach (var path in filePaths)
         {
+            // If path is a directory, queue a scan
+            if (Directory.Exists(path))
+            {
+                _ = ScanDroppedFolderAsync(path);
+                continue;
+            }
+
             var fileInfo = new FileInfo(path);
             if (!fileInfo.Exists) continue;
 
@@ -666,6 +674,33 @@ public partial class HomeViewModel : ViewModelBase
         }
 
         UpdateStatusMessage();
+    }
+
+    /// <summary>
+    /// Scans a dropped folder for media files, with progress feedback.
+    /// </summary>
+    public async Task ScanDroppedFolderAsync(string folderPath)
+    {
+        IsProcessing = true;
+        IsScanning = true;
+        SelectedFolder = folderPath;
+        StatusMessage = $"Scanning {Path.GetFileName(folderPath)}...";
+
+        try
+        {
+            await ScanFolderAsync(folderPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to scan dropped folder {Folder}", folderPath);
+            _notificationService?.ShowError($"Failed to scan folder: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+            IsScanning = false;
+            UpdateStatusMessage();
+        }
     }
 
     private async Task ScanFolderAsync(string folderPath)
