@@ -29,10 +29,12 @@ jobs:
           dotnet build src/MediaMatch.Core --no-restore -c Release
           dotnet build src/MediaMatch.Application --no-restore -c Release
           dotnet build src/MediaMatch.Infrastructure --no-restore -c Release
+          dotnet build src/MediaMatch.Infrastructure.Unix --no-restore -c Release
           dotnet build src/MediaMatch.CLI --no-restore -c Release
           dotnet build tests/MediaMatch.Core.Tests --no-restore -c Release
           dotnet build tests/MediaMatch.Application.Tests --no-restore -c Release
           dotnet build tests/MediaMatch.Infrastructure.Tests --no-restore -c Release
+          dotnet build tests/MediaMatch.Infrastructure.Unix.Tests --no-restore -c Release
           dotnet build tests/MediaMatch.CLI.Tests --no-restore -c Release
           dotnet build tests/MediaMatch.App.Tests --no-restore -c Release
           dotnet build tests/MediaMatch.EndToEnd.Tests --no-restore -c Release
@@ -42,6 +44,7 @@ jobs:
           dotnet test tests/MediaMatch.Core.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
           dotnet test tests/MediaMatch.Application.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
           dotnet test tests/MediaMatch.Infrastructure.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
+          dotnet test tests/MediaMatch.Infrastructure.Unix.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
           dotnet test tests/MediaMatch.CLI.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
           dotnet test tests/MediaMatch.App.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
           dotnet test tests/MediaMatch.EndToEnd.Tests --no-build -c Release --verbosity normal --logger "trx;LogFileName=test-results.trx"

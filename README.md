@@ -117,7 +117,8 @@ MediaMatch automatically renames and organizes your TV shows, movies, anime, mus
 | Platform | Status | Install |
 |----------|--------|---------|
 | **Windows** | ✅ Available | `winget install swigerb.MediaMatch` or [direct download](https://github.com/swigerb/MediaMatch/releases) |
-| **macOS** | 🔜 Planned | Uno Platform port |
+| **macOS** | 🧪 In Development | Uno Platform head — build from source (requires maccatalyst workload) |
+| **Linux** | 🧪 In Development | Uno Platform head — build from source (requires X11 libs) |
 | **NAS** | 🔜 Planned | Synology SPK, QNAP QPKG |
 
 ---
@@ -127,7 +128,9 @@ MediaMatch automatically renames and organizes your TV shows, movies, anime, mus
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- Windows 10 (1809+) or Windows 11
+- **Windows**: Windows 10 (1809+) or Windows 11
+- **macOS**: `dotnet workload install maccatalyst` + Xcode
+- **Linux**: `libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`
 - Windows App SDK 1.8+
 - `ffprobe` on `PATH` (optional — required for MediaInfo Inspector and `{acf}`, `{dovi}`, `{hdr}`, `{resolution}`, `{bitdepth}` tokens)
 
@@ -252,7 +255,7 @@ Clean architecture: dependencies flow inward (`App/CLI → Application → Core`
 | | MediaMatch | FileBot |
 |--|-----------|---------|
 | **License** | GPL v3 — free and open source | Commercial ($6/year) |
-| **Platform** | .NET 10, WinUI 3, Windows | Java, Swing, cross-platform |
+| **Platform** | .NET 10, WinUI 3, Windows + Uno Platform (macOS, Linux) | Java, Swing, cross-platform |
 | **UI** | Fluent 2, Mica, dark mode, dual-pane layout | Legacy Swing UI |
 | **Matching** | Configurable multi-metric + opportunistic fallback | Fixed algorithms |
 | **Providers** | TMDb, TVDb, AniDB, MusicBrainz, AcoustID, NFO/XML, LLM | TMDb, TVDb, AniDB, AniList, others |
