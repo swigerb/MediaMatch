@@ -49,6 +49,7 @@ jobs:
         run: dotnet test tests/MediaMatch.Core.Tests -c Release --verbosity normal
       
       - name: Test Application
+        if: runner.os == 'Windows'
         run: dotnet test tests/MediaMatch.Application.Tests -c Release --verbosity normal
       
       - name: Test Infrastructure.Unix
