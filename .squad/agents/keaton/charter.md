@@ -28,3 +28,7 @@ Lead architect and technical decision-maker for MediaMatch.
 - Reviews PRs from all team members
 - May approve or reject with reasoning
 - Rejection triggers reassignment per reviewer protocol
+
+## Model
+
+- **Preferred:** claude-opus-5.5
