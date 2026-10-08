@@ -1,6 +1,8 @@
 {
   "version": 1,
   "agentModelOverrides": {
-    "keaton": "claude-opus-5.5"
-  }
+    "keaton": "claude-opus-5.5",
+    "scribe": "claude-haiku-5.5"
+  },
+  "defaultModel": "claude-sonnet-5.5"
 }
